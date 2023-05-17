@@ -9,7 +9,7 @@ use std::ops;
 /// let a = Vector { dx: 1, dy: 2 };
 /// let b = Vector { dx: 1, dy: 2 };
 ///
-/// assert_eq!(a == b);
+/// assert_eq!(a, b);
 /// ```
 #[derive(Debug, Eq)]
 pub struct Vector<T> {
