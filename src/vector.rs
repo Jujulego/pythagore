@@ -1,3 +1,5 @@
+use std::ops;
+
 /// `Vector<T>` structure for 2 dimension vectors
 ///
 /// ## Usage
@@ -17,8 +19,26 @@ pub struct Vector<T> {
 
 // Operators
 impl<T: PartialEq> PartialEq for Vector<T> {
-    fn eq(&self, other: &Vector<T>) -> bool {
+    fn eq(&self, other: &Self) -> bool {
         self.dx == other.dx && self.dy == other.dy
+    }
+}
+
+impl<T: ops::Add> ops::Add for Vector<T> {
+    type Output = Vector<T::Output>;
+
+    fn add(self, rhs: Vector<T>) -> Self::Output {
+        Vector {
+            dx: self.dx + rhs.dx,
+            dy: self.dy + rhs.dy,
+        }
+    }
+}
+
+impl<T: ops::AddAssign> ops::AddAssign for Vector<T> {
+    fn add_assign(&mut self, rhs: Vector<T>) {
+        self.dx += rhs.dx;
+        self.dy += rhs.dy;
     }
 }
 
@@ -49,5 +69,21 @@ mod tests {
         let b = Vector { dx: 1, dy: 1 };
 
         assert_ne!(a, b);
+    }
+
+    #[test]
+    fn it_should_return_sum_of_vectors() {
+        let a = Vector { dx: 1, dy: 2 };
+        let b = Vector { dx: 3, dy: 4 };
+
+        assert_eq!(a + b, Vector { dx: 4, dy: 6 });
+    }
+
+    #[test]
+    fn it_should_add_vector_to_a() {
+        let mut a = Vector { dx: 1, dy: 2 };
+        a += Vector { dx: 3, dy: 4 };
+
+        assert_eq!(a, Vector { dx: 4, dy: 6 });
     }
 }
