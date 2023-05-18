@@ -104,6 +104,18 @@ impl<T: ops::MulAssign + Copy> ops::MulAssign<T> for Vector<T> {
     }
 }
 
+impl<T> ops::Mul for Vector<T>
+where
+    T: ops::Mul,
+    T::Output: ops::Add
+{
+    type Output = <T::Output as ops::Add>::Output;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        self.dx * rhs.dy + self.dy * rhs.dx
+    }
+}
+
 // Tests
 #[cfg(test)]
 mod tests {
@@ -121,7 +133,7 @@ mod tests {
 
     #[test]
     fn it_should_return_false_for_non_null_vector() {
-        let mut v = Vector { dx: 1, dy: 2 };
+        let v = Vector { dx: 1, dy: 2 };
 
         assert!(!v.is_null());
     }
@@ -195,5 +207,13 @@ mod tests {
         let v = Vector { dx: 1, dy: 2 };
 
         assert_eq!(v * 3, Vector { dx: 3, dy: 6 });
+    }
+
+    #[test]
+    fn it_should_return_scalar_product_of_vectors() {
+        let v = Vector { dx: 1, dy: 2 };
+        let u = Vector { dx: 3, dy: 4 };
+
+        assert_eq!(v * u, 10);
     }
 }
