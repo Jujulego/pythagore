@@ -13,7 +13,7 @@ use num_traits::Zero;
 /// assert_eq!(v, u);
 /// assert_eq!(Vector::null(), Vector { dx: 0, dy: 0 })
 /// ```
-#[derive(Debug, Eq)]
+#[derive(Clone, Copy, Debug, Eq)]
 pub struct Vector<T> {
     pub dx: T,
     pub dy: T,
@@ -86,6 +86,24 @@ impl<T: ops::SubAssign> ops::SubAssign for Vector<T> {
     }
 }
 
+impl<T: ops::Mul + Copy> ops::Mul<T> for Vector<T> {
+    type Output = Vector<T::Output>;
+
+    fn mul(self, rhs: T) -> Self::Output {
+        Vector {
+            dx: self.dx * rhs,
+            dy: self.dy * rhs,
+        }
+    }
+}
+
+impl<T: ops::MulAssign + Copy> ops::MulAssign<T> for Vector<T> {
+    fn mul_assign(&mut self, rhs: T) {
+        self.dx *= rhs;
+        self.dy *= rhs;
+    }
+}
+
 // Tests
 #[cfg(test)]
 mod tests {
@@ -103,7 +121,7 @@ mod tests {
 
     #[test]
     fn it_should_return_false_for_non_null_vector() {
-        let v = Vector { dx: 1, dy: 2 };
+        let mut v = Vector { dx: 1, dy: 2 };
 
         assert!(!v.is_null());
     }
@@ -141,7 +159,7 @@ mod tests {
     }
 
     #[test]
-    fn it_should_add_vector_to_a() {
+    fn it_should_add_vector_to_v() {
         let mut v = Vector { dx: 1, dy: 2 };
         v += Vector { dx: 3, dy: 4 };
 
@@ -157,10 +175,25 @@ mod tests {
     }
 
     #[test]
-    fn it_should_subtract_vector_to_a() {
+    fn it_should_subtract_vector_to_v() {
         let mut v = Vector { dx: 1, dy: 2 };
         v -= Vector { dx: 3, dy: 4 };
 
         assert_eq!(v, Vector { dx: -2, dy: -2 });
+    }
+
+    #[test]
+    fn it_should_return_product_vector_by_num() {
+        let mut v = Vector { dx: 1, dy: 2 };
+        v *= 3;
+
+        assert_eq!(v, Vector { dx: 3, dy: 6 });
+    }
+
+    #[test]
+    fn it_should_multiply_vector_by_num() {
+        let v = Vector { dx: 1, dy: 2 };
+
+        assert_eq!(v * 3, Vector { dx: 3, dy: 6 });
     }
 }
