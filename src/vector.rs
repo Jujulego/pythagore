@@ -1,5 +1,6 @@
+use num_traits::real::Real;
+use num_traits::{One, Signed, Zero};
 use std::ops;
-use num_traits::{One, Zero};
 
 /// `Vector<T>` structure for 2 dimension vectors
 ///
@@ -32,11 +33,17 @@ impl<T: Zero> Vector<T> {
 
 impl<T: One + Zero> Vector<T> {
     pub fn unit_dx() -> Self {
-        Vector { dx: T::one(), dy: T::zero() }
+        Vector {
+            dx: T::one(),
+            dy: T::zero(),
+        }
     }
 
     pub fn unit_dy() -> Self {
-        Vector { dx: T::zero(), dy: T::one() }
+        Vector {
+            dx: T::zero(),
+            dy: T::one(),
+        }
     }
 }
 
@@ -50,6 +57,28 @@ impl<T: Zero> Zero for Vector<T> {
 
     fn is_zero(&self) -> bool {
         self.dx.is_zero() && self.dy.is_zero()
+    }
+}
+
+impl<T> Vector<T>
+where
+    T: ops::Mul + Copy,
+    T::Output: ops::Add,
+{
+    pub fn square_norm(&self) -> <T::Output as ops::Add>::Output {
+        self.dx * self.dx + self.dy * self.dy
+    }
+}
+
+impl<T: Real> Vector<T> {
+    pub fn norm(&self) -> T {
+        self.square_norm().sqrt()
+    }
+}
+
+impl<T: Signed> Vector<T> {
+    pub fn manhattan_norm(&self) -> T {
+        self.dx.abs() + self.dy.abs()
     }
 }
 
@@ -117,7 +146,7 @@ impl<T: ops::MulAssign + Copy> ops::MulAssign<T> for Vector<T> {
 impl<T> ops::Mul for Vector<T>
 where
     T: ops::Mul,
-    T::Output: ops::Add
+    T::Output: ops::Add,
 {
     type Output = <T::Output as ops::Add>::Output;
 
@@ -170,6 +199,27 @@ mod tests {
         let v = Vector { dx: 1, dy: 2 };
 
         assert!(!v.is_null());
+    }
+
+    #[test]
+    fn it_should_return_square_norm_of_vector() {
+        let v = Vector { dx: 1, dy: 2 };
+
+        assert_eq!(v.square_norm(), 5);
+    }
+
+    #[test]
+    fn it_should_return_norm_of_vector() {
+        let v = Vector { dx: 1.0, dy: 2.0 };
+
+        assert_eq!(v.norm(), 5.0.sqrt());
+    }
+
+    #[test]
+    fn it_should_return_manhattan_norm_of_vector() {
+        let v = Vector { dx: 1, dy: 2 };
+
+        assert_eq!(v.manhattan_norm(), 3);
     }
 
     #[test]
