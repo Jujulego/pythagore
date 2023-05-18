@@ -74,6 +74,10 @@ impl<T: Real> Vector<T> {
     pub fn norm(&self) -> T {
         self.square_norm().sqrt()
     }
+
+    pub fn unit(&self) -> Self {
+        self / self.norm()
+    }
 }
 
 impl<T: Signed> Vector<T> {
@@ -156,6 +160,17 @@ where
 }
 
 impl<T: ops::Div + Copy> ops::Div<T> for Vector<T> {
+    type Output = Vector<T::Output>;
+
+    fn div(self, rhs: T) -> Self::Output {
+        Vector {
+            dx: self.dx / rhs,
+            dy: self.dy / rhs,
+        }
+    }
+}
+
+impl<T: ops::Div + Copy> ops::Div<T> for &Vector<T> {
     type Output = Vector<T::Output>;
 
     fn div(self, rhs: T) -> Self::Output {
