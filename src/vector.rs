@@ -42,6 +42,24 @@ impl<T: ops::AddAssign> ops::AddAssign for Vector<T> {
     }
 }
 
+impl<T: ops::Sub> ops::Sub for Vector<T> {
+    type Output = Vector<T::Output>;
+
+    fn sub(self, rhs: Vector<T>) -> Self::Output {
+        Vector {
+            dx: self.dx - rhs.dx,
+            dy: self.dy - rhs.dy,
+        }
+    }
+}
+
+impl<T: ops::SubAssign> ops::SubAssign for Vector<T> {
+    fn sub_assign(&mut self, rhs: Vector<T>) {
+        self.dx -= rhs.dx;
+        self.dy -= rhs.dy;
+    }
+}
+
 // Tests
 #[cfg(test)]
 mod tests {
@@ -85,5 +103,21 @@ mod tests {
         a += Vector { dx: 3, dy: 4 };
 
         assert_eq!(a, Vector { dx: 4, dy: 6 });
+    }
+
+    #[test]
+    fn it_should_return_difference_of_vectors() {
+        let a = Vector { dx: 1, dy: 2 };
+        let b = Vector { dx: 3, dy: 4 };
+
+        assert_eq!(a - b, Vector { dx: -2, dy: -2 });
+    }
+
+    #[test]
+    fn it_should_subtract_vector_to_a() {
+        let mut a = Vector { dx: 1, dy: 2 };
+        a -= Vector { dx: 3, dy: 4 };
+
+        assert_eq!(a, Vector { dx: -2, dy: -2 });
     }
 }
