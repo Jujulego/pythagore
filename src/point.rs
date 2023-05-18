@@ -1,4 +1,5 @@
 use std::ops;
+use num_traits::Zero;
 use crate::Vector;
 
 /// `Point<T>` structure for 2 dimension points
@@ -11,11 +12,22 @@ use crate::Vector;
 /// let b = Point { x: 1, y: 2 };
 ///
 /// assert_eq!(a, b);
+/// assert_eq!(Point::origin(), Point { x: 0, y: 0 });
 /// ```
 #[derive(Debug, Eq)]
 pub struct Point<T> {
     pub x: T,
     pub y: T,
+}
+
+// Values
+impl<T: Zero> Point<T> {
+    pub fn origin() -> Self {
+        Point {
+            x: T::zero(),
+            y: T::zero(),
+        }
+    }
 }
 
 // Operators
@@ -76,6 +88,11 @@ impl<T: ops::SubAssign> ops::SubAssign<Vector<T>> for Point<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn it_should_return_origin() {
+        assert_eq!(Point::origin(), Point { x: 0, y: 0 });
+    }
 
     #[test]
     fn it_should_be_equal() {
