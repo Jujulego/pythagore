@@ -126,6 +126,24 @@ where
     }
 }
 
+impl<T: ops::Div + Copy> ops::Div<T> for Vector<T> {
+    type Output = Vector<T::Output>;
+
+    fn div(self, rhs: T) -> Self::Output {
+        Vector {
+            dx: self.dx / rhs,
+            dy: self.dy / rhs,
+        }
+    }
+}
+
+impl<T: ops::DivAssign + Copy> ops::DivAssign<T> for Vector<T> {
+    fn div_assign(&mut self, rhs: T) {
+        self.dx /= rhs;
+        self.dy /= rhs;
+    }
+}
+
 // Tests
 #[cfg(test)]
 mod tests {
@@ -212,17 +230,17 @@ mod tests {
 
     #[test]
     fn it_should_return_product_vector_by_num() {
-        let mut v = Vector { dx: 1, dy: 2 };
-        v *= 3;
+        let v = Vector { dx: 1, dy: 2 };
 
-        assert_eq!(v, Vector { dx: 3, dy: 6 });
+        assert_eq!(v * 3, Vector { dx: 3, dy: 6 });
     }
 
     #[test]
     fn it_should_multiply_vector_by_num() {
-        let v = Vector { dx: 1, dy: 2 };
+        let mut v = Vector { dx: 1, dy: 2 };
+        v *= 3;
 
-        assert_eq!(v * 3, Vector { dx: 3, dy: 6 });
+        assert_eq!(v, Vector { dx: 3, dy: 6 });
     }
 
     #[test]
@@ -231,5 +249,20 @@ mod tests {
         let u = Vector { dx: 3, dy: 4 };
 
         assert_eq!(v * u, 10);
+    }
+
+    #[test]
+    fn it_should_return_division_vector_by_num() {
+        let v = Vector { dx: 2, dy: 4 };
+
+        assert_eq!(v / 2, Vector { dx: 1, dy: 2 });
+    }
+
+    #[test]
+    fn it_should_divide_vector_by_num() {
+        let mut v = Vector { dx: 2, dy: 4 };
+        v /= 2;
+
+        assert_eq!(v, Vector { dx: 1, dy: 2 });
     }
 }
