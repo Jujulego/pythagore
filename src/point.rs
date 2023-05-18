@@ -43,6 +43,35 @@ impl<T: ops::AddAssign> ops::AddAssign<Vector<T>> for Point<T> {
     }
 }
 
+impl<T: ops::Sub> ops::Sub for Point<T> {
+    type Output = Vector<T::Output>;
+
+    fn sub(self, rhs: Point<T>) -> Self::Output {
+        Vector {
+            dx: self.x - rhs.x,
+            dy: self.y - rhs.y,
+        }
+    }
+}
+
+impl<T: ops::Sub> ops::Sub<Vector<T>> for Point<T> {
+    type Output = Point<T::Output>;
+
+    fn sub(self, rhs: Vector<T>) -> Self::Output {
+        Point {
+            x: self.x - rhs.dx,
+            y: self.y - rhs.dy,
+        }
+    }
+}
+
+impl<T: ops::SubAssign> ops::SubAssign<Vector<T>> for Point<T> {
+    fn sub_assign(&mut self, rhs: Vector<T>) {
+        self.x -= rhs.dx;
+        self.y -= rhs.dy;
+    }
+}
+
 // Tests
 #[cfg(test)]
 mod tests {
@@ -73,7 +102,7 @@ mod tests {
     }
 
     #[test]
-    fn it_should_return_new_translated_point() {
+    fn it_should_return_new_add_translated_point() {
         let a = Point { x: 1, y: 2 };
         let v = Vector { dx: 3, dy: 4 };
 
@@ -81,10 +110,34 @@ mod tests {
     }
 
     #[test]
-    fn it_should_translate_point() {
+    fn it_should_add_translate_point() {
         let mut a = Point { x: 1, y: 2 };
         a += Vector { dx: 3, dy: 4 };
 
         assert_eq!(a, Point { x: 4, y: 6 });
+    }
+
+    #[test]
+    fn it_should_return_difference_between_points() {
+        let a = Point { x: 1, y: 2 };
+        let b = Point { x: 3, y: 4 };
+
+        assert_eq!(a - b, Vector { dx: -2, dy: -2 });
+    }
+
+    #[test]
+    fn it_should_return_new_sub_translated_point() {
+        let a = Point { x: 1, y: 2 };
+        let v = Vector { dx: 3, dy: 4 };
+
+        assert_eq!(a - v, Point { x: -2, y: -2 });
+    }
+
+    #[test]
+    fn it_should_sub_translate_point() {
+        let mut a = Point { x: 1, y: 2 };
+        a -= Vector { dx: 3, dy: 4 };
+
+        assert_eq!(a, Point { x: -2, y: -2 });
     }
 }
