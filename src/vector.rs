@@ -1,4 +1,5 @@
 use std::ops;
+use num_traits::Zero;
 
 /// `Vector<T>` structure for 2 dimension vectors
 ///
@@ -6,15 +7,40 @@ use std::ops;
 /// ```
 /// use pythagore::Vector;
 ///
-/// let a = Vector { dx: 1, dy: 2 };
-/// let b = Vector { dx: 1, dy: 2 };
+/// let v = Vector { dx: 1, dy: 2 };
+/// let u = Vector { dx: 1, dy: 2 };
 ///
-/// assert_eq!(a, b);
+/// assert_eq!(v, u);
+/// assert_eq!(Vector::null(), Vector { dx: 0, dy: 0 })
 /// ```
 #[derive(Debug, Eq)]
 pub struct Vector<T> {
     pub dx: T,
     pub dy: T,
+}
+
+// Values
+impl<T: Zero> Vector<T> {
+    pub fn null() -> Self {
+        Vector::zero()
+    }
+
+    pub fn is_null(&self) -> bool {
+        self.is_zero()
+    }
+}
+
+impl<T: Zero> Zero for Vector<T> {
+    fn zero() -> Self {
+        Vector {
+            dx: T::zero(),
+            dy: T::zero(),
+        }
+    }
+
+    fn is_zero(&self) -> bool {
+        self.dx.is_zero() && self.dy.is_zero()
+    }
 }
 
 // Operators
@@ -66,58 +92,75 @@ mod tests {
     use super::*;
 
     #[test]
-    fn it_should_be_equal() {
-        let a = Vector { dx: 1, dy: 2 };
-        let b = Vector { dx: 1, dy: 2 };
+    fn it_should_return_null_vector() {
+        assert_eq!(Vector::null(), Vector { dx: 0, dy: 0 });
+    }
 
-        assert_eq!(a, b);
+    #[test]
+    fn it_should_return_true_for_null_vector() {
+        assert!(Vector::<f32>::null().is_null());
+    }
+
+    #[test]
+    fn it_should_return_false_for_non_null_vector() {
+        let v = Vector { dx: 1, dy: 2 };
+
+        assert!(!v.is_null());
+    }
+
+    #[test]
+    fn it_should_be_equal() {
+        let v = Vector { dx: 1, dy: 2 };
+        let u = Vector { dx: 1, dy: 2 };
+
+        assert_eq!(v, u);
     }
 
     #[test]
     fn it_should_not_be_equal_dx() {
-        let a = Vector { dx: 1, dy: 2 };
-        let b = Vector { dx: 2, dy: 2 };
+        let v = Vector { dx: 1, dy: 2 };
+        let u = Vector { dx: 2, dy: 2 };
 
-        assert_ne!(a, b);
+        assert_ne!(v, u);
     }
 
     #[test]
     fn it_should_not_be_equal_dy() {
-        let a = Vector { dx: 1, dy: 2 };
-        let b = Vector { dx: 1, dy: 1 };
+        let v = Vector { dx: 1, dy: 2 };
+        let u = Vector { dx: 1, dy: 1 };
 
-        assert_ne!(a, b);
+        assert_ne!(v, u);
     }
 
     #[test]
     fn it_should_return_sum_of_vectors() {
-        let a = Vector { dx: 1, dy: 2 };
-        let b = Vector { dx: 3, dy: 4 };
+        let v = Vector { dx: 1, dy: 2 };
+        let u = Vector { dx: 3, dy: 4 };
 
-        assert_eq!(a + b, Vector { dx: 4, dy: 6 });
+        assert_eq!(v + u, Vector { dx: 4, dy: 6 });
     }
 
     #[test]
     fn it_should_add_vector_to_a() {
-        let mut a = Vector { dx: 1, dy: 2 };
-        a += Vector { dx: 3, dy: 4 };
+        let mut v = Vector { dx: 1, dy: 2 };
+        v += Vector { dx: 3, dy: 4 };
 
-        assert_eq!(a, Vector { dx: 4, dy: 6 });
+        assert_eq!(v, Vector { dx: 4, dy: 6 });
     }
 
     #[test]
     fn it_should_return_difference_of_vectors() {
-        let a = Vector { dx: 1, dy: 2 };
-        let b = Vector { dx: 3, dy: 4 };
+        let v = Vector { dx: 1, dy: 2 };
+        let u = Vector { dx: 3, dy: 4 };
 
-        assert_eq!(a - b, Vector { dx: -2, dy: -2 });
+        assert_eq!(v - u, Vector { dx: -2, dy: -2 });
     }
 
     #[test]
     fn it_should_subtract_vector_to_a() {
-        let mut a = Vector { dx: 1, dy: 2 };
-        a -= Vector { dx: 3, dy: 4 };
+        let mut v = Vector { dx: 1, dy: 2 };
+        v -= Vector { dx: 3, dy: 4 };
 
-        assert_eq!(a, Vector { dx: -2, dy: -2 });
+        assert_eq!(v, Vector { dx: -2, dy: -2 });
     }
 }
