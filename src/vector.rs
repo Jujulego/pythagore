@@ -86,6 +86,46 @@ impl<T: Signed> Vector<T> {
     }
 }
 
+// Macros
+macro_rules! vector_binop_impl {
+    ($tp:ident, $lhs:ty, $rhs:ty, $op:tt, $op_trait:ty, $constraint:path $(, $copy:path)?) => {
+        impl<$tp: $constraint $(+ $copy)*> $op_trait for $lhs {
+            type Output = Vector<$tp::Output>;
+
+            fn $op(self, rhs: $rhs) -> Self::Output {
+                Vector {
+                    dx: self.dx.$op(rhs.dx),
+                    dy: self.dy.$op(rhs.dy),
+                }
+            }
+        }
+    };
+}
+
+macro_rules! vector_add_impl {
+    ($tp:ident, $lhs:ty) => {
+        vector_add_impl!($tp, $lhs, $lhs);
+        vector_add_impl!($tp, &$lhs, $lhs, Copy);
+        vector_add_impl!($tp, $lhs, &$lhs, Copy);
+        vector_add_impl!($tp, &$lhs, &$lhs, Copy);
+    };
+    ($tp:ident, $lhs:ty, $rhs:ty $(, $copy:path)?) => {
+        vector_binop_impl!($tp,  $lhs, $rhs, add, ops::Add<$rhs>, ops::Add$(, $copy)?);
+    };
+}
+
+macro_rules! vector_sub_impl {
+    ($tp:ident, $lhs:ty) => {
+        vector_sub_impl!($tp, $lhs, $lhs);
+        vector_sub_impl!($tp, &$lhs, $lhs, Copy);
+        vector_sub_impl!($tp, $lhs, &$lhs, Copy);
+        vector_sub_impl!($tp, &$lhs, &$lhs, Copy);
+    };
+    ($tp:ident, $lhs:ty, $rhs:ty $(, $copy:path)?) => {
+        vector_binop_impl!($tp,  $lhs, $rhs, sub, ops::Sub<$rhs>, ops::Sub$(, $copy)?);
+    };
+}
+
 // Operators
 impl<T: PartialEq> PartialEq for Vector<T> {
     fn eq(&self, other: &Self) -> bool {
@@ -93,32 +133,13 @@ impl<T: PartialEq> PartialEq for Vector<T> {
     }
 }
 
-impl<T: ops::Add> ops::Add for Vector<T> {
-    type Output = Vector<T::Output>;
-
-    fn add(self, rhs: Vector<T>) -> Self::Output {
-        Vector {
-            dx: self.dx + rhs.dx,
-            dy: self.dy + rhs.dy,
-        }
-    }
-}
+vector_add_impl!(T, Vector<T>);
+vector_sub_impl!(T, Vector<T>);
 
 impl<T: ops::AddAssign> ops::AddAssign for Vector<T> {
     fn add_assign(&mut self, rhs: Vector<T>) {
         self.dx += rhs.dx;
         self.dy += rhs.dy;
-    }
-}
-
-impl<T: ops::Sub> ops::Sub for Vector<T> {
-    type Output = Vector<T::Output>;
-
-    fn sub(self, rhs: Vector<T>) -> Self::Output {
-        Vector {
-            dx: self.dx - rhs.dx,
-            dy: self.dy - rhs.dy,
-        }
     }
 }
 
