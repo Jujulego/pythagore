@@ -1,5 +1,5 @@
 use std::ops;
-use num_traits::Zero;
+use num_traits::{One, Zero};
 
 /// `Vector<T>` structure for 2 dimension vectors
 ///
@@ -19,7 +19,7 @@ pub struct Vector<T> {
     pub dy: T,
 }
 
-// Values
+// Methods
 impl<T: Zero> Vector<T> {
     pub fn null() -> Self {
         Vector::zero()
@@ -27,6 +27,16 @@ impl<T: Zero> Vector<T> {
 
     pub fn is_null(&self) -> bool {
         self.is_zero()
+    }
+}
+
+impl<T: One + Zero> Vector<T> {
+    pub fn unit_dx() -> Self {
+        Vector { dx: T::one(), dy: T::zero() }
+    }
+
+    pub fn unit_dy() -> Self {
+        Vector { dx: T::zero(), dy: T::one() }
     }
 }
 
@@ -124,6 +134,12 @@ mod tests {
     #[test]
     fn it_should_return_null_vector() {
         assert_eq!(Vector::null(), Vector { dx: 0, dy: 0 });
+    }
+
+    #[test]
+    fn it_should_return_unit_vectors() {
+        assert_eq!(Vector::unit_dx(), Vector { dx: 1, dy: 0 });
+        assert_eq!(Vector::unit_dy(), Vector { dx: 0, dy: 1 });
     }
 
     #[test]
