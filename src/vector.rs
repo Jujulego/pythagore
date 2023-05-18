@@ -161,64 +161,94 @@ macro_rules! vector_sub_assign_impl {
 vector_sub_assign_impl!(T,  Vector<T>);
 vector_sub_assign_impl!(T, &Vector<T>, Copy);
 
-impl<T: ops::Mul + Copy> ops::Mul<T> for Vector<T> {
-    type Output = Vector<T::Output>;
+macro_rules! vector_mul_impl {
+    ($tp:ident, $lhs:ty, $rhs:ty $(, $defer:tt)?) => {
+        impl<$tp: ops::Mul + Copy> ops::Mul<$rhs> for $lhs {
+            type Output = Vector<$tp::Output>;
 
-    fn mul(self, rhs: T) -> Self::Output {
-        Vector {
-            dx: self.dx * rhs,
-            dy: self.dy * rhs,
+            fn mul(self, rhs: $rhs) -> Self::Output {
+                Vector {
+                    dx: self.dx * $($defer)?rhs,
+                    dy: self.dy * $($defer)?rhs,
+                }
+            }
         }
-    }
+    };
 }
 
-impl<T: ops::MulAssign + Copy> ops::MulAssign<T> for Vector<T> {
-    fn mul_assign(&mut self, rhs: T) {
-        self.dx *= rhs;
-        self.dy *= rhs;
-    }
-}
+vector_mul_impl!(T,  Vector<T>,  T);
+vector_mul_impl!(T, &Vector<T>,  T);
+vector_mul_impl!(T,  Vector<T>, &T, *);
+vector_mul_impl!(T, &Vector<T>, &T, *);
 
-impl<T> ops::Mul for Vector<T>
-    where
-        T: ops::Mul,
-        T::Output: ops::Add,
-{
-    type Output = <T::Output as ops::Add>::Output;
-
-    fn mul(self, rhs: Self) -> Self::Output {
-        self.dx * rhs.dy + self.dy * rhs.dx
-    }
-}
-
-impl<T: ops::Div + Copy> ops::Div<T> for Vector<T> {
-    type Output = Vector<T::Output>;
-
-    fn div(self, rhs: T) -> Self::Output {
-        Vector {
-            dx: self.dx / rhs,
-            dy: self.dy / rhs,
+macro_rules! vector_mul_assign_impl {
+    ($tp:ident, $rhs:ty $(, $defer:tt)?) => {
+        impl<$tp: ops::MulAssign + Copy> ops::MulAssign<$rhs> for Vector<T> {
+            fn mul_assign(&mut self, rhs: $rhs) {
+                self.dx *= $($defer)?rhs;
+                self.dy *= $($defer)?rhs;
+            }
         }
-    }
+    };
 }
 
-impl<T: ops::Div + Copy> ops::Div<T> for &Vector<T> {
-    type Output = Vector<T::Output>;
+vector_mul_assign_impl!(T,  T);
+vector_mul_assign_impl!(T, &T, *);
 
-    fn div(self, rhs: T) -> Self::Output {
-        Vector {
-            dx: self.dx / rhs,
-            dy: self.dy / rhs,
+macro_rules! vector_scalar_impl {
+    ($tp:ident, $lhs:ty, $rhs:ty $(, $copy:path)?) => {
+        impl<$tp> ops::Mul<$rhs> for $lhs
+            where
+                $tp: ops::Mul $(+ $copy)?,
+                $tp::Output: ops::Add,
+        {
+            type Output = <$tp::Output as ops::Add>::Output;
+
+            fn mul(self, rhs: $rhs) -> Self::Output {
+                self.dx * rhs.dy + self.dy * rhs.dx
+            }
         }
-    }
+    };
 }
 
-impl<T: ops::DivAssign + Copy> ops::DivAssign<T> for Vector<T> {
-    fn div_assign(&mut self, rhs: T) {
-        self.dx /= rhs;
-        self.dy /= rhs;
-    }
+vector_scalar_impl!(T,  Vector<T>,  Vector<T>);
+vector_scalar_impl!(T, &Vector<T>,  Vector<T>, Copy);
+vector_scalar_impl!(T,  Vector<T>, &Vector<T>, Copy);
+vector_scalar_impl!(T, &Vector<T>, &Vector<T>, Copy);
+
+macro_rules! vector_div_impl {
+    ($tp:ident, $lhs:ty, $rhs:ty $(, $defer:tt)?) => {
+        impl<$tp: ops::Div + Copy> ops::Div<$rhs> for $lhs {
+            type Output = Vector<$tp::Output>;
+
+            fn div(self, rhs: $rhs) -> Self::Output {
+                Vector {
+                    dx: self.dx / $($defer)?rhs,
+                    dy: self.dy / $($defer)?rhs,
+                }
+            }
+        }
+    };
 }
+
+vector_div_impl!(T,  Vector<T>,  T);
+vector_div_impl!(T, &Vector<T>,  T);
+vector_div_impl!(T,  Vector<T>, &T, *);
+vector_div_impl!(T, &Vector<T>, &T, *);
+
+macro_rules! vector_div_assign_impl {
+    ($tp:ident, $rhs:ty $(, $defer:tt)?) => {
+        impl<$tp: ops::DivAssign + Copy> ops::DivAssign<$rhs> for Vector<T> {
+            fn div_assign(&mut self, rhs: $rhs) {
+                self.dx /= $($defer)?rhs;
+                self.dy /= $($defer)?rhs;
+            }
+        }
+    };
+}
+
+vector_div_assign_impl!(T,  T);
+vector_div_assign_impl!(T, &T, *);
 
 // Tests
 #[cfg(test)]
@@ -298,15 +328,19 @@ mod tests {
         let v = Vector { dx: 1, dy: 2 };
         let u = Vector { dx: 3, dy: 4 };
 
-        assert_eq!(v + u, Vector { dx: 4, dy: 6 });
+        assert_eq!( v +  u, Vector { dx: 4, dy: 6 });
+        assert_eq!(&v +  u, Vector { dx: 4, dy: 6 });
+        assert_eq!( v + &u, Vector { dx: 4, dy: 6 });
+        assert_eq!(&v + &u, Vector { dx: 4, dy: 6 });
     }
 
     #[test]
     fn it_should_add_vector_to_v() {
         let mut v = Vector { dx: 1, dy: 2 };
-        v += Vector { dx: 3, dy: 4 };
+        v +=  Vector { dx: 3, dy: 4 };
+        v += &Vector { dx: 5, dy: 6 };
 
-        assert_eq!(v, Vector { dx: 4, dy: 6 });
+        assert_eq!(v, Vector { dx: 9, dy: 12 });
     }
 
     #[test]
@@ -314,30 +348,38 @@ mod tests {
         let v = Vector { dx: 1, dy: 2 };
         let u = Vector { dx: 3, dy: 4 };
 
-        assert_eq!(v - u, Vector { dx: -2, dy: -2 });
+        assert_eq!( v -  u, Vector { dx: -2, dy: -2 });
+        assert_eq!(&v -  u, Vector { dx: -2, dy: -2 });
+        assert_eq!( v - &u, Vector { dx: -2, dy: -2 });
+        assert_eq!(&v - &u, Vector { dx: -2, dy: -2 });
     }
 
     #[test]
     fn it_should_subtract_vector_to_v() {
         let mut v = Vector { dx: 1, dy: 2 };
-        v -= Vector { dx: 3, dy: 4 };
+        v -=  Vector { dx: 3, dy: 4 };
+        v -= &Vector { dx: 5, dy: 6 };
 
-        assert_eq!(v, Vector { dx: -2, dy: -2 });
+        assert_eq!(v, Vector { dx: -7, dy: -8 });
     }
 
     #[test]
     fn it_should_return_product_vector_by_num() {
         let v = Vector { dx: 1, dy: 2 };
 
-        assert_eq!(v * 3, Vector { dx: 3, dy: 6 });
+        assert_eq!( v *  3, Vector { dx: 3, dy: 6 });
+        assert_eq!(&v *  3, Vector { dx: 3, dy: 6 });
+        assert_eq!( v * &3, Vector { dx: 3, dy: 6 });
+        assert_eq!(&v * &3, Vector { dx: 3, dy: 6 });
     }
 
     #[test]
     fn it_should_multiply_vector_by_num() {
         let mut v = Vector { dx: 1, dy: 2 };
-        v *= 3;
+        v *=  3;
+        v *= &3;
 
-        assert_eq!(v, Vector { dx: 3, dy: 6 });
+        assert_eq!(v, Vector { dx: 9, dy: 18 });
     }
 
     #[test]
@@ -345,20 +387,27 @@ mod tests {
         let v = Vector { dx: 1, dy: 2 };
         let u = Vector { dx: 3, dy: 4 };
 
-        assert_eq!(v * u, 10);
+        assert_eq!( v *  u, 10);
+        assert_eq!(&v *  u, 10);
+        assert_eq!( v * &u, 10);
+        assert_eq!(&v * &u, 10);
     }
 
     #[test]
     fn it_should_return_division_vector_by_num() {
         let v = Vector { dx: 2, dy: 4 };
 
-        assert_eq!(v / 2, Vector { dx: 1, dy: 2 });
+        assert_eq!( v /  2, Vector { dx: 1, dy: 2 });
+        assert_eq!(&v /  2, Vector { dx: 1, dy: 2 });
+        assert_eq!( v / &2, Vector { dx: 1, dy: 2 });
+        assert_eq!(&v / &2, Vector { dx: 1, dy: 2 });
     }
 
     #[test]
     fn it_should_divide_vector_by_num() {
-        let mut v = Vector { dx: 2, dy: 4 };
-        v /= 2;
+        let mut v = Vector { dx: 4, dy: 8 };
+        v /=  2;
+        v /= &2;
 
         assert_eq!(v, Vector { dx: 1, dy: 2 });
     }
