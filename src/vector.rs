@@ -61,9 +61,9 @@ impl<T: Zero> Zero for Vector<T> {
 }
 
 impl<T> Vector<T>
-where
-    T: ops::Mul + Copy,
-    T::Output: ops::Add,
+    where
+        T: ops::Mul + Copy,
+        T::Output: ops::Add,
 {
     pub fn square_norm(&self) -> <T::Output as ops::Add>::Output {
         self.dx * self.dx + self.dy * self.dy
@@ -86,46 +86,6 @@ impl<T: Signed> Vector<T> {
     }
 }
 
-// Macros
-macro_rules! vector_binop_impl {
-    ($tp:ident, $lhs:ty, $rhs:ty, $op:tt, $op_trait:ty, $constraint:path $(, $copy:path)?) => {
-        impl<$tp: $constraint $(+ $copy)*> $op_trait for $lhs {
-            type Output = Vector<$tp::Output>;
-
-            fn $op(self, rhs: $rhs) -> Self::Output {
-                Vector {
-                    dx: self.dx.$op(rhs.dx),
-                    dy: self.dy.$op(rhs.dy),
-                }
-            }
-        }
-    };
-}
-
-macro_rules! vector_add_impl {
-    ($tp:ident, $lhs:ty) => {
-        vector_add_impl!($tp, $lhs, $lhs);
-        vector_add_impl!($tp, &$lhs, $lhs, Copy);
-        vector_add_impl!($tp, $lhs, &$lhs, Copy);
-        vector_add_impl!($tp, &$lhs, &$lhs, Copy);
-    };
-    ($tp:ident, $lhs:ty, $rhs:ty $(, $copy:path)?) => {
-        vector_binop_impl!($tp,  $lhs, $rhs, add, ops::Add<$rhs>, ops::Add$(, $copy)?);
-    };
-}
-
-macro_rules! vector_sub_impl {
-    ($tp:ident, $lhs:ty) => {
-        vector_sub_impl!($tp, $lhs, $lhs);
-        vector_sub_impl!($tp, &$lhs, $lhs, Copy);
-        vector_sub_impl!($tp, $lhs, &$lhs, Copy);
-        vector_sub_impl!($tp, &$lhs, &$lhs, Copy);
-    };
-    ($tp:ident, $lhs:ty, $rhs:ty $(, $copy:path)?) => {
-        vector_binop_impl!($tp,  $lhs, $rhs, sub, ops::Sub<$rhs>, ops::Sub$(, $copy)?);
-    };
-}
-
 // Operators
 impl<T: PartialEq> PartialEq for Vector<T> {
     fn eq(&self, other: &Self) -> bool {
@@ -133,22 +93,73 @@ impl<T: PartialEq> PartialEq for Vector<T> {
     }
 }
 
-vector_add_impl!(T, Vector<T>);
-vector_sub_impl!(T, Vector<T>);
+macro_rules! vector_add_impl {
+    ($tp:ident, $lhs:ty, $rhs:ty $(, $copy:path)?) => {
+        impl<$tp: ops::Add $(+ $copy)?> ops::Add<$rhs> for $lhs {
+            type Output = Vector<$tp::Output>;
 
-impl<T: ops::AddAssign> ops::AddAssign for Vector<T> {
-    fn add_assign(&mut self, rhs: Vector<T>) {
-        self.dx += rhs.dx;
-        self.dy += rhs.dy;
-    }
+            fn add(self, rhs: $rhs) -> Self::Output {
+                Vector {
+                    dx: self.dx + rhs.dx,
+                    dy: self.dy + rhs.dy,
+                }
+            }
+        }
+    };
 }
 
-impl<T: ops::SubAssign> ops::SubAssign for Vector<T> {
-    fn sub_assign(&mut self, rhs: Vector<T>) {
-        self.dx -= rhs.dx;
-        self.dy -= rhs.dy;
-    }
+vector_add_impl!(T,  Vector<T>,  Vector<T>);
+vector_add_impl!(T, &Vector<T>,  Vector<T>, Copy);
+vector_add_impl!(T,  Vector<T>, &Vector<T>, Copy);
+vector_add_impl!(T, &Vector<T>, &Vector<T>, Copy);
+
+macro_rules! vector_add_assign_impl {
+    ($tp:ident, $rhs:ty $(, $copy:path)?) => {
+        impl<$tp: ops::AddAssign $(+ $copy)?> ops::AddAssign<$rhs> for Vector<$tp> {
+            fn add_assign(&mut self, rhs: $rhs) {
+                self.dx += rhs.dx;
+                self.dy += rhs.dy;
+            }
+        }
+    };
 }
+
+vector_add_assign_impl!(T,  Vector<T>);
+vector_add_assign_impl!(T, &Vector<T>, Copy);
+
+macro_rules! vector_sub_impl {
+    ($tp:ident, $lhs:ty, $rhs:ty $(, $copy:path)?) => {
+        impl<$tp: ops::Sub $(+ $copy)?> ops::Sub<$rhs> for $lhs {
+            type Output = Vector<$tp::Output>;
+
+            fn sub(self, rhs: $rhs) -> Self::Output {
+                Vector {
+                    dx: self.dx - rhs.dx,
+                    dy: self.dy - rhs.dy,
+                }
+            }
+        }
+    };
+}
+
+vector_sub_impl!(T,  Vector<T>,  Vector<T>);
+vector_sub_impl!(T, &Vector<T>,  Vector<T>, Copy);
+vector_sub_impl!(T,  Vector<T>, &Vector<T>, Copy);
+vector_sub_impl!(T, &Vector<T>, &Vector<T>, Copy);
+
+macro_rules! vector_sub_assign_impl {
+    ($tp:ident, $rhs:ty $(, $copy:path)?) => {
+        impl<$tp: ops::SubAssign $(+ $copy)?> ops::SubAssign<$rhs> for Vector<$tp> {
+            fn sub_assign(&mut self, rhs: $rhs) {
+                self.dx -= rhs.dx;
+                self.dy -= rhs.dy;
+            }
+        }
+    };
+}
+
+vector_sub_assign_impl!(T,  Vector<T>);
+vector_sub_assign_impl!(T, &Vector<T>, Copy);
 
 impl<T: ops::Mul + Copy> ops::Mul<T> for Vector<T> {
     type Output = Vector<T::Output>;
@@ -169,9 +180,9 @@ impl<T: ops::MulAssign + Copy> ops::MulAssign<T> for Vector<T> {
 }
 
 impl<T> ops::Mul for Vector<T>
-where
-    T: ops::Mul,
-    T::Output: ops::Add,
+    where
+        T: ops::Mul,
+        T::Output: ops::Add,
 {
     type Output = <T::Output as ops::Add>::Output;
 
