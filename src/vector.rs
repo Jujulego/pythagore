@@ -60,12 +60,8 @@ impl<T: Zero> Zero for Vector<T> {
     }
 }
 
-impl<T> Vector<T>
-    where
-        T: ops::Mul + Copy,
-        T::Output: ops::Add,
-{
-    pub fn square_norm(&self) -> <T::Output as ops::Add>::Output {
+impl<T: ops::Mul<Output = T> + ops::Add<Output = T> + Copy> Vector<T> {
+    pub fn square_norm(&self) -> T {
         self.dx * self.dx + self.dy * self.dy
     }
 }
@@ -83,6 +79,15 @@ impl<T: Real> Vector<T> {
 impl<T: Signed> Vector<T> {
     pub fn manhattan_norm(&self) -> T {
         self.dx.abs() + self.dy.abs()
+    }
+}
+
+impl<T: Copy + ops::Neg<Output = T>> Vector<T> {
+    pub fn normal(&self) -> Self {
+        Vector {
+            dx: self.dy,
+            dy: -self.dx,
+        }
     }
 }
 
@@ -197,12 +202,8 @@ vector_mul_assign_impl!(T, &T, *);
 
 macro_rules! vector_scalar_impl {
     ($tp:ident, $lhs:ty, $rhs:ty $(, $copy:path)?) => {
-        impl<$tp> ops::Mul<$rhs> for $lhs
-            where
-                $tp: ops::Mul $(+ $copy)?,
-                $tp::Output: ops::Add,
-        {
-            type Output = <$tp::Output as ops::Add>::Output;
+        impl<$tp: ops::Mul<Output = T> + ops::Add<Output = T> $(+ $copy)?> ops::Mul<$rhs> for $lhs {
+            type Output = $tp;
 
             fn mul(self, rhs: $rhs) -> Self::Output {
                 self.dx * rhs.dy + self.dy * rhs.dx
