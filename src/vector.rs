@@ -526,10 +526,10 @@ mod tests {
         let v = vector!{ dx: 1, dy: 2 };
         let u = vector!{ dx: 3, dy: 4 };
 
-        assert_eq!( v *  u, 10);
-        assert_eq!(&v *  u, 10);
-        assert_eq!( v * &u, 10);
-        assert_eq!(&v * &u, 10);
+        assert_eq!( v *  u, 11);
+        assert_eq!(&v *  u, 11);
+        assert_eq!( v * &u, 11);
+        assert_eq!(&v * &u, 11);
     }
 
     #[test]
