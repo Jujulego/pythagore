@@ -98,6 +98,24 @@ impl<T: PartialEq> PartialEq for Vector<T> {
     }
 }
 
+macro_rules! vector_neg_impl {
+    ($tp:ident, $lhs:ty $(, $copy:path)?) => {
+        impl<$tp: ops::Neg $(+ $copy)?> ops::Neg for $lhs {
+            type Output = Vector<$tp::Output>;
+
+            fn neg(self) -> Self::Output {
+                Vector {
+                    dx: -self.dx,
+                    dy: -self.dy,
+                }
+            }
+        }
+    };
+}
+
+vector_neg_impl!(T,  Vector<T>);
+vector_neg_impl!(T, &Vector<T>, Copy);
+
 macro_rules! vector_add_impl {
     ($tp:ident, $lhs:ty, $rhs:ty $(, $copy:path)?) => {
         impl<$tp: ops::Add $(+ $copy)?> ops::Add<$rhs> for $lhs {
@@ -322,6 +340,14 @@ mod tests {
         let u = Vector { dx: 1, dy: 1 };
 
         assert_ne!(v, u);
+    }
+
+    #[test]
+    fn it_should_return_negative_vector() {
+        let v = Vector { dx: 1, dy: 2 };
+
+        assert_eq!(-v, Vector { dx: -1, dy: -2 });
+        assert_eq!(-&v, Vector { dx: -1, dy: -2 });
     }
 
     #[test]
