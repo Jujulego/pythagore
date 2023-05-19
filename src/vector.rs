@@ -194,229 +194,157 @@ impl<T: Copy + Num, const D: usize> ops::IndexMut<usize> for Vector<T, D> {
     }
 }
 
-impl<T: Copy + Signed, const D: usize> ops::Neg for Vector<T, D> {
-    type Output = Self;
+macro_rules! vector_neg_impl {
+    ($tp:ident, $dp:ident, $lhs:ty) => {
+        impl<$tp: Copy + Signed, const $dp: usize> ops::Neg for $lhs {
+            type Output = Vector<$tp, $dp>;
 
-    fn neg(self) -> Self::Output {
-        Vector::from(-self.scalar)
+            fn neg(self) -> Self::Output {
+                Vector::from(-self.scalar)
+            }
+        }
+    };
+}
+
+vector_neg_impl!(T, D, Vector<T, D>);
+vector_neg_impl!(T, D, &Vector<T, D>);
+
+macro_rules! vector_add_assign_impl {
+    ($tp:ident, $dp:ident, $rhs:ty) => {
+        impl<$tp: Copy + Num, const $dp: usize> ops::AddAssign<$rhs> for Vector<$tp, $dp> {
+            fn add_assign(&mut self, rhs: $rhs) {
+                self.scalar += rhs.scalar;
+            }
+        }
     }
 }
 
-impl<T: Copy + Signed, const D: usize> ops::Neg for &Vector<T, D> {
-    type Output = Vector<T, D>;
+vector_add_assign_impl!(T, D, Vector<T, D>);
+vector_add_assign_impl!(T, D, &Vector<T, D>);
 
-    fn neg(self) -> Self::Output {
-        Vector::from(-self.scalar)
+macro_rules! vector_add_impl {
+    ($tp:ident, $dp:ident, $lhs:ty, $rhs:ty) => {
+        impl<$tp: Copy + Num, const $dp: usize> ops::Add<$rhs> for $lhs {
+            type Output = Vector<$tp, $dp>;
+
+            fn add(self, rhs: $rhs) -> Self::Output {
+                Vector::from(self.scalar + rhs.scalar)
+            }
+        }
     }
 }
 
-impl<T: Copy + Num, const D: usize> ops::AddAssign for Vector<T, D> {
-    fn add_assign(&mut self, rhs: Self) {
-        self.scalar += rhs.scalar;
+vector_add_impl!(T, D, Vector<T, D>, Vector<T, D>);
+vector_add_impl!(T, D, &Vector<T, D>, Vector<T, D>);
+vector_add_impl!(T, D, Vector<T, D>, &Vector<T, D>);
+vector_add_impl!(T, D, &Vector<T, D>, &Vector<T, D>);
+
+macro_rules! vector_sub_assign_impl {
+    ($tp:ident, $dp:ident, $rhs:ty) => {
+        impl<$tp: Copy + Num, const $dp: usize> ops::SubAssign<$rhs> for Vector<$tp, $dp> {
+            fn sub_assign(&mut self, rhs: $rhs) {
+                self.scalar -= rhs.scalar;
+            }
+        }
     }
 }
 
-impl<T: Copy + Num, const D: usize> ops::AddAssign<&Self> for Vector<T, D> {
-    fn add_assign(&mut self, rhs: &Self) {
-        self.scalar += rhs.scalar;
+vector_sub_assign_impl!(T, D, Vector<T, D>);
+vector_sub_assign_impl!(T, D, &Vector<T, D>);
+
+macro_rules! vector_sub_impl {
+    ($tp:ident, $dp:ident, $lhs:ty, $rhs:ty) => {
+        impl<$tp: Copy + Num, const $dp: usize> ops::Sub<$rhs> for $lhs {
+            type Output = Vector<$tp, $dp>;
+
+            fn sub(self, rhs: $rhs) -> Self::Output {
+                Vector::from(self.scalar - rhs.scalar)
+            }
+        }
     }
 }
 
-impl<T: Copy + Num, const D: usize> ops::Add for Vector<T, D> {
-    type Output = Self;
+vector_sub_impl!(T, D, Vector<T, D>, Vector<T, D>);
+vector_sub_impl!(T, D, &Vector<T, D>, Vector<T, D>);
+vector_sub_impl!(T, D, Vector<T, D>, &Vector<T, D>);
+vector_sub_impl!(T, D, &Vector<T, D>, &Vector<T, D>);
 
-    fn add(self, rhs: Self) -> Self::Output {
-        Vector::from(self.scalar + rhs.scalar)
+macro_rules! vector_mul_assign_impl {
+    ($tp:ident, $dp:ident, $rhs:ty $(, $defer:tt)?) => {
+        impl<$tp: Copy + Num, const $dp: usize> ops::MulAssign<$rhs> for Vector<$tp, $dp> {
+            fn mul_assign(&mut self, rhs: $rhs) {
+                self.scalar *= $($defer)?rhs;
+            }
+        }
     }
 }
 
-impl<T: Copy + Num, const D: usize> ops::Add<&Self> for Vector<T, D> {
-    type Output = Self;
+vector_mul_assign_impl!(T, D, T);
+vector_mul_assign_impl!(T, D, &T, *);
 
-    fn add(self, rhs: &Self) -> Self::Output {
-        Vector::from(self.scalar + rhs.scalar)
+macro_rules! vector_mul_impl {
+    ($tp:ident, $dp:ident, $lhs:ty, $rhs:ty $(, $defer:tt)?) => {
+        impl<$tp: Copy + Num, const $dp: usize> ops::Mul<$rhs> for $lhs {
+            type Output = Vector<$tp, $dp>;
+
+            fn mul(self, rhs: $rhs) -> Self::Output {
+                Vector::from(self.scalar * $($defer)?rhs)
+            }
+        }
     }
 }
 
-impl<T: Copy + Num, const D: usize> ops::Add<Vector<T, D>> for &Vector<T, D> {
-    type Output = Vector<T, D>;
+vector_mul_impl!(T, D, Vector<T, D>, T);
+vector_mul_impl!(T, D, &Vector<T, D>, T);
+vector_mul_impl!(T, D, Vector<T, D>, &T, *);
+vector_mul_impl!(T, D, &Vector<T, D>, &T, *);
 
-    fn add(self, rhs: Vector<T, D>) -> Self::Output {
-        Vector::from(self.scalar + rhs.scalar)
+macro_rules! vector_scalar_impl {
+    ($tp:ident, $dp:ident, $lhs:ty, $rhs:ty) => {
+        impl<$tp: Copy + Num + ops::AddAssign, const $dp: usize> ops::Mul<$rhs> for $lhs {
+            type Output = $tp;
+
+            fn mul(self, rhs: $rhs) -> Self::Output {
+                self.scalar * rhs.scalar
+            }
+        }
     }
 }
 
-impl<T: Copy + Num, const D: usize> ops::Add<&Vector<T, D>> for &Vector<T, D> {
-    type Output = Vector<T, D>;
+vector_scalar_impl!(T, D, Vector<T, D>, Vector<T, D>);
+vector_scalar_impl!(T, D, &Vector<T, D>, Vector<T, D>);
+vector_scalar_impl!(T, D, Vector<T, D>, &Vector<T, D>);
+vector_scalar_impl!(T, D, &Vector<T, D>, &Vector<T, D>);
 
-    fn add(self, rhs: &Vector<T, D>) -> Self::Output {
-        Vector::from(self.scalar + rhs.scalar)
+macro_rules! vector_div_assign_impl {
+    ($tp:ident, $dp:ident, $rhs:ty $(, $defer:tt)?) => {
+        impl<$tp: Copy + Num, const $dp: usize> ops::DivAssign<$rhs> for Vector<$tp, $dp> {
+            fn div_assign(&mut self, rhs: $rhs) {
+                self.scalar /= $($defer)?rhs;
+            }
+        }
     }
 }
 
-impl<T: Copy + Num, const D: usize> ops::SubAssign for Vector<T, D> {
-    fn sub_assign(&mut self, rhs: Self) {
-        self.scalar -= rhs.scalar;
+vector_div_assign_impl!(T, D, T);
+vector_div_assign_impl!(T, D, &T, *);
+
+macro_rules! vector_div_impl {
+    ($tp:ident, $dp:ident, $lhs:ty, $rhs:ty $(, $defer:tt)?) => {
+        impl<$tp: Copy + Num, const $dp: usize> ops::Div<$rhs> for $lhs {
+            type Output = Vector<$tp, $dp>;
+
+            fn div(self, rhs: $rhs) -> Self::Output {
+                Vector::from(self.scalar / $($defer)?rhs)
+            }
+        }
     }
 }
 
-impl<T: Copy + Num, const D: usize> ops::SubAssign<&Self> for Vector<T, D> {
-    fn sub_assign(&mut self, rhs: &Self) {
-        self.scalar -= rhs.scalar;
-    }
-}
-
-impl<T: Copy + Num, const D: usize> ops::Sub for Vector<T, D> {
-    type Output = Self;
-
-    fn sub(self, rhs: Self) -> Self::Output {
-        Vector::from(self.scalar - rhs.scalar)
-    }
-}
-
-impl<T: Copy + Num, const D: usize> ops::Sub<&Self> for Vector<T, D> {
-    type Output = Self;
-
-    fn sub(self, rhs: &Self) -> Self::Output {
-        Vector::from(self.scalar - rhs.scalar)
-    }
-}
-
-impl<T: Copy + Num, const D: usize> ops::Sub<Vector<T, D>> for &Vector<T, D> {
-    type Output = Vector<T, D>;
-
-    fn sub(self, rhs: Vector<T, D>) -> Self::Output {
-        Vector::from(self.scalar - rhs.scalar)
-    }
-}
-
-impl<T: Copy + Num, const D: usize> ops::Sub<&Vector<T, D>> for &Vector<T, D> {
-    type Output = Vector<T, D>;
-
-    fn sub(self, rhs: &Vector<T, D>) -> Self::Output {
-        Vector::from(self.scalar - rhs.scalar)
-    }
-}
-
-impl<T: Copy + Num, const D: usize> ops::MulAssign<T> for Vector<T, D> {
-    fn mul_assign(&mut self, rhs: T) {
-        self.scalar *= rhs;
-    }
-}
-
-impl<T: Copy + Num, const D: usize> ops::MulAssign<&T> for Vector<T, D> {
-    fn mul_assign(&mut self, rhs: &T) {
-        self.scalar *= *rhs;
-    }
-}
-
-impl<T: Copy + Num, const D: usize> ops::Mul<T> for Vector<T, D> {
-    type Output = Self;
-
-    fn mul(self, rhs: T) -> Self::Output {
-        Vector::from(self.scalar * rhs)
-    }
-}
-
-impl<T: Copy + Num, const D: usize> ops::Mul<&T> for Vector<T, D> {
-    type Output = Self;
-
-    fn mul(self, rhs: &T) -> Self::Output {
-        Vector::from(self.scalar * *rhs)
-    }
-}
-
-impl<T: Copy + Num, const D: usize> ops::Mul<T> for &Vector<T, D> {
-    type Output = Vector<T, D>;
-
-    fn mul(self, rhs: T) -> Self::Output {
-        Vector::from(self.scalar * rhs)
-    }
-}
-
-impl<T: Copy + Num, const D: usize> ops::Mul<&T> for &Vector<T, D> {
-    type Output = Vector<T, D>;
-
-    fn mul(self, rhs: &T) -> Self::Output {
-        Vector::from(self.scalar * *rhs)
-    }
-}
-
-impl<T: Copy + Num + ops::AddAssign, const D: usize> ops::Mul for Vector<T, D> {
-    type Output = T;
-
-    fn mul(self, rhs: Self) -> Self::Output {
-        self.scalar * rhs.scalar
-    }
-}
-
-impl<T: Copy + Num + ops::AddAssign, const D: usize> ops::Mul<&Self> for Vector<T, D> {
-    type Output = T;
-
-    fn mul(self, rhs: &Self) -> Self::Output {
-        self.scalar * rhs.scalar
-    }
-}
-
-impl<T: Copy + Num + ops::AddAssign, const D: usize> ops::Mul<Vector<T, D>> for &Vector<T, D> {
-    type Output = T;
-
-    fn mul(self, rhs: Vector<T, D>) -> Self::Output {
-        self.scalar * rhs.scalar
-    }
-}
-
-impl<T: Copy + Num + ops::AddAssign, const D: usize> ops::Mul<&Vector<T, D>> for &Vector<T, D> {
-    type Output = T;
-
-    fn mul(self, rhs: &Vector<T, D>) -> Self::Output {
-        self.scalar * rhs.scalar
-    }
-}
-
-impl<T: Copy + Num, const D: usize> ops::DivAssign<T> for Vector<T, D> {
-    fn div_assign(&mut self, rhs: T) {
-        self.scalar /= rhs;
-    }
-}
-
-impl<T: Copy + Num, const D: usize> ops::DivAssign<&T> for Vector<T, D> {
-    fn div_assign(&mut self, rhs: &T) {
-        self.scalar /= *rhs;
-    }
-}
-
-impl<T: Copy + Num, const D: usize> ops::Div<T> for Vector<T, D> {
-    type Output = Self;
-
-    fn div(self, rhs: T) -> Self::Output {
-        Vector::from(self.scalar / rhs)
-    }
-}
-
-impl<T: Copy + Num, const D: usize> ops::Div<&T> for Vector<T, D> {
-    type Output = Self;
-
-    fn div(self, rhs: &T) -> Self::Output {
-        Vector::from(self.scalar / *rhs)
-    }
-}
-
-impl<T: Copy + Num, const D: usize> ops::Div<T> for &Vector<T, D> {
-    type Output = Vector<T, D>;
-
-    fn div(self, rhs: T) -> Self::Output {
-        Vector::from(self.scalar / rhs)
-    }
-}
-
-impl<T: Copy + Num, const D: usize> ops::Div<&T> for &Vector<T, D> {
-    type Output = Vector<T, D>;
-
-    fn div(self, rhs: &T) -> Self::Output {
-        Vector::from(self.scalar / *rhs)
-    }
-}
+vector_div_impl!(T, D, Vector<T, D>, T);
+vector_div_impl!(T, D, &Vector<T, D>, T);
+vector_div_impl!(T, D, Vector<T, D>, &T, *);
+vector_div_impl!(T, D, &Vector<T, D>, &T, *);
 
 // Macros
 #[macro_export]
