@@ -2,7 +2,7 @@ use std::array::TryFromSliceError;
 use std::ops;
 use num_traits::{Num, Signed, Zero};
 
-/// `Number<T, const D: usize>` utility structure for n dimension compute
+/// `Scalar<T, const D: usize>` utility structure for n dimension compute
 ///
 /// ## Usage
 /// ```
@@ -20,7 +20,7 @@ pub struct Scalar<T: Num, const D: usize> {
 
 // Methods
 impl<T: Num, const D: usize> Scalar<T, D> {
-    /// Returns the dimension of the current scalar
+    /// Returns scalar's dimension
     #[inline]
     pub const fn dimension(&self) -> usize {
         D
@@ -104,7 +104,7 @@ impl<T: Num, const D: usize> ops::IndexMut<usize> for Scalar<T, D> {
     }
 }
 
-impl<T: Copy + Num + Signed, const D: usize> ops::Neg for Scalar<T, D> {
+impl<T: Copy + Signed, const D: usize> ops::Neg for Scalar<T, D> {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
@@ -150,7 +150,21 @@ impl<T: Copy + Num, const D: usize> ops::Mul<T> for Scalar<T, D> {
     type Output = Self;
 
     fn mul(self, rhs: T) -> Self::Output {
-        self.map(|x, n| x * rhs)
+        self.map(|x, _| x * rhs)
+    }
+}
+
+impl<T: Copy + Num + ops::AddAssign, const D: usize> ops::Mul for Scalar<T, D> {
+    type Output = T;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        let mut result = T::zero();
+
+        for n in 0..D {
+            result += self[n] * rhs[n];
+        }
+
+        result
     }
 }
 
@@ -164,10 +178,11 @@ impl<T: Copy + Num, const D: usize> ops::Div<T> for Scalar<T, D> {
     type Output = Self;
 
     fn div(self, rhs: T) -> Self::Output {
-        self.map(|x, n| x / rhs)
+        self.map(|x, _| x / rhs)
     }
 }
 
+// Macros
 /// Builds a new scalar from given elements
 ///
 /// ## Example
