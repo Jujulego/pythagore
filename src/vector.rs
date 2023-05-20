@@ -1,19 +1,9 @@
 use num_traits::{Float, Num, Signed, Zero};
 use std::ops;
 
-use crate::Scalar;
+use crate::{Scalar, scalar};
 
 /// `Vector<T, const D: usize>` structure for n dimension vectors
-///
-/// ## Usage
-/// ```
-/// use pythagore::*;
-///
-/// let v = vector!{ dx: 1, dy: 2 };
-/// let u = vector!{ dx: 1, dy: 2 };
-///
-/// assert_eq!(v, u);
-/// ```
 #[derive(Clone, Copy, Debug, Default, Eq)]
 pub struct Vector<T: Copy + Num, const D: usize> {
     pub(crate) scalar: Scalar<T, D>,
@@ -24,12 +14,20 @@ pub type Vector3D<T> = Vector<T, 4>;
 
 // Methods
 impl<T: Copy + Num, const D: usize> Vector<T, D> {
-    pub const DIMENSION: usize = D;
+    pub const DIMENSION: usize = D - 1;
 
     /// Returns vector's dimension
+    ///
+    /// ### Example
+    /// ```
+    /// use pythagore::*;
+    ///
+    /// assert_eq!(vector!{ dx: 1, dy: 2 }.dimension(), 2);
+    /// assert_eq!(vector!{ dx: 1, dy: 2, dz: 3 }.dimension(), 3);
+    /// ```
     #[inline]
     pub const fn dimension(&self) -> usize {
-        D
+        D - 1
     }
 
     /// Returns a null vector
@@ -38,18 +36,29 @@ impl<T: Copy + Num, const D: usize> Vector<T, D> {
     /// ```
     /// use pythagore::*;
     ///
-    /// assert_eq!(Vector::null(), vector!{ dx: 0, dy: 0 })
+    /// assert_eq!(Vector2D::null(), vector!{ dx: 0, dy: 0 });
+    /// assert_eq!(Vector3D::null(), vector!{ dx: 0, dy: 0, dz: 0 });
     /// ```
     pub fn null() -> Self {
         Self::zero()
     }
 
+    /// Returns true if vector is null
     pub fn is_null(&self) -> bool {
         self.is_zero()
     }
 }
 
 impl<T: Copy + Num + ops::AddAssign, const D: usize> Vector<T, D> {
+    /// Returns the squared norm of vector
+    ///
+    /// ## Example
+    /// ```
+    /// use pythagore::*;
+    ///
+    /// assert_eq!(vector!{ dx: 2, dy: 3 }.square_norm(), 13);
+    /// assert_eq!(vector!{ dx: 2, dy: 3, dz: 4 }.square_norm(), 29);
+    /// ```
     pub fn square_norm(&self) -> T {
         let mut result = T::zero();
 
@@ -62,16 +71,43 @@ impl<T: Copy + Num + ops::AddAssign, const D: usize> Vector<T, D> {
 }
 
 impl<T: Copy + Float + ops::AddAssign, const D: usize> Vector<T, D> {
+    /// Returns the norm of vector (only for float vectors)
+    ///
+    /// ## Example
+    /// ```
+    /// use pythagore::*;
+    ///
+    /// assert_eq!(vector!{ dx: 1.0, dy: 0.0 }.norm(), 1.0);
+    /// assert_eq!(vector!{ dx: 0.0, dy: 0.0, dz: 4.0 }.norm(), 4.0);
+    /// ```
     pub fn norm(&self) -> T {
         self.square_norm().sqrt()
     }
 
+    /// Returns a unit vector from vector (only for float vectors)
+    ///
+    /// ## Example
+    /// ```
+    /// use pythagore::*;
+    ///
+    /// assert_eq!(vector!{ dx: 10.0, dy: 0.0 }.unit(), vector!{ dx: 1.0, dy: 0.0 });
+    /// assert_eq!(vector!{ dx: 0.0, dy: 0.0, dz: 5.0 }.unit(), vector!{ dx: 0.0, dy: 0.0, dz: 1.0 });
+    /// ```
     pub fn unit(&self) -> Self {
         self / self.norm()
     }
 }
 
 impl<T: Copy + Signed + ops::AddAssign, const D: usize> Vector<T, D> {
+    /// Returns the norm of vector (only for signed vectors)
+    ///
+    /// ## Example
+    /// ```
+    /// use pythagore::*;
+    ///
+    /// assert_eq!(vector!{ dx: 1, dy: -2 }.manhattan_norm(), 3);
+    /// assert_eq!(vector!{ dx: 1, dy: -2, dz: 3 }.manhattan_norm(), 6);
+    /// ```
     pub fn manhattan_norm(&self) -> T {
         let mut result = T::zero();
 
@@ -84,64 +120,214 @@ impl<T: Copy + Signed + ops::AddAssign, const D: usize> Vector<T, D> {
 }
 
 impl<T: Copy + Num> Vector2D<T> {
+    /// Returns dx unit vector
+    ///
+    /// ## Example
+    /// ```
+    /// use pythagore::*;
+    ///
+    /// assert_eq!(Vector2D::unit_dx(), vector!{ dx: 1, dy: 0 });
+    /// ```
+    #[inline]
     pub fn unit_dx() -> Self {
-        Vector::from([T::one(), T::zero()])
+        Vector { scalar: scalar![T::one(), T::zero(), T::zero()] }
     }
 
+    /// Returns dy unit vector
+    ///
+    /// ## Example
+    /// ```
+    /// use pythagore::*;
+    ///
+    /// assert_eq!(Vector2D::unit_dy(), vector!{ dx: 0, dy: 1 });
+    /// ```
+    #[inline]
     pub fn unit_dy() -> Self {
-        Vector::from([T::zero(), T::one()])
+        Vector { scalar: scalar![T::zero(), T::one(), T::zero()] }
     }
 
+    /// Returns ref on dx element of vector
+    ///
+    /// ## Example
+    /// ```
+    /// use pythagore::*;
+    ///
+    /// assert_eq!(vector!{ dx: 1, dy: 2 }.dx(), &1);
+    /// ```
+    #[inline]
     pub fn dx(&self) -> &T {
         &self.scalar[0]
     }
 
+    /// Returns mutable ref on dx element of vector
+    ///
+    /// ## Example
+    /// ```
+    /// use pythagore::*;
+    ///
+    /// let mut v = vector!{ dx: 1, dy: 2 };
+    /// *v.dx_mut() = 5;
+    ///
+    /// assert_eq!(v.dx(), &5);
+    /// ```
+    #[inline]
     pub fn dx_mut(&mut self) -> &mut T {
         &mut self.scalar[0]
     }
 
+    /// Returns ref on dy element of vector
+    ///
+    /// ## Example
+    /// ```
+    /// use pythagore::*;
+    ///
+    /// assert_eq!(vector!{ dx: 1, dy: 2 }.dy(), &2);
+    /// ```
+    #[inline]
     pub fn dy(&self) -> &T {
         &self.scalar[1]
     }
 
+    /// Returns mutable ref on dy element of vector
+    ///
+    /// ## Example
+    /// ```
+    /// use pythagore::*;
+    ///
+    /// let mut v = vector!{ dx: 1, dy: 2 };
+    /// *v.dy_mut() = 5;
+    ///
+    /// assert_eq!(v.dy(), &5);
+    /// ```
+    #[inline]
     pub fn dy_mut(&mut self) -> &mut T {
         &mut self.scalar[1]
     }
 }
 
 impl<T: Copy + Num> Vector3D<T> {
+    /// Returns dx unit vector
+    ///
+    /// ## Example
+    /// ```
+    /// use pythagore::*;
+    ///
+    /// assert_eq!(Vector3D::unit_dx(), vector!{ dx: 1, dy: 0, dz: 0 });
+    /// ```
+    #[inline]
     pub fn unit_dx() -> Self {
-        Vector::from([T::one(), T::zero(), T::zero()])
+        Vector { scalar: scalar![T::one(), T::zero(), T::zero(), T::zero()] }
     }
 
+    /// Returns dy unit vector
+    ///
+    /// ## Example
+    /// ```
+    /// use pythagore::*;
+    ///
+    /// assert_eq!(Vector3D::unit_dy(), vector!{ dx: 0, dy: 1, dz: 0 });
+    /// ```
+    #[inline]
     pub fn unit_dy() -> Self {
-        Vector::from([T::zero(), T::one(), T::zero()])
+        Vector { scalar: scalar![T::zero(), T::one(), T::zero(), T::zero()] }
     }
 
+    /// Returns dz unit vector
+    ///
+    /// ## Example
+    /// ```
+    /// use pythagore::*;
+    ///
+    /// assert_eq!(Vector3D::unit_dz(), vector!{ dx: 0, dy: 0, dz: 1 });
+    /// ```
+    #[inline]
     pub fn unit_dz() -> Self {
-        Vector::from([T::zero(), T::zero(), T::one()])
+        Vector { scalar: scalar![T::zero(), T::zero(), T::one(), T::zero()] }
     }
 
+    /// Returns ref on dx element of vector
+    ///
+    /// ### Example
+    /// ```
+    /// use pythagore::*;
+    ///
+    /// assert_eq!(vector!{ dx: 1, dy: 2, dz: 3 }.dx(), &1);
+    /// ```
+    #[inline]
     pub fn dx(&self) -> &T {
         &self.scalar[0]
     }
 
+    /// Returns mutable ref on dx element of vector
+    ///
+    /// ### Example
+    /// ```
+    /// use pythagore::*;
+    ///
+    /// let mut v = vector!{ dx: 1, dy: 2, dz: 3 };
+    /// *v.dx_mut() = 5;
+    ///
+    /// assert_eq!(v.dx(), &5);
+    /// ```
+    #[inline]
     pub fn dx_mut(&mut self) -> &mut T {
         &mut self.scalar[0]
     }
 
+    /// Returns ref on dy element of vector
+    ///
+    /// ### Example
+    /// ```
+    /// use pythagore::*;
+    ///
+    /// assert_eq!(vector!{ dx: 1, dy: 2, dz: 3 }.dy(), &2);
+    /// ```
+    #[inline]
     pub fn dy(&self) -> &T {
         &self.scalar[1]
     }
 
+    /// Returns mutable ref on dy element of vector
+    ///
+    /// ### Example
+    /// ```
+    /// use pythagore::*;
+    ///
+    /// let mut v = vector!{ dx: 1, dy: 2, dz: 3 };
+    /// *v.dy_mut() = 5;
+    ///
+    /// assert_eq!(v.dy(), &5);
+    /// ```
+    #[inline]
     pub fn dy_mut(&mut self) -> &mut T {
         &mut self.scalar[1]
     }
 
+    /// Returns ref on dz element of vector
+    ///
+    /// ### Example
+    /// ```
+    /// use pythagore::*;
+    ///
+    /// assert_eq!(vector!{ dx: 1, dy: 2, dz: 3 }.dz(), &3);
+    /// ```
+    #[inline]
     pub fn dz(&self) -> &T {
         &self.scalar[2]
     }
 
+    /// Returns mutable ref on dz element of vector
+    ///
+    /// ### Example
+    /// ```
+    /// use pythagore::*;
+    ///
+    /// let mut v = vector!{ dx: 1, dy: 2, dz: 3 };
+    /// *v.dz_mut() = 5;
+    ///
+    /// assert_eq!(v.dz(), &5);
+    /// ```
+    #[inline]
     pub fn dz_mut(&mut self) -> &mut T {
         &mut self.scalar[2]
     }
@@ -404,167 +590,42 @@ mod tests {
     use super::*;
 
     #[test]
-    fn it_should_return_null_vector() {
-        assert_eq!(Vector::null(), vector!{ dx: 0, dy: 0 });
+    fn vector_is_null() {
+        assert!(Vector::<f32, 4>::null().is_null());
+
+        assert!(!vector!{ dx: 1, dy: 2 }.is_null());
+        assert!(!vector!{ dx: 1, dy: 2, dz: 3 }.is_null());
     }
 
     #[test]
-    fn it_should_return_unit_vectors() {
-        assert_eq!(Vector::<i32, 3>::unit_dx(), vector!{ dx: 1, dy: 0 });
-        assert_eq!(Vector::<i32, 3>::unit_dy(), vector!{ dx: 0, dy: 1 });
+    fn vector_2d_norm() {
+        assert_eq!(vector!{ dx: 2.0, dy: 3.0 }.norm(), (13.0 as f32).sqrt());
     }
 
     #[test]
-    fn it_should_return_true_for_null_vector() {
-        assert!(Vector::<i32, 2>::null().is_null());
+    fn vector_3d_norm() {
+        assert_eq!(vector!{ dx: 2.0, dy: 3.0, dz: 4.0 }.norm(), (29.0 as f32).sqrt());
     }
 
     #[test]
-    fn it_should_return_false_for_non_null_vector() {
-        let v = vector!{ dx: 1, dy: 2 };
+    fn vector_2d_unit() {
+        let v = vector!{ dx: 2.0, dy: 3.0 };
+        let norm = v.norm();
 
-        assert!(!v.is_null());
+        assert_eq!(v.unit(), vector!{ dx: v.dx() / norm, dy: v.dy() / norm });
+
+        assert_eq!(v.unit().norm(), 1.0);
+        assert_eq!(v.unit().scalar[2], 0.0);
     }
 
     #[test]
-    fn it_should_return_square_norm_of_vector() {
-        let v = vector!{ dx: 1, dy: 2 };
+    fn vector_3d_unit() {
+        let v = vector!{ dx: 2.0, dy: 3.0, dz: 4.0 };
+        let norm = v.norm();
 
-        assert_eq!(v.square_norm(), 5);
-    }
+        assert_eq!(v.unit(), vector!{ dx: v.dx() / norm, dy: v.dy() / norm, dz: v.dz() / norm });
 
-    #[test]
-    fn it_should_return_norm_of_vector() {
-        let v = vector!{ dx: 1.0, dy: 2.0 };
-
-        assert_eq!(v.norm(), 5.0.sqrt());
-    }
-
-    #[test]
-    fn it_should_return_manhattan_norm_of_vector() {
-        let v = vector!{ dx: 1, dy: 2 };
-
-        assert_eq!(v.manhattan_norm(), 3);
-    }
-
-    #[test]
-    fn it_should_be_equal() {
-        let v = vector!{ dx: 1, dy: 2 };
-        let u = vector!{ dx: 1, dy: 2 };
-
-        assert_eq!(v, u);
-    }
-
-    #[test]
-    fn it_should_not_be_equal_dx() {
-        let v = vector!{ dx: 1, dy: 2 };
-        let u = vector!{ dx: 2, dy: 2 };
-
-        assert_ne!(v, u);
-    }
-
-    #[test]
-    fn it_should_not_be_equal_dy() {
-        let v = vector!{ dx: 1, dy: 2 };
-        let u = vector!{ dx: 1, dy: 1 };
-
-        assert_ne!(v, u);
-    }
-
-    #[test]
-    fn it_should_return_negative_vector() {
-        let v = vector!{ dx: 1, dy: 2 };
-
-        assert_eq!(-v, vector!{ dx: -1, dy: -2 });
-        assert_eq!(-&v, vector!{ dx: -1, dy: -2 });
-    }
-
-    #[test]
-    fn it_should_return_sum_of_vectors() {
-        let v = vector!{ dx: 1, dy: 2 };
-        let u = vector!{ dx: 3, dy: 4 };
-
-        assert_eq!( v +  u, vector!{ dx: 4, dy: 6 });
-        assert_eq!(&v +  u, vector!{ dx: 4, dy: 6 });
-        assert_eq!( v + &u, vector!{ dx: 4, dy: 6 });
-        assert_eq!(&v + &u, vector!{ dx: 4, dy: 6 });
-    }
-
-    #[test]
-    fn it_should_add_vector_to_v() {
-        let mut v = vector!{ dx: 1, dy: 2 };
-        v +=  vector!{ dx: 3, dy: 4 };
-        v += &vector!{ dx: 5, dy: 6 };
-
-        assert_eq!(v, vector!{ dx: 9, dy: 12 });
-    }
-
-    #[test]
-    fn it_should_return_difference_of_vectors() {
-        let v = vector!{ dx: 1, dy: 2 };
-        let u = vector!{ dx: 3, dy: 4 };
-
-        assert_eq!( v -  u, vector!{ dx: -2, dy: -2 });
-        assert_eq!(&v -  u, vector!{ dx: -2, dy: -2 });
-        assert_eq!( v - &u, vector!{ dx: -2, dy: -2 });
-        assert_eq!(&v - &u, vector!{ dx: -2, dy: -2 });
-    }
-
-    #[test]
-    fn it_should_subtract_vector_to_v() {
-        let mut v = vector!{ dx: 1, dy: 2 };
-        v -=  vector!{ dx: 3, dy: 4 };
-        v -= &vector!{ dx: 5, dy: 6 };
-
-        assert_eq!(v, vector!{ dx: -7, dy: -8 });
-    }
-
-    #[test]
-    fn it_should_return_product_vector_by_num() {
-        let v = vector!{ dx: 1, dy: 2 };
-
-        assert_eq!( v *  3, vector!{ dx: 3, dy: 6 });
-        assert_eq!(&v *  3, vector!{ dx: 3, dy: 6 });
-        assert_eq!( v * &3, vector!{ dx: 3, dy: 6 });
-        assert_eq!(&v * &3, vector!{ dx: 3, dy: 6 });
-    }
-
-    #[test]
-    fn it_should_multiply_vector_by_num() {
-        let mut v = vector!{ dx: 1, dy: 2 };
-        v *=  3;
-        v *= &3;
-
-        assert_eq!(v, vector!{ dx: 9, dy: 18 });
-    }
-
-    #[test]
-    fn it_should_return_scalar_product_of_vectors() {
-        let v = vector!{ dx: 1, dy: 2 };
-        let u = vector!{ dx: 3, dy: 4 };
-
-        assert_eq!( v *  u, 11);
-        assert_eq!(&v *  u, 11);
-        assert_eq!( v * &u, 11);
-        assert_eq!(&v * &u, 11);
-    }
-
-    #[test]
-    fn it_should_return_division_vector_by_num() {
-        let v = vector!{ dx: 2, dy: 4 };
-
-        assert_eq!( v /  2, vector!{ dx: 1, dy: 2 });
-        assert_eq!(&v /  2, vector!{ dx: 1, dy: 2 });
-        assert_eq!( v / &2, vector!{ dx: 1, dy: 2 });
-        assert_eq!(&v / &2, vector!{ dx: 1, dy: 2 });
-    }
-
-    #[test]
-    fn it_should_divide_vector_by_num() {
-        let mut v = vector!{ dx: 4, dy: 8 };
-        v /=  2;
-        v /= &2;
-
-        assert_eq!(v, vector!{ dx: 1, dy: 2 });
+        assert_eq!(v.unit().norm(), 1.0);
+        assert_eq!(v.unit().scalar[3], 0.0);
     }
 }

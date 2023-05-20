@@ -15,7 +15,7 @@ use num_traits::{Num, Signed, Zero};
 /// ```
 #[derive(Clone, Copy, Debug, Eq)]
 pub struct Scalar<T: Num, const D: usize> {
-    elements: [T; D],
+    pub(crate) elements: [T; D],
 }
 
 // Methods
