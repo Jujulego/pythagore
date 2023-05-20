@@ -1,5 +1,8 @@
+use std::ops;
 use num_traits::{Num, Zero};
+
 use crate::Scalar;
+use crate::Vector;
 
 /// `Point<T>` structure for 2 dimension points
 ///
@@ -50,6 +53,50 @@ impl<T: Copy + Num, const D: usize> Point<T, D> {
     }
 }
 
+impl<T: Copy + Num> Point2D<T> {
+    pub fn x(&self) -> &T {
+        &self.scalar[0]
+    }
+
+    pub fn x_mut(&mut self) -> &mut T {
+        &mut self.scalar[0]
+    }
+
+    pub fn y(&self) -> &T {
+        &self.scalar[1]
+    }
+
+    pub fn y_mut(&mut self) -> &mut T {
+        &mut self.scalar[1]
+    }
+}
+
+impl<T: Copy + Num> Point3D<T> {
+    pub fn x(&self) -> &T {
+        &self.scalar[0]
+    }
+
+    pub fn x_mut(&mut self) -> &mut T {
+        &mut self.scalar[0]
+    }
+
+    pub fn y(&self) -> &T {
+        &self.scalar[1]
+    }
+
+    pub fn y_mut(&mut self) -> &mut T {
+        &mut self.scalar[1]
+    }
+
+    pub fn z(&self) -> &T {
+        &self.scalar[1]
+    }
+
+    pub fn z_mut(&mut self) -> &mut T {
+        &mut self.scalar[1]
+    }
+}
+
 // Utils
 macro_rules! point_from_array_impl {
     ($dim:literal) => {
@@ -84,6 +131,102 @@ macro_rules! point_from_scalar_impl {
 
 point_from_scalar_impl!(3);
 point_from_scalar_impl!(4);
+
+// Operators
+impl<T: Copy + Num, const D: usize> PartialEq for Point<T, D> {
+    fn eq(&self, other: &Self) -> bool {
+        self.scalar == other.scalar
+    }
+}
+
+impl<T: Copy + Num, const D: usize> ops::Index<usize> for Point<T, D> {
+    type Output = T;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.scalar[index]
+    }
+}
+
+impl<T: Copy + Num, const D: usize> ops::IndexMut<usize> for Point<T, D> {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        &mut self.scalar[index]
+    }
+}
+
+macro_rules! point_add_assign_impl {
+    ($tp:ident, $dp:ident, $rhs:ty) => {
+        impl<$tp: Copy + Num, const $dp: usize> ops::AddAssign<$rhs> for Point<$tp, $dp> {
+            fn add_assign(&mut self, rhs: $rhs) {
+                self.scalar += rhs.scalar;
+            }
+        }
+    }
+}
+
+point_add_assign_impl!(T, D, Vector<T, D>);
+point_add_assign_impl!(T, D, &Vector<T, D>);
+
+macro_rules! point_add_impl {
+    ($tp:ident, $dp:ident, $lhs:ty, $rhs:ty) => {
+        impl<$tp: Copy + Num, const $dp: usize> ops::Add<$rhs> for $lhs {
+            type Output = Point<$tp, $dp>;
+
+            fn add(self, rhs: $rhs) -> Self::Output {
+                Point { scalar: self.scalar + rhs.scalar }
+            }
+        }
+    }
+}
+
+point_add_impl!(T, D, Point<T, D>, Vector<T, D>);
+point_add_impl!(T, D, &Point<T, D>, Vector<T, D>);
+point_add_impl!(T, D, Point<T, D>, &Vector<T, D>);
+point_add_impl!(T, D, &Point<T, D>, &Vector<T, D>);
+
+point_add_impl!(T, D, Vector<T, D>, Point<T, D>);
+point_add_impl!(T, D, &Vector<T, D>, Point<T, D>);
+point_add_impl!(T, D, Vector<T, D>, &Point<T, D>);
+point_add_impl!(T, D, &Vector<T, D>, &Point<T, D>);
+
+macro_rules! point_sub_assign_impl {
+    ($tp:ident, $dp:ident, $rhs:ty) => {
+        impl<$tp: Copy + Num, const $dp: usize> ops::SubAssign<$rhs> for Point<$tp, $dp> {
+            fn sub_assign(&mut self, rhs: $rhs) {
+                self.scalar += rhs.scalar;
+            }
+        }
+    }
+}
+
+point_sub_assign_impl!(T, D, Vector<T, D>);
+point_sub_assign_impl!(T, D, &Vector<T, D>);
+
+macro_rules! point_sub_impl {
+    ($tp:ident, $dp:ident, $lhs:ty, $rhs:ty, $res:tt) => {
+        impl<$tp: Copy + Num, const $dp: usize> ops::Sub<$rhs> for $lhs {
+            type Output = $res<$tp, $dp>;
+
+            fn sub(self, rhs: $rhs) -> Self::Output {
+                $res { scalar: self.scalar + rhs.scalar }
+            }
+        }
+    }
+}
+
+point_sub_impl!(T, D, Point<T, D>, Point<T, D>, Vector);
+point_sub_impl!(T, D, &Point<T, D>, Point<T, D>, Vector);
+point_sub_impl!(T, D, Point<T, D>, &Point<T, D>, Vector);
+point_sub_impl!(T, D, &Point<T, D>, &Point<T, D>, Vector);
+
+point_sub_impl!(T, D, Point<T, D>, Vector<T, D>, Point);
+point_sub_impl!(T, D, &Point<T, D>, Vector<T, D>, Point);
+point_sub_impl!(T, D, Point<T, D>, &Vector<T, D>, Point);
+point_sub_impl!(T, D, &Point<T, D>, &Vector<T, D>, Point);
+
+point_sub_impl!(T, D, Vector<T, D>, Point<T, D>, Point);
+point_sub_impl!(T, D, &Vector<T, D>, Point<T, D>, Point);
+point_sub_impl!(T, D, Vector<T, D>, &Point<T, D>, Point);
+point_sub_impl!(T, D, &Vector<T, D>, &Point<T, D>, Point);
 
 // Macros
 #[macro_export]

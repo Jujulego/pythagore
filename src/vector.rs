@@ -16,7 +16,7 @@ use crate::Scalar;
 /// ```
 #[derive(Clone, Copy, Debug, Default, Eq)]
 pub struct Vector<T: Copy + Num, const D: usize> {
-    scalar: Scalar<T, D>,
+    pub(crate) scalar: Scalar<T, D>,
 }
 
 pub type Vector2D<T> = Vector<T, 3>;
