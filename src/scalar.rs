@@ -6,7 +6,7 @@ use num_traits::{Num, Signed, Zero};
 ///
 /// ## Usage
 /// ```
-/// use pythagore::*;
+/// use pythagore::scalar;
 ///
 /// let s = scalar![1, 2, 3, 4];
 ///
@@ -269,7 +269,7 @@ scalar_div_impl!(T, D, &Scalar<T, D>, &T, *);
 ///
 /// ## Example
 /// ```
-/// use pythagore::*;
+/// use pythagore::{scalar, Scalar};
 ///
 /// assert_eq!(scalar![1, 2, 3], Scalar::from([1, 2, 3]));
 /// assert_eq!(scalar![1; 5], Scalar::from([1; 5]));
@@ -277,9 +277,9 @@ scalar_div_impl!(T, D, &Scalar<T, D>, &T, *);
 #[macro_export]
 macro_rules! scalar {
     ($elem:expr; $d:expr) => {
-        Scalar::from([$elem; $d])
+        scalar::Scalar::from([$elem; $d])
     };
     ($($x:expr),*) => {
-        Scalar::from([$($x), +])
+        scalar::Scalar::from([$($x), +])
     };
 }

@@ -1,6 +1,6 @@
 use num_traits::Num;
 
-use crate::{Scalar, scalar};
+use crate::scalar;
 use crate::Vector;
 
 // Type
