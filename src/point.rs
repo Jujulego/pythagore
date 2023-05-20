@@ -1,159 +1,121 @@
-// use num_traits::{Num, Zero};
-// use std::ops;
-//
-// use crate::Vector;
-// use crate::vector;
-//
-// /// `Point<T>` structure for 2 dimension points
-// ///
-// /// ## Usage
-// /// ```
-// /// use pythagore::Point;
-// ///
-// /// let a = Point { x: 1, y: 2 };
-// /// let b = Point { x: 1, y: 2 };
-// ///
-// /// assert_eq!(a, b);
-// /// assert_eq!(Point::origin(), Point { x: 0, y: 0 });
-// /// ```
-// #[derive(Debug, Eq)]
-// pub struct Point<T> {
-//     pub x: T,
-//     pub y: T,
-// }
-//
-// // Values
-// impl<T: Zero> Point<T> {
-//     pub fn origin() -> Self {
-//         Point {
-//             x: T::zero(),
-//             y: T::zero(),
-//         }
-//     }
-// }
-//
-// // Operators
-// impl<T: PartialEq> PartialEq for Point<T> {
-//     fn eq(&self, other: &Point<T>) -> bool {
-//         self.x == other.x && self.y == other.y
-//     }
-// }
-//
-// impl<T: Copy + Num> ops::Add<Vector<T, 2>> for Point<T> {
-//     type Output = Point<T>;
-//
-//     fn add(self, rhs: Vector<T, 2>) -> Self::Output {
-//         Point {
-//             x: self.x + *rhs.dx(),
-//             y: self.y + *rhs.dy(),
-//         }
-//     }
-// }
-//
-// impl<T: Copy + Num> ops::AddAssign<Vector<T, 2>> for Point<T> {
-//     fn add_assign(&mut self, rhs: Vector<T, 2>) {
-//         self.x += *rhs.dx();
-//         self.y += *rhs.dy();
-//     }
-// }
-//
-// impl<T: Num> ops::Sub for Point<T> {
-//     type Output = Vector<T, 2>;
-//
-//     fn sub(self, rhs: Point<T>) -> Self::Output {
-//         vector![self.x - rhs.x, self.y - rhs.y]
-//     }
-// }
-//
-// impl<T: Num> ops::Sub<Vector<T, 2>> for Point<T> {
-//     type Output = Point<T>;
-//
-//     fn sub(self, rhs: Vector<T, 2>) -> Self::Output {
-//         Point {
-//             x: self.x - rhs.dx(),
-//             y: self.y - rhs.dy(),
-//         }
-//     }
-// }
-//
-// impl<T: Num> ops::SubAssign<Vector<T, 2>> for Point<T> {
-//     fn sub_assign(&mut self, rhs: Vector<T, 2>) {
-//         self.x -= rhs.dx();
-//         self.y -= rhs.dy();
-//     }
-// }
-//
-// // Tests
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-//
-//     #[test]
-//     fn it_should_return_origin() {
-//         assert_eq!(Point::origin(), Point { x: 0, y: 0 });
-//     }
-//
-//     #[test]
-//     fn it_should_be_equal() {
-//         let a = Point { x: 1, y: 2 };
-//         let b = Point { x: 1, y: 2 };
-//
-//         assert_eq!(a, b);
-//     }
-//
-//     #[test]
-//     fn it_should_not_be_equal_x() {
-//         let a = Point { x: 1, y: 2 };
-//         let b = Point { x: 2, y: 2 };
-//
-//         assert_ne!(a, b);
-//     }
-//
-//     #[test]
-//     fn it_should_not_be_equal_y() {
-//         let a = Point { x: 1, y: 2 };
-//         let b = Point { x: 1, y: 1 };
-//
-//         assert_ne!(a, b);
-//     }
-//
-//     #[test]
-//     fn it_should_return_new_add_translated_point() {
-//         let a = Point { x: 1, y: 2 };
-//         let v = Vector { dx: 3, dy: 4 };
-//
-//         assert_eq!(a + v, Point { x: 4, y: 6 });
-//     }
-//
-//     #[test]
-//     fn it_should_add_translate_point() {
-//         let mut a = Point { x: 1, y: 2 };
-//         a += Vector { dx: 3, dy: 4 };
-//
-//         assert_eq!(a, Point { x: 4, y: 6 });
-//     }
-//
-//     #[test]
-//     fn it_should_return_difference_between_points() {
-//         let a = Point { x: 1, y: 2 };
-//         let b = Point { x: 3, y: 4 };
-//
-//         assert_eq!(a - b, Vector { dx: -2, dy: -2 });
-//     }
-//
-//     #[test]
-//     fn it_should_return_new_sub_translated_point() {
-//         let a = Point { x: 1, y: 2 };
-//         let v = Vector { dx: 3, dy: 4 };
-//
-//         assert_eq!(a - v, Point { x: -2, y: -2 });
-//     }
-//
-//     #[test]
-//     fn it_should_sub_translate_point() {
-//         let mut a = Point { x: 1, y: 2 };
-//         a -= Vector { dx: 3, dy: 4 };
-//
-//         assert_eq!(a, Point { x: -2, y: -2 });
-//     }
-// }
+use num_traits::{Num, Zero};
+use crate::Scalar;
+
+/// `Point<T>` structure for 2 dimension points
+///
+/// ## Usage
+/// ```
+/// use pythagore::*;
+///
+/// let a = point!{ x: 1, y: 2 };
+/// let b = point!{ x: 1, y: 2 };
+///
+/// assert_eq!(a, b);
+/// assert_eq!(Point::origin(), point!{ x: 0, y: 0 });
+/// ```
+pub struct Point<T: Copy + Num, const D: usize> {
+    scalar: Scalar<T, D>,
+}
+
+pub type Point2D<T> = Point<T, 3>;
+pub type Point3D<T> = Point<T, 4>;
+
+// Methods
+impl<T: Copy + Num, const D: usize> Point<T, D> {
+    pub const DIMENSION: usize = D - 1;
+
+    /// Returns point's dimension
+    #[inline]
+    pub const fn dimension(&self) -> usize {
+        D - 1
+    }
+
+    /// Returns a null vector
+    ///
+    /// ## Example
+    /// ```
+    /// use pythagore::*;
+    ///
+    /// assert_eq!(Point::origin(), point!{ x: 0, y: 0 })
+    /// ```
+    pub fn origin() -> Self {
+        let mut pt = Point { scalar: Scalar::zero() };
+        pt.scalar[D - 1] = T::one();
+
+        pt
+    }
+
+    pub fn is_null(&self) -> bool {
+        self.scalar.is_zero()
+    }
+}
+
+// Utils
+macro_rules! point_from_array_impl {
+    ($dim:literal) => {
+        impl<T: Copy + Num> From<[T; { $dim - 1 }]> for Point<T, $dim> {
+            fn from(value: [T; { $dim - 1 }]) -> Self {
+                Scalar::from(value).into()
+            }
+        }
+    };
+}
+
+point_from_array_impl!(3);
+point_from_array_impl!(4);
+
+macro_rules! point_from_scalar_impl {
+    ($dim:literal) => {
+        impl<T: Copy + Num> From<Scalar<T, { $dim - 1 }>> for Point<T, $dim> {
+            fn from(value: Scalar<T, { $dim - 1 }>) -> Self {
+                let mut scalar = Scalar::zero();
+
+                for n in 0..$dim - 1 {
+                    scalar[n] = value[n];
+                }
+
+                scalar[$dim - 1] = T::one();
+
+                Point { scalar }
+            }
+        }
+    };
+}
+
+point_from_scalar_impl!(3);
+point_from_scalar_impl!(4);
+
+// Macros
+#[macro_export]
+macro_rules! point {
+    (x: $x:expr, y: $y:expr) => {
+        Point::from([$x, $y, 1])
+    };
+    (y: $y:expr, x: $x:expr) => {
+        Point::from([$x, $y, 1])
+    };
+    (x: $x:expr, y: $y:expr, z: $z:expr) => {
+        Point::from([$x, $y, $z, 1])
+    };
+    (y: $y:expr, x: $x:expr, z: $z:expr) => {
+        Point::from([$x, $y, $z, 1])
+    };
+    (x: $x:expr, z: $z:expr, y: $y:expr) => {
+        Point::from([$x, $y, $z, 1])
+    };
+    (y: $y:expr, z: $z:expr, x: $x:expr) => {
+        Point::from([$x, $y, $z, 1])
+    };
+    (z: $z:expr, x: $x:expr, y: $y:expr) => {
+        Point::from([$x, $y, $z, 1])
+    };
+    (z: $z:expr, y: $y:expr, x: $x:expr) => {
+        Point::from([$x, $y, $z, 1])
+    };
+    ($elem:expr; $d:expr) => {
+        Point::from([$elem; $d])
+    };
+    ($($x:expr),*) => {
+        Point::from([$($x), +, 1])
+    };
+}

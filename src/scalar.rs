@@ -20,6 +20,8 @@ pub struct Scalar<T: Num, const D: usize> {
 
 // Methods
 impl<T: Num, const D: usize> Scalar<T, D> {
+    pub const DIMENSION: usize = D;
+
     /// Returns scalar's dimension
     #[inline]
     pub const fn dimension(&self) -> usize {

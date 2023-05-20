@@ -19,8 +19,13 @@ pub struct Vector<T: Copy + Num, const D: usize> {
     scalar: Scalar<T, D>,
 }
 
+pub type Vector2D<T> = Vector<T, 3>;
+pub type Vector3D<T> = Vector<T, 4>;
+
 // Methods
 impl<T: Copy + Num, const D: usize> Vector<T, D> {
+    pub const DIMENSION: usize = D;
+
     /// Returns vector's dimension
     #[inline]
     pub const fn dimension(&self) -> usize {
@@ -78,7 +83,7 @@ impl<T: Copy + Signed + ops::AddAssign, const D: usize> Vector<T, D> {
     }
 }
 
-impl<T: Copy + Num> Vector<T, 2> {
+impl<T: Copy + Num> Vector2D<T> {
     pub fn unit_dx() -> Self {
         Vector::from([T::one(), T::zero()])
     }
@@ -104,7 +109,7 @@ impl<T: Copy + Num> Vector<T, 2> {
     }
 }
 
-impl<T: Copy + Num> Vector<T, 3> {
+impl<T: Copy + Num> Vector3D<T> {
     pub fn unit_dx() -> Self {
         Vector::from([T::one(), T::zero(), T::zero()])
     }
@@ -143,29 +148,41 @@ impl<T: Copy + Num> Vector<T, 3> {
 }
 
 // Utils
-impl<T: Copy + Num, const D: usize> From<[T; D]> for Vector<T, D> {
-    fn from(value: [T; D]) -> Self {
-        Scalar::from(value).into()
-    }
+macro_rules! vector_from_array_impl {
+    ($dim:literal) => {
+        impl<T: Copy + Num> From<[T; { $dim - 1 }]> for Vector<T, $dim> {
+            fn from(value: [T; { $dim - 1 }]) -> Self {
+                Scalar::from(value).into()
+            }
+        }
+    };
 }
 
-impl<T: Copy + Num, const D: usize> From<Scalar<T, D>> for Vector<T, D> {
-    fn from(value: Scalar<T, D>) -> Self {
-        Vector { scalar: value }
-    }
+vector_from_array_impl!(3);
+vector_from_array_impl!(4);
+
+macro_rules! vector_from_scalar_impl {
+    ($dim:literal) => {
+        impl<T: Copy + Num> From<Scalar<T, { $dim - 1 }>> for Vector<T, $dim> {
+            fn from(value: Scalar<T, { $dim - 1 }>) -> Self {
+                let mut scalar = Scalar::zero();
+
+                for n in 0..$dim - 1 {
+                    scalar[n] = value[n];
+                }
+
+                Vector { scalar }
+            }
+        }
+    };
 }
 
-impl<T: Copy + Num, const D: usize> TryInto<Vector<T, D>> for Vec<T> {
-    type Error = <Vec<T> as TryInto<Scalar<T, D>>>::Error;
-
-    fn try_into(self) -> Result<Vector<T, D>, Self::Error> {
-        self.try_into().map(|s: Scalar<T, D>| s.into())
-    }
-}
+vector_from_scalar_impl!(3);
+vector_from_scalar_impl!(4);
 
 impl<T: Copy + Num, const D: usize> Zero for Vector<T, D> {
     fn zero() -> Self {
-        Vector::from(Scalar::zero())
+        Vector { scalar: Scalar::zero() }
     }
 
     fn is_zero(&self) -> bool {
@@ -200,7 +217,7 @@ macro_rules! vector_neg_impl {
             type Output = Vector<$tp, $dp>;
 
             fn neg(self) -> Self::Output {
-                Vector::from(-self.scalar)
+                Vector { scalar: -self.scalar }
             }
         }
     };
@@ -228,7 +245,7 @@ macro_rules! vector_add_impl {
             type Output = Vector<$tp, $dp>;
 
             fn add(self, rhs: $rhs) -> Self::Output {
-                Vector::from(self.scalar + rhs.scalar)
+                Vector { scalar: self.scalar + rhs.scalar }
             }
         }
     }
@@ -258,7 +275,7 @@ macro_rules! vector_sub_impl {
             type Output = Vector<$tp, $dp>;
 
             fn sub(self, rhs: $rhs) -> Self::Output {
-                Vector::from(self.scalar - rhs.scalar)
+                Vector { scalar: self.scalar - rhs.scalar }
             }
         }
     }
@@ -288,7 +305,7 @@ macro_rules! vector_mul_impl {
             type Output = Vector<$tp, $dp>;
 
             fn mul(self, rhs: $rhs) -> Self::Output {
-                Vector::from(self.scalar * $($defer)?rhs)
+                Vector { scalar: self.scalar * $($defer)?rhs }
             }
         }
     }
@@ -335,7 +352,7 @@ macro_rules! vector_div_impl {
             type Output = Vector<$tp, $dp>;
 
             fn div(self, rhs: $rhs) -> Self::Output {
-                Vector::from(self.scalar / $($defer)?rhs)
+                Vector { scalar: self.scalar / $($defer)?rhs }
             }
         }
     }
@@ -393,8 +410,8 @@ mod tests {
 
     #[test]
     fn it_should_return_unit_vectors() {
-        assert_eq!(Vector::<i32, 2>::unit_dx(), vector!{ dx: 1, dy: 0 });
-        assert_eq!(Vector::<i32, 2>::unit_dy(), vector!{ dx: 0, dy: 1 });
+        assert_eq!(Vector::<i32, 3>::unit_dx(), vector!{ dx: 1, dy: 0 });
+        assert_eq!(Vector::<i32, 3>::unit_dy(), vector!{ dx: 0, dy: 1 });
     }
 
     #[test]
