@@ -18,7 +18,7 @@ impl<T: Copy + Num, const D: usize> Point<T, D> {
     ///
     /// ### Example
     /// ```
-    /// use pythagore::*;
+    /// use pythagore::point;
     ///
     /// assert_eq!(point!{ x: 1, y: 2 }.dimension(), 2);
     /// assert_eq!(point!{ x: 1, y: 2, z: 3 }.dimension(), 3);
@@ -32,7 +32,7 @@ impl<T: Copy + Num, const D: usize> Point<T, D> {
     ///
     /// ## Example
     /// ```
-    /// use pythagore::*;
+    /// use pythagore::{point, Point2D, Point3D};
     ///
     /// assert_eq!(Point2D::origin(), point!{ x: 0, y: 0 });
     /// assert_eq!(Point3D::origin(), point!{ x: 0, y: 0, z: 0 });
@@ -181,44 +181,10 @@ point_sub_impl!(T, D, &Vector<T, D>, Point<T, D>, Point);
 point_sub_impl!(T, D, Vector<T, D>, &Point<T, D>, Point);
 point_sub_impl!(T, D, &Vector<T, D>, &Point<T, D>, Point);
 
-// Macros
-#[macro_export]
-macro_rules! point {
-    (x: $x:expr, y: $y:expr) => {
-        Point::from([$x, $y])
-    };
-    (y: $y:expr, x: $x:expr) => {
-        Point::from([$x, $y])
-    };
-    (x: $x:expr, y: $y:expr, z: $z:expr) => {
-        Point::from([$x, $y, $z])
-    };
-    (y: $y:expr, x: $x:expr, z: $z:expr) => {
-        Point::from([$x, $y, $z])
-    };
-    (x: $x:expr, z: $z:expr, y: $y:expr) => {
-        Point::from([$x, $y, $z])
-    };
-    (y: $y:expr, z: $z:expr, x: $x:expr) => {
-        Point::from([$x, $y, $z])
-    };
-    (z: $z:expr, x: $x:expr, y: $y:expr) => {
-        Point::from([$x, $y, $z])
-    };
-    (z: $z:expr, y: $y:expr, x: $x:expr) => {
-        Point::from([$x, $y, $z])
-    };
-    ($elem:expr; $d:expr) => {
-        Point::from([$elem; $d])
-    };
-    ($($x:expr),*) => {
-        Point::from([$($x), +])
-    };
-}
-
 // Tests
 #[cfg(test)]
 mod tests {
+    use crate::point;
     use super::*;
 
     #[test]

@@ -12,7 +12,7 @@ impl<T: Copy + Num> Vector3D<T> {
     ///
     /// ## Example
     /// ```
-    /// use pythagore::*;
+    /// use pythagore::{vector, Vector3D};
     ///
     /// assert_eq!(Vector3D::unit_dx(), vector!{ dx: 1, dy: 0, dz: 0 });
     /// ```
@@ -25,7 +25,7 @@ impl<T: Copy + Num> Vector3D<T> {
     ///
     /// ## Example
     /// ```
-    /// use pythagore::*;
+    /// use pythagore::{vector, Vector3D};
     ///
     /// assert_eq!(Vector3D::unit_dy(), vector!{ dx: 0, dy: 1, dz: 0 });
     /// ```
@@ -38,7 +38,7 @@ impl<T: Copy + Num> Vector3D<T> {
     ///
     /// ## Example
     /// ```
-    /// use pythagore::*;
+    /// use pythagore::{vector, Vector3D};
     ///
     /// assert_eq!(Vector3D::unit_dz(), vector!{ dx: 0, dy: 0, dz: 1 });
     /// ```
@@ -51,7 +51,7 @@ impl<T: Copy + Num> Vector3D<T> {
     ///
     /// ### Example
     /// ```
-    /// use pythagore::*;
+    /// use pythagore::vector;
     ///
     /// assert_eq!(vector!{ dx: 1, dy: 2, dz: 3 }.dx(), &1);
     /// ```
@@ -64,7 +64,7 @@ impl<T: Copy + Num> Vector3D<T> {
     ///
     /// ### Example
     /// ```
-    /// use pythagore::*;
+    /// use pythagore::vector;
     ///
     /// let mut v = vector!{ dx: 1, dy: 2, dz: 3 };
     /// *v.dx_mut() = 5;
@@ -80,7 +80,7 @@ impl<T: Copy + Num> Vector3D<T> {
     ///
     /// ### Example
     /// ```
-    /// use pythagore::*;
+    /// use pythagore::vector;
     ///
     /// assert_eq!(vector!{ dx: 1, dy: 2, dz: 3 }.dy(), &2);
     /// ```
@@ -93,7 +93,7 @@ impl<T: Copy + Num> Vector3D<T> {
     ///
     /// ### Example
     /// ```
-    /// use pythagore::*;
+    /// use pythagore::vector;
     ///
     /// let mut v = vector!{ dx: 1, dy: 2, dz: 3 };
     /// *v.dy_mut() = 5;
@@ -109,7 +109,7 @@ impl<T: Copy + Num> Vector3D<T> {
     ///
     /// ### Example
     /// ```
-    /// use pythagore::*;
+    /// use pythagore::vector;
     ///
     /// assert_eq!(vector!{ dx: 1, dy: 2, dz: 3 }.dz(), &3);
     /// ```
@@ -122,7 +122,7 @@ impl<T: Copy + Num> Vector3D<T> {
     ///
     /// ### Example
     /// ```
-    /// use pythagore::*;
+    /// use pythagore::vector;
     ///
     /// let mut v = vector!{ dx: 1, dy: 2, dz: 3 };
     /// *v.dz_mut() = 5;

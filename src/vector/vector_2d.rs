@@ -12,7 +12,7 @@ impl<T: Copy + Num> Vector2D<T> {
     ///
     /// ## Example
     /// ```
-    /// use pythagore::*;
+    /// use pythagore::{vector, Vector2D};
     ///
     /// assert_eq!(Vector2D::unit_dx(), vector!{ dx: 1, dy: 0 });
     /// ```
@@ -25,7 +25,7 @@ impl<T: Copy + Num> Vector2D<T> {
     ///
     /// ## Example
     /// ```
-    /// use pythagore::*;
+    /// use pythagore::{vector, Vector2D};
     ///
     /// assert_eq!(Vector2D::unit_dy(), vector!{ dx: 0, dy: 1 });
     /// ```
@@ -38,7 +38,7 @@ impl<T: Copy + Num> Vector2D<T> {
     ///
     /// ## Example
     /// ```
-    /// use pythagore::*;
+    /// use pythagore::vector;
     ///
     /// assert_eq!(vector!{ dx: 1, dy: 2 }.dx(), &1);
     /// ```
@@ -51,7 +51,7 @@ impl<T: Copy + Num> Vector2D<T> {
     ///
     /// ## Example
     /// ```
-    /// use pythagore::*;
+    /// use pythagore::vector;
     ///
     /// let mut v = vector!{ dx: 1, dy: 2 };
     /// *v.dx_mut() = 5;
@@ -67,7 +67,7 @@ impl<T: Copy + Num> Vector2D<T> {
     ///
     /// ## Example
     /// ```
-    /// use pythagore::*;
+    /// use pythagore::vector;
     ///
     /// assert_eq!(vector!{ dx: 1, dy: 2 }.dy(), &2);
     /// ```
@@ -80,7 +80,7 @@ impl<T: Copy + Num> Vector2D<T> {
     ///
     /// ## Example
     /// ```
-    /// use pythagore::*;
+    /// use pythagore::vector;
     ///
     /// let mut v = vector!{ dx: 1, dy: 2 };
     /// *v.dy_mut() = 5;

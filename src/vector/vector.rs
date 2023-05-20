@@ -17,7 +17,7 @@ impl<T: Copy + Num, const D: usize> Vector<T, D> {
     ///
     /// ### Example
     /// ```
-    /// use pythagore::*;
+    /// use pythagore::vector;
     ///
     /// assert_eq!(vector!{ dx: 1, dy: 2 }.dimension(), 2);
     /// assert_eq!(vector!{ dx: 1, dy: 2, dz: 3 }.dimension(), 3);
@@ -31,7 +31,7 @@ impl<T: Copy + Num, const D: usize> Vector<T, D> {
     ///
     /// ## Example
     /// ```
-    /// use pythagore::*;
+    /// use pythagore::{vector, Vector2D, Vector3D};
     ///
     /// assert_eq!(Vector2D::null(), vector!{ dx: 0, dy: 0 });
     /// assert_eq!(Vector3D::null(), vector!{ dx: 0, dy: 0, dz: 0 });
@@ -51,7 +51,7 @@ impl<T: Copy + Num + ops::AddAssign, const D: usize> Vector<T, D> {
     ///
     /// ## Example
     /// ```
-    /// use pythagore::*;
+    /// use pythagore::vector;
     ///
     /// assert_eq!(vector!{ dx: 2, dy: 3 }.square_norm(), 13);
     /// assert_eq!(vector!{ dx: 2, dy: 3, dz: 4 }.square_norm(), 29);
@@ -72,7 +72,7 @@ impl<T: Copy + Float + ops::AddAssign, const D: usize> Vector<T, D> {
     ///
     /// ## Example
     /// ```
-    /// use pythagore::*;
+    /// use pythagore::vector;
     ///
     /// assert_eq!(vector!{ dx: 1.0, dy: 0.0 }.norm(), 1.0);
     /// assert_eq!(vector!{ dx: 0.0, dy: 0.0, dz: 4.0 }.norm(), 4.0);
@@ -85,7 +85,7 @@ impl<T: Copy + Float + ops::AddAssign, const D: usize> Vector<T, D> {
     ///
     /// ## Example
     /// ```
-    /// use pythagore::*;
+    /// use pythagore::vector;
     ///
     /// assert_eq!(vector!{ dx: 10.0, dy: 0.0 }.unit(), vector!{ dx: 1.0, dy: 0.0 });
     /// assert_eq!(vector!{ dx: 0.0, dy: 0.0, dz: 5.0 }.unit(), vector!{ dx: 0.0, dy: 0.0, dz: 1.0 });
@@ -100,7 +100,7 @@ impl<T: Copy + Signed + ops::AddAssign, const D: usize> Vector<T, D> {
     ///
     /// ## Example
     /// ```
-    /// use pythagore::*;
+    /// use pythagore::vector;
     ///
     /// assert_eq!(vector!{ dx: 1, dy: -2 }.manhattan_norm(), 3);
     /// assert_eq!(vector!{ dx: 1, dy: -2, dz: 3 }.manhattan_norm(), 6);

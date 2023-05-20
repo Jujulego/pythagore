@@ -11,7 +11,7 @@ impl<T: Copy + Num> Point3D<T> {
     ///
     /// ## Example
     /// ```
-    /// use pythagore::*;
+    /// use pythagore::point;
     ///
     /// assert_eq!(point!{ x: 1, y: 2, z: 3 }.x(), &1);
     /// ```
@@ -24,7 +24,7 @@ impl<T: Copy + Num> Point3D<T> {
     ///
     /// ## Example
     /// ```
-    /// use pythagore::*;
+    /// use pythagore::point;
     ///
     /// let mut v = point!{ x: 1, y: 2, z: 3 };
     /// *v.x_mut() = 5;
@@ -40,7 +40,7 @@ impl<T: Copy + Num> Point3D<T> {
     ///
     /// ## Example
     /// ```
-    /// use pythagore::*;
+    /// use pythagore::point;
     ///
     /// assert_eq!(point!{ x: 1, y: 2, z: 3 }.y(), &2);
     /// ```
@@ -53,7 +53,7 @@ impl<T: Copy + Num> Point3D<T> {
     ///
     /// ## Example
     /// ```
-    /// use pythagore::*;
+    /// use pythagore::point;
     ///
     /// let mut v = point!{ x: 1, y: 2, z: 3 };
     /// *v.y_mut() = 5;
@@ -69,7 +69,7 @@ impl<T: Copy + Num> Point3D<T> {
     ///
     /// ## Example
     /// ```
-    /// use pythagore::*;
+    /// use pythagore::point;
     ///
     /// assert_eq!(point!{ x: 1, y: 2, z: 3 }.z(), &3);
     /// ```
@@ -82,7 +82,7 @@ impl<T: Copy + Num> Point3D<T> {
     ///
     /// ## Example
     /// ```
-    /// use pythagore::*;
+    /// use pythagore::point;
     ///
     /// let mut v = point!{ x: 1, y: 2, z: 3 };
     /// *v.z_mut() = 5;

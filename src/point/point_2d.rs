@@ -11,7 +11,7 @@ impl<T: Copy + Num> Point2D<T> {
     ///
     /// ## Example
     /// ```
-    /// use pythagore::*;
+    /// use pythagore::point;
     ///
     /// assert_eq!(point!{ x: 1, y: 2 }.x(), &1);
     /// ```
@@ -24,7 +24,7 @@ impl<T: Copy + Num> Point2D<T> {
     ///
     /// ## Example
     /// ```
-    /// use pythagore::*;
+    /// use pythagore::point;
     ///
     /// let mut v = point!{ x: 1, y: 2 };
     /// *v.x_mut() = 5;
@@ -40,7 +40,7 @@ impl<T: Copy + Num> Point2D<T> {
     ///
     /// ## Example
     /// ```
-    /// use pythagore::*;
+    /// use pythagore::point;
     ///
     /// assert_eq!(point!{ x: 1, y: 2 }.y(), &2);
     /// ```
@@ -53,7 +53,7 @@ impl<T: Copy + Num> Point2D<T> {
     ///
     /// ## Example
     /// ```
-    /// use pythagore::*;
+    /// use pythagore::point;
     ///
     /// let mut v = point!{ x: 1, y: 2 };
     /// *v.y_mut() = 5;
