@@ -1,5 +1,6 @@
 use num_traits::{Float, Num, Signed, Zero};
 use std::ops;
+use std::slice::Iter;
 
 use crate::Scalar;
 use crate::traits::Dimension;
@@ -12,6 +13,11 @@ pub struct Vector<T: Copy + Num, const D: usize> {
 
 // Methods
 impl<T: Copy + Num, const D: usize> Vector<T, D> {
+    /// Returns iterator on vector elements
+    pub fn iter(&self) -> Iter<'_, T> {
+        self.scalar[0..D-1].iter()
+    }
+
     /// Returns a null vector
     ///
     /// ## Example

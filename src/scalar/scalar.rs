@@ -1,5 +1,6 @@
-use std::array::TryFromSliceError;
 use std::ops;
+use std::ops::Range;
+use std::slice::Iter;
 use num_traits::{Num, Signed, Zero};
 
 use crate::traits::Dimension;
@@ -21,6 +22,11 @@ pub struct Scalar<T: Num, const D: usize> {
 
 // Methods
 impl<T: Copy + Num, const D: usize> Scalar<T, D> {
+    /// Returns iterator on scalar elements
+    pub fn iter(&self) -> Iter<'_, T> {
+        self.elements.iter()
+    }
+
     #[inline]
     fn map(&self, op: impl Fn(&T, usize) -> T) -> Self {
         let mut copy = self.clone();
@@ -60,14 +66,6 @@ impl<T: Num, const D: usize> From<[T; D]> for Scalar<T, D> {
     }
 }
 
-impl<T: Copy + Num, const D: usize> TryInto<Scalar<T, D>> for Vec<T> {
-    type Error = TryFromSliceError;
-
-    fn try_into(self) -> Result<Scalar<T, D>, Self::Error> {
-        self.as_slice().try_into().map(|e: &[T; D]| (*e).into())
-    }
-}
-
 impl<T: Copy + Num, const D: usize> Zero for Scalar<T, D> {
     fn zero() -> Self {
         Scalar::from([T::zero(); D])
@@ -93,8 +91,22 @@ impl<T: Num, const D: usize> ops::Index<usize> for Scalar<T, D> {
     }
 }
 
+impl<T: Num, const D: usize> ops::Index<Range<usize>> for Scalar<T, D> {
+    type Output = [T];
+
+    fn index(&self, index: Range<usize>) -> &Self::Output {
+        &self.elements[index]
+    }
+}
+
 impl<T: Num, const D: usize> ops::IndexMut<usize> for Scalar<T, D> {
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        &mut self.elements[index]
+    }
+}
+
+impl<T: Num, const D: usize> ops::IndexMut<Range<usize>> for Scalar<T, D> {
+    fn index_mut(&mut self, index: Range<usize>) -> &mut Self::Output {
         &mut self.elements[index]
     }
 }

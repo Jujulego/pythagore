@@ -1,4 +1,5 @@
 use std::ops;
+use std::slice::Iter;
 use num_traits::{Num, Zero};
 
 use crate::Scalar;
@@ -13,6 +14,11 @@ pub struct Point<T: Copy + Num, const D: usize> {
 
 // Methods
 impl<T: Copy + Num, const D: usize> Point<T, D> {
+    /// Returns iterator on point elements
+    pub fn iter(&self) -> Iter<'_, T> {
+        self.scalar[0..D-1].iter()
+    }
+
     /// Returns origin point
     ///
     /// ## Example

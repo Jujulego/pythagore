@@ -15,15 +15,11 @@ pub struct BoundingBox<T: Copy + Num, const D: usize> {
 impl<T: Copy + Num + Ord, const D: usize> BoundingBox<T, D> {
     /// Returns true if point is within the bounding box
     pub fn contains(&self, pt: &Point<T, D>) -> bool {
-        let d = pt - self.origin;
+        let diff = pt - self.origin;
 
-        for n in 0..D-1 {
-            if min(self.size[n], T::zero()) > d[n] || d[n] >= max(self.size[n], T::zero()) {
-                return false;
-            }
-        }
-
-        return true;
+        self.size.iter()
+            .zip(diff.iter())
+            .all(|(&size_e, &diff_e)| min(size_e, T::zero()) <= diff_e && diff_e <= max(size_e, T::zero()))
     }
 }
 
@@ -51,6 +47,7 @@ mod tests {
 
         assert!(bbox.contains(&Point::origin()));
         assert!(bbox.contains(&point!{ x: 1, y: 1 }));
+        assert!(bbox.contains(&point!{ x: 5, y: 5 }));
 
         assert!(!bbox.contains(&point!{ x: -1, y: 1 }));
         assert!(!bbox.contains(&point!{ x: 10, y: 1 }));
