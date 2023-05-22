@@ -1,4 +1,19 @@
-
+/// Builds a new vector from given elements
+///
+/// ## Example
+/// ```
+/// use pythagore::{vector, Vector};
+///
+/// // 2d vector
+/// assert_eq!(vector!{ dx: 1, dy: 2 }, Vector::from([1, 2]));
+///
+/// // 3d vector
+/// assert_eq!(vector!{ dx: 1, dy: 2, dz: 3 }, Vector::from([1, 2, 3]));
+///
+/// // Array based
+/// assert_eq!(vector![1; 3], Vector::from([1, 1, 1]));
+/// assert_eq!(vector![1, 2, 3], Vector::from([1, 2, 3]));
+/// ```
 #[macro_export]
 macro_rules! vector {
     (dx: $x:expr, dy: $y:expr) => {
@@ -31,4 +46,26 @@ macro_rules! vector {
     ($($x:expr),*) => {
         vector::Vector::from([$($x), +])
     };
+}
+
+// Tests
+#[cfg(test)]
+mod tests {
+    use crate::{vector, Vector};
+
+    #[test]
+    fn vector_2d_creation() {
+        assert_eq!(vector! { dx: 1, dy: 2 }, Vector::from([1, 2]));
+        assert_eq!(vector! { dy: 2, dx: 1 }, Vector::from([1, 2]));
+    }
+
+    #[test]
+    fn vector_3d_creation() {
+        assert_eq!(vector!{ dx: 1, dy: 2, dz: 3 }, Vector::from([1, 2, 3]));
+        assert_eq!(vector!{ dy: 2, dx: 1, dz: 3 }, Vector::from([1, 2, 3]));
+        assert_eq!(vector!{ dy: 2, dz: 3, dx: 1 }, Vector::from([1, 2, 3]));
+        assert_eq!(vector!{ dy: 2, dz: 3, dx: 1 }, Vector::from([1, 2, 3]));
+        assert_eq!(vector!{ dz: 3, dy: 2, dx: 1 }, Vector::from([1, 2, 3]));
+        assert_eq!(vector!{ dz: 3, dy: 2, dx: 1 }, Vector::from([1, 2, 3]));
+    }
 }
