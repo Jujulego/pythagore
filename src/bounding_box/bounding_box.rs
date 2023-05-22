@@ -2,7 +2,7 @@ use std::cmp::{max, min};
 use num_traits::Num;
 
 use crate::{Point, Vector};
-use crate::traits::HasDimension;
+use crate::traits::Dimension;
 
 /// `BoundingBox<T, const D: usize>` structure for n dimension bounding box
 #[derive(Clone, Copy, Debug)]
@@ -28,12 +28,10 @@ impl<T: Copy + Num + Ord, const D: usize> BoundingBox<T, D> {
 }
 
 // Utils
-impl<T: Copy + Num, const D: usize> HasDimension for BoundingBox<T, D> {
-    const DIMENSION: usize = D - 1;
-
+impl<T: Copy + Num, const D: usize> Dimension<D> for BoundingBox<T, D> {
     /// Returns bounding box's dimension
     #[inline]
-    fn dimension(&self) -> usize {
+    fn dimension() -> usize {
         D - 1
     }
 }

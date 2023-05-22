@@ -2,7 +2,7 @@ use std::ops;
 use num_traits::{Num, Zero};
 
 use crate::Scalar;
-use crate::traits::HasDimension;
+use crate::traits::Dimension;
 use crate::Vector;
 
 /// `Point<T, const D: usize>` structure for n dimension points
@@ -36,12 +36,10 @@ impl<T: Copy + Num, const D: usize> Point<T, D> {
 }
 
 // Utils
-impl<T: Copy + Num, const D: usize> HasDimension for Point<T, D> {
-    const DIMENSION: usize = D - 1;
-
+impl<T: Copy + Num, const D: usize> Dimension<D> for Point<T, D> {
     /// Returns point's dimension
     #[inline]
-    fn dimension(&self) -> usize {
+    fn dimension() -> usize {
         D - 1
     }
 }

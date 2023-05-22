@@ -2,7 +2,7 @@ use num_traits::{Float, Num, Signed, Zero};
 use std::ops;
 
 use crate::Scalar;
-use crate::traits::HasDimension;
+use crate::traits::Dimension;
 
 /// `Vector<T, const D: usize>` structure for n dimension vectors
 #[derive(Clone, Copy, Debug, Default, Eq)]
@@ -102,12 +102,10 @@ impl<T: Copy + Signed + ops::AddAssign, const D: usize> Vector<T, D> {
 }
 
 // Utils
-impl<T: Copy + Num, const D: usize> HasDimension for Vector<T, D> {
-    const DIMENSION: usize = D - 1;
-
+impl<T: Copy + Num, const D: usize> Dimension<D> for Vector<T, D> {
     /// Returns vector's dimension
     #[inline]
-    fn dimension(&self) -> usize {
+    fn dimension() -> usize {
         D - 1
     }
 }

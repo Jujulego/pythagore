@@ -2,7 +2,7 @@ use std::array::TryFromSliceError;
 use std::ops;
 use num_traits::{Num, Signed, Zero};
 
-use crate::traits::HasDimension;
+use crate::traits::Dimension;
 
 /// `Scalar<T, const D: usize>` utility structure for n dimension compute
 ///
@@ -44,15 +44,7 @@ impl<T: Copy + Num, const D: usize> Default for Scalar<T, D> {
     }
 }
 
-impl<T: Num, const D: usize> HasDimension for Scalar<T, D> {
-    const DIMENSION: usize = D;
-
-    /// Returns scalar's dimension
-    #[inline]
-    fn dimension(&self) -> usize {
-        D
-    }
-}
+impl<T: Num, const D: usize> Dimension<D> for Scalar<T, D> {}
 
 impl<T: Num, const D: usize> From<[T; D]> for Scalar<T, D> {
     /// Builds a new scalar form given fixed array
