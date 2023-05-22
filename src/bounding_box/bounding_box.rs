@@ -7,19 +7,37 @@ use crate::traits::Dimension;
 /// `BoundingBox<T, const D: usize>` structure for n dimension bounding box
 #[derive(Clone, Copy, Debug)]
 pub struct BoundingBox<T: Copy + Num, const D: usize> {
-    pub origin: Point<T, D>,
-    pub size: Vector<T, D>,
+    start: Point<T, D>,
+    end: Point<T, D>,
 }
 
 // Methods
 impl<T: Copy + Num + Ord, const D: usize> BoundingBox<T, D> {
+    pub fn new(base: &Point<T, D>, size: &Vector<T, D>) -> BoundingBox<T, D> {
+        let mut start = Point::origin();
+        let mut end = Point::origin();
+
+        let other = base + size;
+
+        for n in 0..D {
+            start[n] = min(base[n], other[n]);
+            end[n] = max(base[n], other[n]);
+        }
+
+        BoundingBox { start, end }
+    }
+
     /// Returns true if point is within the bounding box
     pub fn contains(&self, pt: &Point<T, D>) -> bool {
-        let diff = pt - self.origin;
+        let diff = pt - self.start;
 
-        self.size.iter()
+        self.size().iter()
             .zip(diff.iter())
-            .all(|(&size_e, diff_e)| (min(size_e, T::zero())..=max(size_e, T::zero())).contains(diff_e))
+            .all(|(&size_e, diff_e)| (T::zero()..=size_e).contains(diff_e))
+    }
+
+    pub fn size(&self) -> Vector<T, D> {
+        self.end - self.start
     }
 }
 
@@ -40,10 +58,7 @@ mod tests {
 
     #[test]
     fn bbox_contains_point() {
-        let bbox = BoundingBox {
-            origin: Point::origin(),
-            size: vector!{ dx: 5, dy: 5 },
-        };
+        let bbox = BoundingBox::new(&Point::origin(), &vector!{ dx: 5, dy: 5 });
 
         assert!(bbox.contains(&Point::origin()));
         assert!(bbox.contains(&point!{ x: 1, y: 1 }));
