@@ -19,7 +19,7 @@ impl<T: Copy + Num + Ord, const D: usize> BoundingBox<T, D> {
 
         self.size.iter()
             .zip(diff.iter())
-            .all(|(&size_e, &diff_e)| min(size_e, T::zero()) <= diff_e && diff_e <= max(size_e, T::zero()))
+            .all(|(&size_e, diff_e)| (min(size_e, T::zero())..=max(size_e, T::zero())).contains(diff_e))
     }
 }
 

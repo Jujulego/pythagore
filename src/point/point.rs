@@ -1,5 +1,5 @@
 use std::ops;
-use std::slice::Iter;
+use std::slice::{Iter, SliceIndex};
 use num_traits::{Num, Zero};
 
 use crate::Scalar;
@@ -16,7 +16,7 @@ pub struct Point<T: Copy + Num, const D: usize> {
 impl<T: Copy + Num, const D: usize> Point<T, D> {
     /// Returns iterator on point elements
     pub fn iter(&self) -> Iter<'_, T> {
-        self.scalar[0..D-1].iter()
+        self.scalar[..D-1].iter()
     }
 
     /// Returns origin point
@@ -37,7 +37,7 @@ impl<T: Copy + Num, const D: usize> Point<T, D> {
 
     /// Returns true if point is origin
     pub fn is_origin(&self) -> bool {
-        self.scalar.elements[0..D - 1].iter().all(|e| e.is_zero())
+        self.scalar.elements[..D - 1].iter().all(|e| e.is_zero())
     }
 }
 
@@ -91,16 +91,16 @@ impl<T: Copy + Num, const D: usize> PartialEq for Point<T, D> {
     }
 }
 
-impl<T: Copy + Num, const D: usize> ops::Index<usize> for Point<T, D> {
-    type Output = T;
+impl<T: Copy + Num, I: SliceIndex<[T]>, const D: usize> ops::Index<I> for Point<T, D> {
+    type Output = I::Output;
 
-    fn index(&self, index: usize) -> &Self::Output {
+    fn index(&self, index: I) -> &Self::Output {
         &self.scalar[index]
     }
 }
 
-impl<T: Copy + Num, const D: usize> ops::IndexMut<usize> for Point<T, D> {
-    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+impl<T: Copy + Num, I: SliceIndex<[T]>, const D: usize> ops::IndexMut<I> for Point<T, D> {
+    fn index_mut(&mut self, index: I) -> &mut Self::Output {
         &mut self.scalar[index]
     }
 }

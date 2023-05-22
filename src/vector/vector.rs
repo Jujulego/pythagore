@@ -1,6 +1,6 @@
 use num_traits::{Float, Num, Signed, Zero};
 use std::ops;
-use std::slice::Iter;
+use std::slice::{Iter, SliceIndex};
 
 use crate::Scalar;
 use crate::traits::Dimension;
@@ -15,7 +15,7 @@ pub struct Vector<T: Copy + Num, const D: usize> {
 impl<T: Copy + Num, const D: usize> Vector<T, D> {
     /// Returns iterator on vector elements
     pub fn iter(&self) -> Iter<'_, T> {
-        self.scalar[0..D-1].iter()
+        self.scalar[..D-1].iter()
     }
 
     /// Returns a null vector
@@ -165,16 +165,16 @@ impl<T: Copy + Num, const D: usize> PartialEq for Vector<T, D> {
     }
 }
 
-impl<T: Copy + Num, const D: usize> ops::Index<usize> for Vector<T, D> {
-    type Output = T;
+impl<T: Copy + Num, I: SliceIndex<[T]>, const D: usize> ops::Index<I> for Vector<T, D> {
+    type Output = I::Output;
 
-    fn index(&self, index: usize) -> &Self::Output {
+    fn index(&self, index: I) -> &Self::Output {
         &self.scalar[index]
     }
 }
 
-impl<T: Copy + Num, const D: usize> ops::IndexMut<usize> for Vector<T, D> {
-    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+impl<T: Copy + Num, I: SliceIndex<[T]>, const D: usize> ops::IndexMut<I> for Vector<T, D> {
+    fn index_mut(&mut self, index: I) -> &mut Self::Output {
         &mut self.scalar[index]
     }
 }

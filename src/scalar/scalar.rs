@@ -1,6 +1,5 @@
 use std::ops;
-use std::ops::Range;
-use std::slice::Iter;
+use std::slice::{Iter, SliceIndex};
 use num_traits::{Num, Signed, Zero};
 
 use crate::traits::Dimension;
@@ -83,30 +82,16 @@ impl<T: Num, const D: usize> PartialEq for Scalar<T, D> {
     }
 }
 
-impl<T: Num, const D: usize> ops::Index<usize> for Scalar<T, D> {
-    type Output = T;
+impl<T: Num, I: SliceIndex<[T]>, const D: usize> ops::Index<I> for Scalar<T, D> {
+    type Output = I::Output;
 
-    fn index(&self, index: usize) -> &Self::Output {
+    fn index(&self, index: I) -> &Self::Output {
         &self.elements[index]
     }
 }
 
-impl<T: Num, const D: usize> ops::Index<Range<usize>> for Scalar<T, D> {
-    type Output = [T];
-
-    fn index(&self, index: Range<usize>) -> &Self::Output {
-        &self.elements[index]
-    }
-}
-
-impl<T: Num, const D: usize> ops::IndexMut<usize> for Scalar<T, D> {
-    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
-        &mut self.elements[index]
-    }
-}
-
-impl<T: Num, const D: usize> ops::IndexMut<Range<usize>> for Scalar<T, D> {
-    fn index_mut(&mut self, index: Range<usize>) -> &mut Self::Output {
+impl<T: Num, I: SliceIndex<[T]>, const D: usize> ops::IndexMut<I> for Scalar<T, D> {
+    fn index_mut(&mut self, index: I) -> &mut Self::Output {
         &mut self.elements[index]
     }
 }
