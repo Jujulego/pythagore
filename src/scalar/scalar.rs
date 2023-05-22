@@ -49,7 +49,7 @@ impl<T: Num, const D: usize> HasDimension for Scalar<T, D> {
 
     /// Returns scalar's dimension
     #[inline]
-    const fn dimension(&self) -> usize {
+    fn dimension(&self) -> usize {
         D
     }
 }

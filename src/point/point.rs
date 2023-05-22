@@ -41,7 +41,7 @@ impl<T: Copy + Num, const D: usize> HasDimension for Point<T, D> {
 
     /// Returns point's dimension
     #[inline]
-    const fn dimension(&self) -> usize {
+    fn dimension(&self) -> usize {
         D - 1
     }
 }

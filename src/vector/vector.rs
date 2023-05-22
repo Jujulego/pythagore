@@ -107,7 +107,7 @@ impl<T: Copy + Num, const D: usize> HasDimension for Vector<T, D> {
 
     /// Returns vector's dimension
     #[inline]
-    const fn dimension(&self) -> usize {
+    fn dimension(&self) -> usize {
         D - 1
     }
 }
