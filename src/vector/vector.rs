@@ -2,6 +2,7 @@ use num_traits::{Float, Num, Signed, Zero};
 use std::ops;
 
 use crate::Scalar;
+use crate::traits::HasDimension;
 
 /// `Vector<T, const D: usize>` structure for n dimension vectors
 #[derive(Clone, Copy, Debug, Default, Eq)]
@@ -11,22 +12,6 @@ pub struct Vector<T: Copy + Num, const D: usize> {
 
 // Methods
 impl<T: Copy + Num, const D: usize> Vector<T, D> {
-    pub const DIMENSION: usize = D - 1;
-
-    /// Returns vector's dimension
-    ///
-    /// ### Example
-    /// ```
-    /// use pythagore::vector;
-    ///
-    /// assert_eq!(vector!{ dx: 1, dy: 2 }.dimension(), 2);
-    /// assert_eq!(vector!{ dx: 1, dy: 2, dz: 3 }.dimension(), 3);
-    /// ```
-    #[inline]
-    pub const fn dimension(&self) -> usize {
-        D - 1
-    }
-
     /// Returns a null vector
     ///
     /// ## Example
@@ -117,6 +102,16 @@ impl<T: Copy + Signed + ops::AddAssign, const D: usize> Vector<T, D> {
 }
 
 // Utils
+impl<T: Copy + Num, const D: usize> HasDimension for Vector<T, D> {
+    const DIMENSION: usize = D - 1;
+
+    /// Returns vector's dimension
+    #[inline]
+    const fn dimension(&self) -> usize {
+        D - 1
+    }
+}
+
 macro_rules! vector_from_array_impl {
     ($dim:literal) => {
         impl<T: Copy + Num> From<[T; { $dim - 1 }]> for Vector<T, $dim> {

@@ -2,6 +2,7 @@ use std::ops;
 use num_traits::{Num, Zero};
 
 use crate::Scalar;
+use crate::traits::HasDimension;
 use crate::Vector;
 
 /// `Point<T, const D: usize>` structure for n dimension points
@@ -12,22 +13,6 @@ pub struct Point<T: Copy + Num, const D: usize> {
 
 // Methods
 impl<T: Copy + Num, const D: usize> Point<T, D> {
-    pub const DIMENSION: usize = D - 1;
-
-    /// Returns point's dimension
-    ///
-    /// ### Example
-    /// ```
-    /// use pythagore::point;
-    ///
-    /// assert_eq!(point!{ x: 1, y: 2 }.dimension(), 2);
-    /// assert_eq!(point!{ x: 1, y: 2, z: 3 }.dimension(), 3);
-    /// ```
-    #[inline]
-    pub const fn dimension(&self) -> usize {
-        D - 1
-    }
-
     /// Returns origin point
     ///
     /// ## Example
@@ -51,6 +36,16 @@ impl<T: Copy + Num, const D: usize> Point<T, D> {
 }
 
 // Utils
+impl<T: Copy + Num, const D: usize> HasDimension for Point<T, D> {
+    const DIMENSION: usize = D - 1;
+
+    /// Returns point's dimension
+    #[inline]
+    const fn dimension(&self) -> usize {
+        D - 1
+    }
+}
+
 macro_rules! point_from_array_impl {
     ($dim:literal) => {
         impl<T: Copy + Num> From<[T; { $dim - 1 }]> for Point<T, $dim> {

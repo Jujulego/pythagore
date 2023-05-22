@@ -2,6 +2,8 @@ use std::array::TryFromSliceError;
 use std::ops;
 use num_traits::{Num, Signed, Zero};
 
+use crate::traits::HasDimension;
+
 /// `Scalar<T, const D: usize>` utility structure for n dimension compute
 ///
 /// ## Usage
@@ -11,7 +13,6 @@ use num_traits::{Num, Signed, Zero};
 /// let s = scalar![1, 2, 3, 4];
 ///
 /// assert_eq!(s[0], 1);
-/// assert_eq!(s.dimension(), 4);
 /// ```
 #[derive(Clone, Copy, Debug, Eq)]
 pub struct Scalar<T: Num, const D: usize> {
@@ -19,16 +20,6 @@ pub struct Scalar<T: Num, const D: usize> {
 }
 
 // Methods
-impl<T: Num, const D: usize> Scalar<T, D> {
-    pub const DIMENSION: usize = D;
-
-    /// Returns scalar's dimension
-    #[inline]
-    pub const fn dimension(&self) -> usize {
-        D
-    }
-}
-
 impl<T: Copy + Num, const D: usize> Scalar<T, D> {
     #[inline]
     fn map(&self, op: impl Fn(&T, usize) -> T) -> Self {
@@ -50,6 +41,16 @@ impl<T: Copy + Num, const D: usize> Scalar<T, D> {
 impl<T: Copy + Num, const D: usize> Default for Scalar<T, D> {
     fn default() -> Self {
         Scalar::from([T::zero(); D])
+    }
+}
+
+impl<T: Num, const D: usize> HasDimension for Scalar<T, D> {
+    const DIMENSION: usize = D;
+
+    /// Returns scalar's dimension
+    #[inline]
+    const fn dimension(&self) -> usize {
+        D
     }
 }
 
