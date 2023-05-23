@@ -1,6 +1,7 @@
-use num_traits::{Float, Num, Signed, Zero};
+use std::iter::Sum;
 use std::ops;
 use std::slice::{Iter, SliceIndex};
+use num_traits::{Float, Num, Signed, Zero};
 
 use crate::Scalar;
 use crate::traits::Dimension;
@@ -302,7 +303,7 @@ vector_mul_impl!(N, D, &Vector<N, D>, &N, *);
 
 macro_rules! vector_scalar_impl {
     ($tp:ident, $dp:ident, $lhs:ty, $rhs:ty) => {
-        impl<$tp: Copy + Num + ops::AddAssign, const $dp: usize> ops::Mul<$rhs> for $lhs {
+        impl<$tp: Copy + Num + Sum, const $dp: usize> ops::Mul<$rhs> for $lhs {
             type Output = $tp;
 
             fn mul(self, rhs: $rhs) -> Self::Output {

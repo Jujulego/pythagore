@@ -1,6 +1,8 @@
-use std::ops;
-use std::slice::{Iter, SliceIndex};
+use std::iter::Sum;
+use std::ops::{Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
+use std::slice::{Iter, IterMut, SliceIndex};
 use num_traits::{Num, Signed, Zero};
+use crate::{forward_ref_binop, forward_ref_op_assign, forward_ref_unop};
 
 use crate::traits::{Dimension, BoxableScalar};
 
@@ -19,32 +21,10 @@ pub struct Scalar<N: Num, const D: usize> {
     pub(crate) elements: [N; D],
 }
 
-// Methods
-impl<N: Copy + Num, const D: usize> Scalar<N, D> {
-    /// Returns iterator on point elements
-    #[inline]
-    pub fn iter(&self) -> Iter<'_, N> {
-        self.elements.iter()
-    }
-
-    #[inline]
-    fn map(&self, op: impl Fn(&N, usize) -> N) -> Self {
-        let mut copy = self.clone();
-        copy.map_mut(op);
-
-        copy
-    }
-
-    #[inline]
-    fn map_mut(&mut self, op: impl Fn(&N, usize) -> N) {
-        for n in 0..D {
-            self[n] = op(&self[n], n);
-        }
-    }
-}
-
 // Utils
-impl<N: Copy + Num, const D: usize> BoxableScalar<N> for Scalar<N, D> {}
+impl<N: Num, const D: usize> BoxableScalar<N> for Scalar<N, D> {}
+
+impl<N: Num, const D: usize> Dimension<D> for Scalar<N, D> {}
 
 impl<N: Copy + Num, const D: usize> Default for Scalar<N, D> {
     #[inline]
@@ -53,7 +33,16 @@ impl<N: Copy + Num, const D: usize> Default for Scalar<N, D> {
     }
 }
 
-impl<N: Num, const D: usize> Dimension<D> for Scalar<N, D> {}
+impl<N: Copy + Num, const D: usize> Zero for Scalar<N, D> {
+    #[inline]
+    fn zero() -> Self {
+        Scalar::from([N::zero(); D])
+    }
+
+    fn is_zero(&self) -> bool {
+        self.elements.iter().all(|e| e.is_zero())
+    }
+}
 
 impl<N: Num, const D: usize> From<[N; D]> for Scalar<N, D> {
     /// Builds a new scalar form given fixed array
@@ -69,14 +58,35 @@ impl<N: Num, const D: usize> From<[N; D]> for Scalar<N, D> {
     }
 }
 
-impl<N: Copy + Num, const D: usize> Zero for Scalar<N, D> {
-    #[inline]
-    fn zero() -> Self {
-        Scalar::from([N::zero(); D])
-    }
+impl<'a, N: Num, const D: usize> IntoIterator for &'a Scalar<N, D> {
+    type Item = &'a N;
+    type IntoIter = Iter<'a, N>;
 
-    fn is_zero(&self) -> bool {
-        self.elements.iter().all(|e| e.is_zero())
+    fn into_iter(self) -> Self::IntoIter {
+        self.elements.iter()
+    }
+}
+
+impl<'a, N: Num, const D: usize> IntoIterator for &'a mut Scalar<N, D> {
+    type Item = &'a mut N;
+    type IntoIter = IterMut<'a, N>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.elements.iter_mut()
+    }
+}
+
+impl<N: Copy + Num, const D: usize> FromIterator<N> for Scalar<N, D> {
+    fn from_iter<T: IntoIterator<Item = N>>(iter: T) -> Self {
+        let mut scalar = Scalar::default();
+        let mut idx = 0;
+
+        for x in iter.into_iter().take(D) {
+            scalar[idx] = x;
+            idx += 1;
+        }
+
+        scalar
     }
 }
 
@@ -87,7 +97,7 @@ impl<N: Num, const D: usize> PartialEq for Scalar<N, D> {
     }
 }
 
-impl<N: Num, I: SliceIndex<[N]>, const D: usize> ops::Index<I> for Scalar<N, D> {
+impl<N: Num, I: SliceIndex<[N]>, const D: usize> Index<I> for Scalar<N, D> {
     type Output = I::Output;
 
     fn index(&self, index: I) -> &Self::Output {
@@ -95,166 +105,119 @@ impl<N: Num, I: SliceIndex<[N]>, const D: usize> ops::Index<I> for Scalar<N, D> 
     }
 }
 
-impl<N: Num, I: SliceIndex<[N]>, const D: usize> ops::IndexMut<I> for Scalar<N, D> {
+impl<N: Num, I: SliceIndex<[N]>, const D: usize> IndexMut<I> for Scalar<N, D> {
     fn index_mut(&mut self, index: I) -> &mut Self::Output {
         &mut self.elements[index]
     }
 }
 
-macro_rules! scalar_neg_impl {
-    ($tp:ident, $dp:ident, $lhs:ty) => {
-        impl<$tp: Copy + Signed, const $dp: usize> ops::Neg for $lhs {
-            type Output = Scalar<$tp, $dp>;
+impl<N: Copy + Signed, const D: usize> Neg for Scalar<N, D> {
+    type Output = Scalar<N, D>;
 
-            fn neg(self) -> Self::Output {
-                self.map(|&x, _| -x)
-            }
-        }
-    };
-}
-
-scalar_neg_impl!(N, D, Scalar<N, D>);
-scalar_neg_impl!(N, D, &Scalar<N, D>);
-
-macro_rules! scalar_add_assign_impl {
-    ($tp:ident, $dp:ident, $rhs:ty) => {
-        impl<$tp: Copy + Num, const $dp: usize> ops::AddAssign<$rhs> for Scalar<$tp, $dp> {
-            fn add_assign(&mut self, rhs: $rhs) {
-                self.map_mut(|&x, n| x + rhs[n]);
-            }
-        }
-    };
-}
-
-scalar_add_assign_impl!(N, D, Scalar<N, D>);
-scalar_add_assign_impl!(N, D, &Scalar<N, D>);
-
-macro_rules! scalar_add_impl {
-    ($tp:ident, $dp:ident, $lhs:ty, $rhs:ty) => {
-        impl<$tp: Copy + Num, const $dp: usize> ops::Add<$rhs> for $lhs {
-            type Output = Scalar<$tp, $dp>;
-
-            fn add(self, rhs: $rhs) -> Self::Output {
-                self.map(|&x, n| x + rhs[n])
-            }
-        }
+    fn neg(self) -> Self::Output {
+        self.into_iter().map(|&x| -x).collect()
     }
 }
 
-scalar_add_impl!(N, D, Scalar<N, D>, Scalar<N, D>);
-scalar_add_impl!(N, D, &Scalar<N, D>, Scalar<N, D>);
-scalar_add_impl!(N, D, Scalar<N, D>, &Scalar<N, D>);
-scalar_add_impl!(N, D, &Scalar<N, D>, &Scalar<N, D>);
+forward_ref_unop!(Neg, Scalar<N, D>, neg, <N: Copy + Signed, const D: usize>);
 
-macro_rules! scalar_sub_assign_impl {
-    ($tp:ident, $dp:ident, $rhs:ty) => {
-        impl<$tp: Copy + Num, const $dp: usize> ops::SubAssign<$rhs> for Scalar<$tp, $dp> {
-            fn sub_assign(&mut self, rhs: $rhs) {
-                self.map_mut(|&x, n| x - rhs[n]);
-            }
-        }
-    };
-}
-
-scalar_sub_assign_impl!(N, D, Scalar<N, D>);
-scalar_sub_assign_impl!(N, D, &Scalar<N, D>);
-
-macro_rules! scalar_sub_impl {
-    ($tp:ident, $dp:ident, $lhs:ty, $rhs:ty) => {
-        impl<$tp: Copy + Num, const $dp: usize> ops::Sub<$rhs> for $lhs {
-            type Output = Scalar<$tp, $dp>;
-
-            fn sub(self, rhs: $rhs) -> Self::Output {
-                self.map(|&x, n| x - rhs[n])
-            }
-        }
+impl<N: Copy + Num, const D: usize> AddAssign for Scalar<N, D> {
+    fn add_assign(&mut self, rhs: Scalar<N, D>) {
+        self.into_iter()
+            .zip(rhs.into_iter())
+            .for_each(|(l, &r)| *l = *l + r);
     }
 }
 
-scalar_sub_impl!(N, D, Scalar<N, D>, Scalar<N, D>);
-scalar_sub_impl!(N, D, &Scalar<N, D>, Scalar<N, D>);
-scalar_sub_impl!(N, D, Scalar<N, D>, &Scalar<N, D>);
-scalar_sub_impl!(N, D, &Scalar<N, D>, &Scalar<N, D>);
+forward_ref_op_assign!(AddAssign, Scalar<N, D>, add_assign, Scalar<N, D>, <N: Copy + Num, const D: usize>);
 
-macro_rules! scalar_mul_assign_impl {
-    ($tp:ident, $dp:ident, $rhs:ty $(, $defer:tt)?) => {
-        impl<$tp: Copy + Num, const $dp: usize> ops::MulAssign<$rhs> for Scalar<$tp, $dp> {
-            fn mul_assign(&mut self, rhs: $rhs) {
-                self.map_mut(|&x, _| x * $($defer)?rhs);
-            }
-        }
-    };
-}
+impl<N: Copy + Num, const D: usize> Add for Scalar<N, D> {
+    type Output = Scalar<N, D>;
 
-scalar_mul_assign_impl!(N, D, N);
-scalar_mul_assign_impl!(N, D, &N, *);
-
-macro_rules! scalar_mul_impl {
-    ($tp:ident, $dp:ident, $lhs:ty, $rhs:ty $(, $defer:tt)?) => {
-        impl<$tp: Copy + Num, const $dp: usize> ops::Mul<$rhs> for $lhs {
-            type Output = Scalar<$tp, $dp>;
-
-            fn mul(self, rhs: $rhs) -> Self::Output {
-                self.map(|&x, _| x * $($defer)?rhs)
-            }
-        }
+    fn add(self, rhs: Scalar<N, D>) -> Self::Output {
+        self.into_iter()
+            .zip(rhs.into_iter())
+            .map(|(&l, &r)| l + r)
+            .collect()
     }
 }
 
-scalar_mul_impl!(N, D, Scalar<N, D>, N);
-scalar_mul_impl!(N, D, &Scalar<N, D>, N);
-scalar_mul_impl!(N, D, Scalar<N, D>, &N, *);
-scalar_mul_impl!(N, D, &Scalar<N, D>, &N, *);
+forward_ref_binop!(Add, Scalar<N, D>, add, Scalar<N, D>, <N: Copy + Num, const D: usize>);
 
-macro_rules! scalar_dot_scalar_impl {
-    ($tp:ident, $dp:ident, $lhs:ty, $rhs:ty) => {
-        impl<$tp: Copy + Num + ops::AddAssign, const $dp: usize> ops::Mul<$rhs> for $lhs {
-            type Output = $tp;
-
-            fn mul(self, rhs: $rhs) -> Self::Output {
-                let mut result = N::zero();
-
-                for n in 0..D {
-                    result += self[n] * rhs[n];
-                }
-
-                result
-            }
-        }
-    };
-}
-
-scalar_dot_scalar_impl!(N, D, Scalar<N, D>, Scalar<N, D>);
-scalar_dot_scalar_impl!(N, D, &Scalar<N, D>, Scalar<N, D>);
-scalar_dot_scalar_impl!(N, D, Scalar<N, D>, &Scalar<N, D>);
-scalar_dot_scalar_impl!(N, D, &Scalar<N, D>, &Scalar<N, D>);
-
-macro_rules! scalar_div_assign_impl {
-    ($tp:ident, $dp:ident, $rhs:ty $(, $defer:tt)?) => {
-        impl<$tp: Copy + Num, const $dp: usize> ops::DivAssign<$rhs> for Scalar<$tp, $dp> {
-            fn div_assign(&mut self, rhs: $rhs) {
-                self.map_mut(|&x, _| x / $($defer)?rhs);
-            }
-        }
-    };
-}
-
-scalar_div_assign_impl!(N, D, N);
-scalar_div_assign_impl!(N, D, &N, *);
-
-macro_rules! scalar_div_impl {
-    ($tp:ident, $dp:ident, $lhs:ty, $rhs:ty $(, $defer:tt)?) => {
-        impl<$tp: Copy + Num, const $dp: usize> ops::Div<$rhs> for $lhs {
-            type Output = Scalar<$tp, $dp>;
-
-            fn div(self, rhs: $rhs) -> Self::Output {
-                self.map(|&x, _| x / $($defer)?rhs)
-            }
-        }
+impl<N: Copy + Num, const D: usize> SubAssign for Scalar<N, D> {
+    fn sub_assign(&mut self, rhs: Scalar<N, D>) {
+        self.into_iter()
+            .zip(rhs.into_iter())
+            .for_each(|(l, &r)| *l = *l - r);
     }
 }
 
-scalar_div_impl!(N, D, Scalar<N, D>, N);
-scalar_div_impl!(N, D, &Scalar<N, D>, N);
-scalar_div_impl!(N, D, Scalar<N, D>, &N, *);
-scalar_div_impl!(N, D, &Scalar<N, D>, &N, *);
+forward_ref_op_assign!(SubAssign, Scalar<N, D>, sub_assign, Scalar<N, D>, <N: Copy + Num, const D: usize>);
+
+impl<N: Copy + Num, const D: usize> Sub for Scalar<N, D> {
+    type Output = Scalar<N, D>;
+
+    fn sub(self, rhs: Scalar<N, D>) -> Self::Output {
+        self.into_iter()
+            .zip(rhs.into_iter())
+            .map(|(&l, &r)| l - r)
+            .collect()
+    }
+}
+
+forward_ref_binop!(Sub, Scalar<N, D>, sub, Scalar<N, D>, <N: Copy + Num, const D: usize>);
+
+impl<N: Copy + Num, const D: usize> MulAssign<N> for Scalar<N, D> {
+    fn mul_assign(&mut self, rhs: N) {
+        self.into_iter()
+            .for_each(move |l| *l = *l * rhs);
+    }
+}
+
+forward_ref_op_assign!(MulAssign, Scalar<N, D>, mul_assign, N, <N: Copy + Num, const D: usize>);
+
+impl<N: Copy + Num, const D: usize> Mul<N> for Scalar<N, D> {
+    type Output = Scalar<N, D>;
+
+    fn mul(self, rhs: N) -> Self::Output {
+        self.into_iter()
+            .map(move |&l| l * rhs)
+            .collect()
+    }
+}
+
+forward_ref_binop!(Mul, Scalar<N, D>, mul, N, <N: Copy + Num, const D: usize>);
+
+impl<N: Copy + Num + Sum, const D: usize> Mul for Scalar<N, D> {
+    type Output = N;
+
+    fn mul(self, rhs: Scalar<N, D>) -> Self::Output {
+        self.into_iter()
+            .zip(rhs.into_iter())
+            .map(|(&l, &r)| l * r)
+            .sum()
+    }
+}
+
+forward_ref_binop!(Mul, Scalar<N, D>, mul, Scalar<N, D>, <N: Copy + Num + Sum, const D: usize>);
+
+impl<N: Copy + Num, const D: usize> DivAssign<N> for Scalar<N, D> {
+    fn div_assign(&mut self, rhs: N) {
+        self.into_iter()
+            .for_each(move |l| *l = *l / rhs);
+    }
+}
+
+forward_ref_op_assign!(DivAssign, Scalar<N, D>, div_assign, N, <N: Copy + Num, const D: usize>);
+
+impl<N: Copy + Num, const D: usize> Div<N> for Scalar<N, D> {
+    type Output = Scalar<N, D>;
+
+    fn div(self, rhs: N) -> Self::Output {
+        self.into_iter()
+            .map(move |&l| l / rhs)
+            .collect()
+    }
+}
+
+forward_ref_binop!(Div, Scalar<N, D>, div, N, <N: Copy + Num, const D: usize>);
