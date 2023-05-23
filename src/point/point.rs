@@ -144,7 +144,7 @@ macro_rules! point_sub_assign_impl {
     ($tp:ident, $dp:ident, $rhs:ty) => {
         impl<$tp: Copy + Num, const $dp: usize> ops::SubAssign<$rhs> for Point<$tp, $dp> {
             fn sub_assign(&mut self, rhs: $rhs) {
-                self.scalar += rhs.scalar;
+                self.scalar -= rhs.scalar;
             }
         }
     }
@@ -159,7 +159,7 @@ macro_rules! point_sub_impl {
             type Output = $res<$tp, $dp>;
 
             fn sub(self, rhs: $rhs) -> Self::Output {
-                $res { scalar: self.scalar + rhs.scalar }
+                $res { scalar: self.scalar - rhs.scalar }
             }
         }
     }
@@ -183,7 +183,7 @@ point_sub_impl!(T, D, &Vector<T, D>, &Point<T, D>, Point);
 // Tests
 #[cfg(test)]
 mod tests {
-    use crate::{point, scalar};
+    use crate::{point, scalar, vector};
     use super::*;
 
     #[test]
@@ -206,5 +206,50 @@ mod tests {
         let pt = Point::from(&scalar![1, 2, 3]);
 
         assert_eq!(pt.scalar.elements, [1, 2, 3, 1]);
+    }
+
+    #[test]
+    fn point_add_assign() {
+        let mut a = point!{ x: 1, y: 2 };
+        a += vector!{ dx: 3, dy: 4 };
+
+        assert_eq!(a, point!{ x: 4, y: 6 });
+        assert_eq!(a.scalar[2], 1);
+    }
+
+    #[test]
+    fn point_add_vector() {
+        let a = point!{ x: 1, y: 2 };
+        let b = a + vector!{ dx: 3, dy: 4 };
+
+        assert_eq!(b, point!{ x: 4, y: 6 });
+        assert_eq!(b.scalar[2], 1);
+    }
+
+    #[test]
+    fn point_sub_assign() {
+        let mut a = point!{ x: 1, y: 2 };
+        a -= vector!{ dx: 3, dy: 4 };
+
+        assert_eq!(a, point!{ x: -2, y: -2 });
+        assert_eq!(a.scalar[2], 1);
+    }
+
+    #[test]
+    fn point_sub_vector() {
+        let a = point!{ x: 1, y: 2 };
+        let b = a - vector!{ dx: 3, dy: 4 };
+
+        assert_eq!(b, point!{ x: -2, y: -2 });
+        assert_eq!(b.scalar[2], 1);
+    }
+
+    #[test]
+    fn point_sub_point() {
+        let a = point!{ x: 1, y: 2 };
+        let b = a - point!{ x: 3, y: 4 };
+
+        assert_eq!(b, vector!{ dx: -2, dy: -2 });
+        assert_eq!(b.scalar[2], 0);
     }
 }
