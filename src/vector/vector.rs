@@ -121,11 +121,12 @@ impl<T: Copy + Num, const D: usize> Dimension<D> for Vector<T, D> {
 
 macro_rules! vector_from_array_impl {
     ($dim:literal) => {
-        impl<T: Copy + Num> From<&[T; { $dim - 1 }]> for Vector<T, $dim> {
-            fn from(value: &[T; { $dim - 1 }]) -> Self {
+        #[cfg(not(feature = "generic_const_exprs"))]
+        impl<T: Copy + Num> From<&[T; $dim]> for Vector<T, { $dim + 1 }> {
+            fn from(value: &[T; $dim]) -> Self {
                 let mut scalar = Scalar::zero();
 
-                for n in 0..$dim - 1 {
+                for n in 0..$dim {
                     scalar[n] = value[n];
                 }
 
@@ -135,22 +136,31 @@ macro_rules! vector_from_array_impl {
     };
 }
 
+vector_from_array_impl!(2);
 vector_from_array_impl!(3);
-vector_from_array_impl!(4);
 
 macro_rules! vector_from_scalar_impl {
     ($dim:literal) => {
-        impl<T: Copy + Num> From<&Scalar<T, { $dim - 1 }>> for Vector<T, $dim> {
+        #[cfg(not(feature = "generic_const_exprs"))]
+        impl<T: Copy + Num> From<&Scalar<T, $dim>> for Vector<T, { $dim + 1 }> {
             #[inline]
-            fn from(value: &Scalar<T, { $dim - 1 }>) -> Self {
+            fn from(value: &Scalar<T, $dim>) -> Self {
                 Vector::from(&value.elements)
             }
         }
     };
 }
 
+vector_from_scalar_impl!(2);
 vector_from_scalar_impl!(3);
-vector_from_scalar_impl!(4);
+
+#[cfg(feature = "generic_const_exprs")]
+impl<T: Copy + Num, const D: usize> From<&Scalar<T, D>> for Vector<T, { D + 1 }> {
+    #[inline]
+    fn from(value: &Scalar<T, D>) -> Self {
+        Point::from(&value.elements)
+    }
+}
 
 impl<T: Copy + Num, const D: usize> Zero for Vector<T, D> {
     #[inline]

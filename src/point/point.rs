@@ -56,15 +56,15 @@ impl<T: Copy + Num, const D: usize> ScalarNum<T> for Point<T, D> {
 macro_rules! point_from_array_impl {
     ($dim:literal) => {
         #[cfg(not(feature = "generic_const_exprs"))]
-        impl<T: Copy + Num> From<&[T; { $dim - 1 }]> for Point<T, $dim> {
-            fn from(value: &[T; { $dim - 1 }]) -> Self {
+        impl<T: Copy + Num> From<&[T; $dim]> for Point<T, { $dim + 1 }> {
+            fn from(value: &[T; $dim]) -> Self {
                 let mut scalar = Scalar::zero();
 
-                for n in 0..$dim - 1 {
+                for n in 0..$dim {
                     scalar[n] = value[n];
                 }
 
-                scalar[$dim - 1] = T::one();
+                scalar[$dim] = T::one();
 
                 Point { scalar }
             }
@@ -72,8 +72,8 @@ macro_rules! point_from_array_impl {
     };
 }
 
+point_from_array_impl!(2);
 point_from_array_impl!(3);
-point_from_array_impl!(4);
 
 #[cfg(feature = "generic_const_exprs")]
 impl<T: Copy + Num, const D: usize> From<&[T; D]> for Point<T, { D + 1 }> {
@@ -93,17 +93,17 @@ impl<T: Copy + Num, const D: usize> From<&[T; D]> for Point<T, { D + 1 }> {
 macro_rules! point_from_scalar_impl {
     ($dim:literal) => {
         #[cfg(not(feature = "generic_const_exprs"))]
-        impl<T: Copy + Num> From<&Scalar<T, { $dim - 1 }>> for Point<T, $dim> {
+        impl<T: Copy + Num> From<&Scalar<T, $dim>> for Point<T, { $dim + 1 }> {
             #[inline]
-            fn from(value: &Scalar<T, { $dim - 1 }>) -> Self {
+            fn from(value: &Scalar<T, $dim>) -> Self {
                 Point::from(&value.elements)
             }
         }
     };
 }
 
+point_from_scalar_impl!(2);
 point_from_scalar_impl!(3);
-point_from_scalar_impl!(4);
 
 #[cfg(feature = "generic_const_exprs")]
 impl<T: Copy + Num, const D: usize> From<&Scalar<T, D>> for Point<T, { D + 1 }> {

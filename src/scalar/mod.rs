@@ -1,4 +1,4 @@
-pub mod macros;
+mod macros;
 pub mod scalar;
 
 pub use crate::scalar::scalar::*;
