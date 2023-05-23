@@ -24,7 +24,7 @@ where
     where
         U: BoxableScalar<N, Output = N> + Dimension<D>
     {
-        (0..D).all(|idx| (
+        (0..D - 1).all(|idx| (
             match self.start_bound() {
                 Included(start) => Included(&start[idx]),
                 Excluded(start) => Excluded(&start[idx]),

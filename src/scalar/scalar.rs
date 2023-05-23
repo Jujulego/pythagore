@@ -23,7 +23,7 @@ pub struct Scalar<N: Num, const D: usize> {
 impl<N: Copy + Num, const D: usize> Scalar<N, D> {
     /// Returns iterator on point elements
     #[inline]
-    fn iter(&self) -> Iter<'_, N> {
+    pub fn iter(&self) -> Iter<'_, N> {
         self.elements.iter()
     }
 
