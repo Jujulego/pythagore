@@ -6,14 +6,14 @@ use crate::Scalar;
 use crate::traits::{Dimension, BoxableScalar};
 use crate::Vector;
 
-/// `Point<T, const D: usize>` structure for n dimension points
+/// `Point<N, const D: usize>` structure for n dimension points
 #[derive(Clone, Copy, Debug, Default, Eq)]
-pub struct Point<T: Copy + Num, const D: usize> {
-    pub(crate) scalar: Scalar<T, D>,
+pub struct Point<N: Copy + Num, const D: usize> {
+    pub(crate) scalar: Scalar<N, D>,
 }
 
 // Methods
-impl<T: Copy + Num, const D: usize> Point<T, D> {
+impl<N: Copy + Num, const D: usize> Point<N, D> {
     /// Returns origin point
     ///
     /// ## Example
@@ -25,7 +25,7 @@ impl<T: Copy + Num, const D: usize> Point<T, D> {
     /// ```
     pub fn origin() -> Self {
         let mut pt = Point { scalar: Scalar::zero() };
-        pt.scalar[D - 1] = T::one();
+        pt.scalar[D - 1] = N::one();
 
         pt
     }
@@ -37,7 +37,7 @@ impl<T: Copy + Num, const D: usize> Point<T, D> {
 }
 
 // Utils
-impl<T: Copy + Num, const D: usize> Dimension<D> for Point<T, D> {
+impl<N: Copy + Num, const D: usize> Dimension<D> for Point<N, D> {
     /// Returns point's dimension
     #[inline]
     fn dimension() -> usize {
@@ -45,10 +45,10 @@ impl<T: Copy + Num, const D: usize> Dimension<D> for Point<T, D> {
     }
 }
 
-impl<T: Copy + Num, const D: usize> BoxableScalar<T> for Point<T, D> {
+impl<N: Copy + Num, const D: usize> BoxableScalar<N> for Point<N, D> {
     /// Returns iterator on point elements
     #[inline]
-    fn iter(&self) -> Iter<'_, T> {
+    fn iter(&self) -> Iter<'_, N> {
         self.scalar[..D-1].iter()
     }
 }
@@ -56,15 +56,15 @@ impl<T: Copy + Num, const D: usize> BoxableScalar<T> for Point<T, D> {
 macro_rules! point_from_array_impl {
     ($dim:literal) => {
         #[cfg(not(feature = "generic_const_exprs"))]
-        impl<T: Copy + Num> From<&[T; $dim]> for Point<T, { $dim + 1 }> {
-            fn from(value: &[T; $dim]) -> Self {
+        impl<N: Copy + Num> From<&[N; $dim]> for Point<N, { $dim + 1 }> {
+            fn from(value: &[N; $dim]) -> Self {
                 let mut scalar = Scalar::zero();
 
                 for n in 0..$dim {
                     scalar[n] = value[n];
                 }
 
-                scalar[$dim] = T::one();
+                scalar[$dim] = N::one();
 
                 Point { scalar }
             }
@@ -76,15 +76,15 @@ point_from_array_impl!(2);
 point_from_array_impl!(3);
 
 #[cfg(feature = "generic_const_exprs")]
-impl<T: Copy + Num, const D: usize> From<&[T; D]> for Point<T, { D + 1 }> {
-    fn from(value: &[T; D]) -> Self {
+impl<N: Copy + Num, const D: usize> From<&[N; D]> for Point<N, { D + 1 }> {
+    fn from(value: &[N; D]) -> Self {
         let mut scalar = Scalar::zero();
 
         for n in 0..D {
             scalar[n] = value[n];
         }
 
-        scalar[D] = T::one();
+        scalar[D] = N::one();
 
         Point { scalar }
     }
@@ -93,9 +93,9 @@ impl<T: Copy + Num, const D: usize> From<&[T; D]> for Point<T, { D + 1 }> {
 macro_rules! point_from_scalar_impl {
     ($dim:literal) => {
         #[cfg(not(feature = "generic_const_exprs"))]
-        impl<T: Copy + Num> From<&Scalar<T, $dim>> for Point<T, { $dim + 1 }> {
+        impl<N: Copy + Num> From<&Scalar<N, $dim>> for Point<N, { $dim + 1 }> {
             #[inline]
-            fn from(value: &Scalar<T, $dim>) -> Self {
+            fn from(value: &Scalar<N, $dim>) -> Self {
                 Point::from(&value.elements)
             }
         }
@@ -106,21 +106,21 @@ point_from_scalar_impl!(2);
 point_from_scalar_impl!(3);
 
 #[cfg(feature = "generic_const_exprs")]
-impl<T: Copy + Num, const D: usize> From<&Scalar<T, D>> for Point<T, { D + 1 }> {
+impl<N: Copy + Num, const D: usize> From<&Scalar<N, D>> for Point<N, { D + 1 }> {
     #[inline]
-    fn from(value: &Scalar<T, D>) -> Self {
+    fn from(value: &Scalar<N, D>) -> Self {
         Point::from(&value.elements)
     }
 }
 
 // Operators
-impl<T: Copy + Num, const D: usize> PartialEq for Point<T, D> {
+impl<N: Copy + Num, const D: usize> PartialEq for Point<N, D> {
     fn eq(&self, other: &Self) -> bool {
         self.scalar == other.scalar
     }
 }
 
-impl<T: Copy + Num, I: SliceIndex<[T]>, const D: usize> ops::Index<I> for Point<T, D> {
+impl<N: Copy + Num, I: SliceIndex<[N]>, const D: usize> ops::Index<I> for Point<N, D> {
     type Output = I::Output;
 
     fn index(&self, index: I) -> &Self::Output {
@@ -128,7 +128,7 @@ impl<T: Copy + Num, I: SliceIndex<[T]>, const D: usize> ops::Index<I> for Point<
     }
 }
 
-impl<T: Copy + Num, I: SliceIndex<[T]>, const D: usize> ops::IndexMut<I> for Point<T, D> {
+impl<N: Copy + Num, I: SliceIndex<[N]>, const D: usize> ops::IndexMut<I> for Point<N, D> {
     fn index_mut(&mut self, index: I) -> &mut Self::Output {
         &mut self.scalar[index]
     }
@@ -144,8 +144,8 @@ macro_rules! point_add_assign_impl {
     }
 }
 
-point_add_assign_impl!(T, D, Vector<T, D>);
-point_add_assign_impl!(T, D, &Vector<T, D>);
+point_add_assign_impl!(N, D, Vector<N, D>);
+point_add_assign_impl!(N, D, &Vector<N, D>);
 
 macro_rules! point_add_impl {
     ($tp:ident, $dp:ident, $lhs:ty, $rhs:ty) => {
@@ -159,15 +159,15 @@ macro_rules! point_add_impl {
     }
 }
 
-point_add_impl!(T, D, Point<T, D>, Vector<T, D>);
-point_add_impl!(T, D, &Point<T, D>, Vector<T, D>);
-point_add_impl!(T, D, Point<T, D>, &Vector<T, D>);
-point_add_impl!(T, D, &Point<T, D>, &Vector<T, D>);
+point_add_impl!(N, D, Point<N, D>, Vector<N, D>);
+point_add_impl!(N, D, &Point<N, D>, Vector<N, D>);
+point_add_impl!(N, D, Point<N, D>, &Vector<N, D>);
+point_add_impl!(N, D, &Point<N, D>, &Vector<N, D>);
 
-point_add_impl!(T, D, Vector<T, D>, Point<T, D>);
-point_add_impl!(T, D, &Vector<T, D>, Point<T, D>);
-point_add_impl!(T, D, Vector<T, D>, &Point<T, D>);
-point_add_impl!(T, D, &Vector<T, D>, &Point<T, D>);
+point_add_impl!(N, D, Vector<N, D>, Point<N, D>);
+point_add_impl!(N, D, &Vector<N, D>, Point<N, D>);
+point_add_impl!(N, D, Vector<N, D>, &Point<N, D>);
+point_add_impl!(N, D, &Vector<N, D>, &Point<N, D>);
 
 macro_rules! point_sub_assign_impl {
     ($tp:ident, $dp:ident, $rhs:ty) => {
@@ -179,8 +179,8 @@ macro_rules! point_sub_assign_impl {
     }
 }
 
-point_sub_assign_impl!(T, D, Vector<T, D>);
-point_sub_assign_impl!(T, D, &Vector<T, D>);
+point_sub_assign_impl!(N, D, Vector<N, D>);
+point_sub_assign_impl!(N, D, &Vector<N, D>);
 
 macro_rules! point_sub_impl {
     ($tp:ident, $dp:ident, $lhs:ty, $rhs:ty, $res:tt) => {
@@ -194,20 +194,20 @@ macro_rules! point_sub_impl {
     }
 }
 
-point_sub_impl!(T, D, Point<T, D>, Point<T, D>, Vector);
-point_sub_impl!(T, D, &Point<T, D>, Point<T, D>, Vector);
-point_sub_impl!(T, D, Point<T, D>, &Point<T, D>, Vector);
-point_sub_impl!(T, D, &Point<T, D>, &Point<T, D>, Vector);
+point_sub_impl!(N, D, Point<N, D>, Point<N, D>, Vector);
+point_sub_impl!(N, D, &Point<N, D>, Point<N, D>, Vector);
+point_sub_impl!(N, D, Point<N, D>, &Point<N, D>, Vector);
+point_sub_impl!(N, D, &Point<N, D>, &Point<N, D>, Vector);
 
-point_sub_impl!(T, D, Point<T, D>, Vector<T, D>, Point);
-point_sub_impl!(T, D, &Point<T, D>, Vector<T, D>, Point);
-point_sub_impl!(T, D, Point<T, D>, &Vector<T, D>, Point);
-point_sub_impl!(T, D, &Point<T, D>, &Vector<T, D>, Point);
+point_sub_impl!(N, D, Point<N, D>, Vector<N, D>, Point);
+point_sub_impl!(N, D, &Point<N, D>, Vector<N, D>, Point);
+point_sub_impl!(N, D, Point<N, D>, &Vector<N, D>, Point);
+point_sub_impl!(N, D, &Point<N, D>, &Vector<N, D>, Point);
 
-point_sub_impl!(T, D, Vector<T, D>, Point<T, D>, Point);
-point_sub_impl!(T, D, &Vector<T, D>, Point<T, D>, Point);
-point_sub_impl!(T, D, Vector<T, D>, &Point<T, D>, Point);
-point_sub_impl!(T, D, &Vector<T, D>, &Point<T, D>, Point);
+point_sub_impl!(N, D, Vector<N, D>, Point<N, D>, Point);
+point_sub_impl!(N, D, &Vector<N, D>, Point<N, D>, Point);
+point_sub_impl!(N, D, Vector<N, D>, &Point<N, D>, Point);
+point_sub_impl!(N, D, &Vector<N, D>, &Point<N, D>, Point);
 
 // Tests
 #[cfg(test)]

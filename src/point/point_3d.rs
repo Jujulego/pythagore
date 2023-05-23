@@ -3,10 +3,10 @@ use num_traits::Num;
 use crate::Point;
 
 // Type
-pub type Point3D<T> = Point<T, 4>;
+pub type Point3D<N> = Point<N, 4>;
 
 // Methods
-impl<T: Copy + Num> Point3D<T> {
+impl<N: Copy + Num> Point3D<N> {
     /// Returns ref on x element of point
     ///
     /// ## Example
@@ -16,7 +16,7 @@ impl<T: Copy + Num> Point3D<T> {
     /// assert_eq!(point!{ x: 1, y: 2, z: 3 }.x(), &1);
     /// ```
     #[inline]
-    pub fn x(&self) -> &T {
+    pub fn x(&self) -> &N {
         &self.scalar[0]
     }
 
@@ -32,7 +32,7 @@ impl<T: Copy + Num> Point3D<T> {
     /// assert_eq!(v.x(), &5);
     /// ```
     #[inline]
-    pub fn x_mut(&mut self) -> &mut T {
+    pub fn x_mut(&mut self) -> &mut N {
         &mut self.scalar[0]
     }
 
@@ -45,7 +45,7 @@ impl<T: Copy + Num> Point3D<T> {
     /// assert_eq!(point!{ x: 1, y: 2, z: 3 }.y(), &2);
     /// ```
     #[inline]
-    pub fn y(&self) -> &T {
+    pub fn y(&self) -> &N {
         &self.scalar[1]
     }
 
@@ -61,7 +61,7 @@ impl<T: Copy + Num> Point3D<T> {
     /// assert_eq!(v.y(), &5);
     /// ```
     #[inline]
-    pub fn y_mut(&mut self) -> &mut T {
+    pub fn y_mut(&mut self) -> &mut N {
         &mut self.scalar[1]
     }
 
@@ -74,7 +74,7 @@ impl<T: Copy + Num> Point3D<T> {
     /// assert_eq!(point!{ x: 1, y: 2, z: 3 }.z(), &3);
     /// ```
     #[inline]
-    pub fn z(&self) -> &T {
+    pub fn z(&self) -> &N {
         &self.scalar[2]
     }
 
@@ -90,7 +90,7 @@ impl<T: Copy + Num> Point3D<T> {
     /// assert_eq!(v.z(), &5);
     /// ```
     #[inline]
-    pub fn z_mut(&mut self) -> &mut T {
+    pub fn z_mut(&mut self) -> &mut N {
         &mut self.scalar[2]
     }
 }
