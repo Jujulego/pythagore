@@ -15,6 +15,7 @@ pub struct Point<T: Copy + Num, const D: usize> {
 // Methods
 impl<T: Copy + Num, const D: usize> Point<T, D> {
     /// Returns iterator on point elements
+    #[inline]
     pub fn iter(&self) -> Iter<'_, T> {
         self.scalar[..D-1].iter()
     }

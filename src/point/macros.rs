@@ -5,14 +5,14 @@
 /// use pythagore::{point, Point};
 ///
 /// // 2d point
-/// assert_eq!(point!{ x: 1, y: 2 }, Point::from([1, 2]));
+/// assert_eq!(point!{ x: 1, y: 2 }, Point::from(&[1, 2]));
 ///
 /// // 3d point
-/// assert_eq!(point!{ x: 1, y: 2, z: 3 }, Point::from([1, 2, 3]));
+/// assert_eq!(point!{ x: 1, y: 2, z: 3 }, Point::from(&[1, 2, 3]));
 ///
 /// // Array based
-/// assert_eq!(point![1; 3], Point::from([1, 1, 1]));
-/// assert_eq!(point![1, 2, 3], Point::from([1, 2, 3]));
+/// assert_eq!(point![1; 3], Point::from(&[1, 1, 1]));
+/// assert_eq!(point![1, 2, 3], Point::from(&[1, 2, 3]));
 /// ```
 #[macro_export]
 macro_rules! point {
