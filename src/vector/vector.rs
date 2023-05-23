@@ -14,6 +14,7 @@ pub struct Vector<T: Copy + Num, const D: usize> {
 // Methods
 impl<T: Copy + Num, const D: usize> Vector<T, D> {
     /// Returns iterator on vector elements
+    #[inline]
     pub fn iter(&self) -> Iter<'_, T> {
         self.scalar[..D-1].iter()
     }
@@ -27,11 +28,13 @@ impl<T: Copy + Num, const D: usize> Vector<T, D> {
     /// assert_eq!(Vector2D::null(), vector!{ dx: 0, dy: 0 });
     /// assert_eq!(Vector3D::null(), vector!{ dx: 0, dy: 0, dz: 0 });
     /// ```
+    #[inline]
     pub fn null() -> Self {
         Self::zero()
     }
 
     /// Returns true if vector is null
+    #[inline]
     pub fn is_null(&self) -> bool {
         self.is_zero()
     }
@@ -150,10 +153,12 @@ vector_from_scalar_impl!(3);
 vector_from_scalar_impl!(4);
 
 impl<T: Copy + Num, const D: usize> Zero for Vector<T, D> {
+    #[inline]
     fn zero() -> Self {
         Vector { scalar: Scalar::zero() }
     }
 
+    #[inline]
     fn is_zero(&self) -> bool {
         self.scalar.is_zero()
     }
@@ -390,5 +395,92 @@ mod tests {
         let v = Vector::from(&scalar![1, 2, 3]);
 
         assert_eq!(v.scalar.elements, [1, 2, 3, 0]);
+    }
+
+    #[test]
+    fn vector_neg_operator() {
+        let v = -vector!{ dx: 1, dy: 2 };
+
+        assert_eq!(v, vector!{ dx: -1, dy: -2 });
+        assert_eq!(v.scalar[2], 0);
+    }
+
+    #[test]
+    fn vector_add_assign() {
+        let mut v = vector!{ dx: 1, dy: 2 };
+        v += vector!{ dx: 3, dy: 4 };
+
+        assert_eq!(v, vector!{ dx: 4, dy: 6 });
+        assert_eq!(v.scalar[2], 0);
+    }
+
+    #[test]
+    fn vector_add_vector() {
+        let v = vector!{ dx: 1, dy: 2 };
+        let u = v + vector!{ dx: 3, dy: 4 };
+
+        assert_eq!(u, vector!{ dx: 4, dy: 6 });
+        assert_eq!(u.scalar[2], 0);
+    }
+
+    #[test]
+    fn vector_sub_assign() {
+        let mut v = vector!{ dx: 1, dy: 2 };
+        v -= vector!{ dx: 3, dy: 4 };
+
+        assert_eq!(v, vector!{ dx: -2, dy: -2 });
+        assert_eq!(v.scalar[2], 0);
+    }
+
+    #[test]
+    fn vector_sub_vector() {
+        let v = vector!{ dx: 1, dy: 2 };
+        let u = v - vector!{ dx: 3, dy: 4 };
+
+        assert_eq!(u, vector!{ dx: -2, dy: -2 });
+        assert_eq!(u.scalar[2], 0);
+    }
+
+    #[test]
+    fn vector_mul_assign() {
+        let mut v = vector!{ dx: 1, dy: 2 };
+        v *= 2;
+
+        assert_eq!(v, vector!{ dx: 2, dy: 4 });
+        assert_eq!(v.scalar[2], 0);
+    }
+
+    #[test]
+    fn vector_mul_num() {
+        let v = vector!{ dx: 1, dy: 2 };
+        let u = v * 2;
+
+        assert_eq!(u, vector!{ dx: 2, dy: 4 });
+        assert_eq!(u.scalar[2], 0);
+    }
+
+    #[test]
+    fn vector_mul_vector() {
+        let r = vector!{ dx: 1, dy: 2 } * vector!{ dx: 3, dy: 4 };
+
+        assert_eq!(r, 11);
+    }
+
+    #[test]
+    fn vector_div_assign() {
+        let mut v = vector!{ dx: 2, dy: 4 };
+        v /= 2;
+
+        assert_eq!(v, vector!{ dx: 1, dy: 2 });
+        assert_eq!(v.scalar[2], 0);
+    }
+
+    #[test]
+    fn vector_div_num() {
+        let v = vector!{ dx: 2, dy: 4 };
+        let u = v / 2;
+
+        assert_eq!(u, vector!{ dx: 1, dy: 2 });
+        assert_eq!(u.scalar[2], 0);
     }
 }
