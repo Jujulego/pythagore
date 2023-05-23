@@ -4,7 +4,7 @@ use num_traits::{Num, Signed, Zero};
 
 use crate::traits::{Dimension, BoxableScalar};
 
-/// `Scalar<T, const D: usize>` utility structure for n dimension compute
+/// `Scalar<N, const D: usize>` utility structure for n dimension compute
 ///
 /// ## Usage
 /// ```
@@ -15,14 +15,14 @@ use crate::traits::{Dimension, BoxableScalar};
 /// assert_eq!(s[0], 1);
 /// ```
 #[derive(Clone, Copy, Debug, Eq)]
-pub struct Scalar<T: Num, const D: usize> {
-    pub(crate) elements: [T; D],
+pub struct Scalar<N: Num, const D: usize> {
+    pub(crate) elements: [N; D],
 }
 
 // Methods
-impl<T: Copy + Num, const D: usize> Scalar<T, D> {
+impl<N: Copy + Num, const D: usize> Scalar<N, D> {
     #[inline]
-    fn map(&self, op: impl Fn(&T, usize) -> T) -> Self {
+    fn map(&self, op: impl Fn(&N, usize) -> N) -> Self {
         let mut copy = self.clone();
         copy.map_mut(op);
 
@@ -30,7 +30,7 @@ impl<T: Copy + Num, const D: usize> Scalar<T, D> {
     }
 
     #[inline]
-    fn map_mut(&mut self, op: impl Fn(&T, usize) -> T) {
+    fn map_mut(&mut self, op: impl Fn(&N, usize) -> N) {
         for n in 0..D {
             self[n] = op(&self[n], n);
         }
@@ -38,15 +38,15 @@ impl<T: Copy + Num, const D: usize> Scalar<T, D> {
 }
 
 // Utils
-impl<T: Copy + Num, const D: usize> Default for Scalar<T, D> {
+impl<N: Copy + Num, const D: usize> Default for Scalar<N, D> {
     fn default() -> Self {
-        Scalar::from([T::zero(); D])
+        Scalar::from([N::zero(); D])
     }
 }
 
-impl<T: Num, const D: usize> Dimension<D> for Scalar<T, D> {}
+impl<N: Num, const D: usize> Dimension<D> for Scalar<N, D> {}
 
-impl<T: Num, const D: usize> From<[T; D]> for Scalar<T, D> {
+impl<N: Num, const D: usize> From<[N; D]> for Scalar<N, D> {
     /// Builds a new scalar form given fixed array
     ///
     /// ## Example
@@ -55,14 +55,14 @@ impl<T: Num, const D: usize> From<[T; D]> for Scalar<T, D> {
     ///
     /// assert_eq!(Scalar::from([1, 2, 3]), scalar![1, 2, 3]);
     /// ```
-    fn from(value: [T; D]) -> Self {
+    fn from(value: [N; D]) -> Self {
         Scalar { elements: value }
     }
 }
 
-impl<T: Copy + Num, const D: usize> Zero for Scalar<T, D> {
+impl<N: Copy + Num, const D: usize> Zero for Scalar<N, D> {
     fn zero() -> Self {
-        Scalar::from([T::zero(); D])
+        Scalar::from([N::zero(); D])
     }
 
     fn is_zero(&self) -> bool {
@@ -70,21 +70,21 @@ impl<T: Copy + Num, const D: usize> Zero for Scalar<T, D> {
     }
 }
 
-impl<T: Copy + Num, const D: usize> BoxableScalar<T> for Scalar<T, D> {
+impl<N: Copy + Num, const D: usize> BoxableScalar<N> for Scalar<N, D> {
     /// Returns iterator on scalar elements
-    fn iter(&self) -> Iter<'_, T> {
+    fn iter(&self) -> Iter<'_, N> {
         self.elements.iter()
     }
 }
 
 // Operators
-impl<T: Num, const D: usize> PartialEq for Scalar<T, D> {
+impl<N: Num, const D: usize> PartialEq for Scalar<N, D> {
     fn eq(&self, other: &Self) -> bool {
         self.elements == other.elements
     }
 }
 
-impl<T: Num, I: SliceIndex<[T]>, const D: usize> ops::Index<I> for Scalar<T, D> {
+impl<N: Num, I: SliceIndex<[N]>, const D: usize> ops::Index<I> for Scalar<N, D> {
     type Output = I::Output;
 
     fn index(&self, index: I) -> &Self::Output {
@@ -92,7 +92,7 @@ impl<T: Num, I: SliceIndex<[T]>, const D: usize> ops::Index<I> for Scalar<T, D> 
     }
 }
 
-impl<T: Num, I: SliceIndex<[T]>, const D: usize> ops::IndexMut<I> for Scalar<T, D> {
+impl<N: Num, I: SliceIndex<[N]>, const D: usize> ops::IndexMut<I> for Scalar<N, D> {
     fn index_mut(&mut self, index: I) -> &mut Self::Output {
         &mut self.elements[index]
     }
@@ -110,8 +110,8 @@ macro_rules! scalar_neg_impl {
     };
 }
 
-scalar_neg_impl!(T, D, Scalar<T, D>);
-scalar_neg_impl!(T, D, &Scalar<T, D>);
+scalar_neg_impl!(N, D, Scalar<N, D>);
+scalar_neg_impl!(N, D, &Scalar<N, D>);
 
 macro_rules! scalar_add_assign_impl {
     ($tp:ident, $dp:ident, $rhs:ty) => {
@@ -123,8 +123,8 @@ macro_rules! scalar_add_assign_impl {
     };
 }
 
-scalar_add_assign_impl!(T, D, Scalar<T, D>);
-scalar_add_assign_impl!(T, D, &Scalar<T, D>);
+scalar_add_assign_impl!(N, D, Scalar<N, D>);
+scalar_add_assign_impl!(N, D, &Scalar<N, D>);
 
 macro_rules! scalar_add_impl {
     ($tp:ident, $dp:ident, $lhs:ty, $rhs:ty) => {
@@ -138,10 +138,10 @@ macro_rules! scalar_add_impl {
     }
 }
 
-scalar_add_impl!(T, D, Scalar<T, D>, Scalar<T, D>);
-scalar_add_impl!(T, D, &Scalar<T, D>, Scalar<T, D>);
-scalar_add_impl!(T, D, Scalar<T, D>, &Scalar<T, D>);
-scalar_add_impl!(T, D, &Scalar<T, D>, &Scalar<T, D>);
+scalar_add_impl!(N, D, Scalar<N, D>, Scalar<N, D>);
+scalar_add_impl!(N, D, &Scalar<N, D>, Scalar<N, D>);
+scalar_add_impl!(N, D, Scalar<N, D>, &Scalar<N, D>);
+scalar_add_impl!(N, D, &Scalar<N, D>, &Scalar<N, D>);
 
 macro_rules! scalar_sub_assign_impl {
     ($tp:ident, $dp:ident, $rhs:ty) => {
@@ -153,8 +153,8 @@ macro_rules! scalar_sub_assign_impl {
     };
 }
 
-scalar_sub_assign_impl!(T, D, Scalar<T, D>);
-scalar_sub_assign_impl!(T, D, &Scalar<T, D>);
+scalar_sub_assign_impl!(N, D, Scalar<N, D>);
+scalar_sub_assign_impl!(N, D, &Scalar<N, D>);
 
 macro_rules! scalar_sub_impl {
     ($tp:ident, $dp:ident, $lhs:ty, $rhs:ty) => {
@@ -168,10 +168,10 @@ macro_rules! scalar_sub_impl {
     }
 }
 
-scalar_sub_impl!(T, D, Scalar<T, D>, Scalar<T, D>);
-scalar_sub_impl!(T, D, &Scalar<T, D>, Scalar<T, D>);
-scalar_sub_impl!(T, D, Scalar<T, D>, &Scalar<T, D>);
-scalar_sub_impl!(T, D, &Scalar<T, D>, &Scalar<T, D>);
+scalar_sub_impl!(N, D, Scalar<N, D>, Scalar<N, D>);
+scalar_sub_impl!(N, D, &Scalar<N, D>, Scalar<N, D>);
+scalar_sub_impl!(N, D, Scalar<N, D>, &Scalar<N, D>);
+scalar_sub_impl!(N, D, &Scalar<N, D>, &Scalar<N, D>);
 
 macro_rules! scalar_mul_assign_impl {
     ($tp:ident, $dp:ident, $rhs:ty $(, $defer:tt)?) => {
@@ -183,8 +183,8 @@ macro_rules! scalar_mul_assign_impl {
     };
 }
 
-scalar_mul_assign_impl!(T, D, T);
-scalar_mul_assign_impl!(T, D, &T, *);
+scalar_mul_assign_impl!(N, D, N);
+scalar_mul_assign_impl!(N, D, &N, *);
 
 macro_rules! scalar_mul_impl {
     ($tp:ident, $dp:ident, $lhs:ty, $rhs:ty $(, $defer:tt)?) => {
@@ -198,10 +198,10 @@ macro_rules! scalar_mul_impl {
     }
 }
 
-scalar_mul_impl!(T, D, Scalar<T, D>, T);
-scalar_mul_impl!(T, D, &Scalar<T, D>, T);
-scalar_mul_impl!(T, D, Scalar<T, D>, &T, *);
-scalar_mul_impl!(T, D, &Scalar<T, D>, &T, *);
+scalar_mul_impl!(N, D, Scalar<N, D>, N);
+scalar_mul_impl!(N, D, &Scalar<N, D>, N);
+scalar_mul_impl!(N, D, Scalar<N, D>, &N, *);
+scalar_mul_impl!(N, D, &Scalar<N, D>, &N, *);
 
 macro_rules! scalar_dot_scalar_impl {
     ($tp:ident, $dp:ident, $lhs:ty, $rhs:ty) => {
@@ -209,7 +209,7 @@ macro_rules! scalar_dot_scalar_impl {
             type Output = $tp;
 
             fn mul(self, rhs: $rhs) -> Self::Output {
-                let mut result = T::zero();
+                let mut result = N::zero();
 
                 for n in 0..D {
                     result += self[n] * rhs[n];
@@ -221,10 +221,10 @@ macro_rules! scalar_dot_scalar_impl {
     };
 }
 
-scalar_dot_scalar_impl!(T, D, Scalar<T, D>, Scalar<T, D>);
-scalar_dot_scalar_impl!(T, D, &Scalar<T, D>, Scalar<T, D>);
-scalar_dot_scalar_impl!(T, D, Scalar<T, D>, &Scalar<T, D>);
-scalar_dot_scalar_impl!(T, D, &Scalar<T, D>, &Scalar<T, D>);
+scalar_dot_scalar_impl!(N, D, Scalar<N, D>, Scalar<N, D>);
+scalar_dot_scalar_impl!(N, D, &Scalar<N, D>, Scalar<N, D>);
+scalar_dot_scalar_impl!(N, D, Scalar<N, D>, &Scalar<N, D>);
+scalar_dot_scalar_impl!(N, D, &Scalar<N, D>, &Scalar<N, D>);
 
 macro_rules! scalar_div_assign_impl {
     ($tp:ident, $dp:ident, $rhs:ty $(, $defer:tt)?) => {
@@ -236,8 +236,8 @@ macro_rules! scalar_div_assign_impl {
     };
 }
 
-scalar_div_assign_impl!(T, D, T);
-scalar_div_assign_impl!(T, D, &T, *);
+scalar_div_assign_impl!(N, D, N);
+scalar_div_assign_impl!(N, D, &N, *);
 
 macro_rules! scalar_div_impl {
     ($tp:ident, $dp:ident, $lhs:ty, $rhs:ty $(, $defer:tt)?) => {
@@ -251,7 +251,7 @@ macro_rules! scalar_div_impl {
     }
 }
 
-scalar_div_impl!(T, D, Scalar<T, D>, T);
-scalar_div_impl!(T, D, &Scalar<T, D>, T);
-scalar_div_impl!(T, D, Scalar<T, D>, &T, *);
-scalar_div_impl!(T, D, &Scalar<T, D>, &T, *);
+scalar_div_impl!(N, D, Scalar<N, D>, N);
+scalar_div_impl!(N, D, &Scalar<N, D>, N);
+scalar_div_impl!(N, D, Scalar<N, D>, &N, *);
+scalar_div_impl!(N, D, &Scalar<N, D>, &N, *);
