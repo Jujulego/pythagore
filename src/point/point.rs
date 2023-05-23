@@ -52,9 +52,17 @@ impl<T: Copy + Num, const D: usize> Dimension<D> for Point<T, D> {
 
 macro_rules! point_from_array_impl {
     ($dim:literal) => {
-        impl<T: Copy + Num> From<[T; { $dim - 1 }]> for Point<T, $dim> {
-            fn from(value: [T; { $dim - 1 }]) -> Self {
-                Scalar::from(value).into()
+        impl<T: Copy + Num> From<&[T; { $dim - 1 }]> for Point<T, $dim> {
+            fn from(value: &[T; { $dim - 1 }]) -> Self {
+                let mut scalar = Scalar::zero();
+
+                for n in 0..$dim - 1 {
+                    scalar[n] = value[n];
+                }
+
+                scalar[$dim - 1] = T::one();
+
+                Point { scalar }
             }
         }
     };
@@ -65,17 +73,9 @@ point_from_array_impl!(4);
 
 macro_rules! point_from_scalar_impl {
     ($dim:literal) => {
-        impl<T: Copy + Num> From<Scalar<T, { $dim - 1 }>> for Point<T, $dim> {
-            fn from(value: Scalar<T, { $dim - 1 }>) -> Self {
-                let mut scalar = Scalar::zero();
-
-                for n in 0..$dim - 1 {
-                    scalar[n] = value[n];
-                }
-
-                scalar[$dim - 1] = T::one();
-
-                Point { scalar }
+        impl<T: Copy + Num> From<&Scalar<T, { $dim - 1 }>> for Point<T, $dim> {
+            fn from(value: &Scalar<T, { $dim - 1 }>) -> Self {
+                Point::from(&value.elements)
             }
         }
     };
@@ -183,7 +183,7 @@ point_sub_impl!(T, D, &Vector<T, D>, &Point<T, D>, Point);
 // Tests
 #[cfg(test)]
 mod tests {
-    use crate::point;
+    use crate::{point, scalar};
     use super::*;
 
     #[test]
@@ -192,5 +192,19 @@ mod tests {
 
         assert!(!point!{ x: 1, y: 2 }.is_origin());
         assert!(!point!{ x: 1, y: 2, z: 3 }.is_origin());
+    }
+
+    #[test]
+    fn point_from_array() {
+        let pt = Point::from(&[1, 2, 3]);
+
+        assert_eq!(pt.scalar.elements, [1, 2, 3, 1]);
+    }
+
+    #[test]
+    fn point_from_scalar() {
+        let pt = Point::from(&scalar![1, 2, 3]);
+
+        assert_eq!(pt.scalar.elements, [1, 2, 3, 1]);
     }
 }
