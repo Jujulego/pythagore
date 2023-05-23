@@ -18,11 +18,11 @@ use crate::traits::{Dimension, BoxableScalar};
 pub trait BoxBounds<N, T, const D: usize>: RangeBounds<T>
 where
     N: Num + PartialOrd,
-    T: BoxableScalar<N, Output = N> + Dimension<D>
+    T: BoxableScalar<N> + Dimension<D>
 {
     fn box_contains<U>(&self, item: &U) -> bool
     where
-        U: BoxableScalar<N, Output = N> + Dimension<D>
+        U: BoxableScalar<N> + Dimension<D>
     {
         (0..D - 1).all(|idx| (
             match self.start_bound() {
@@ -48,37 +48,37 @@ where
 impl<N, T, const D: usize> BoxBounds<N, T, D> for RangeFrom<T>
 where
     N: Num + PartialOrd,
-    T: BoxableScalar<N, Output = N> + Dimension<D>
+    T: BoxableScalar<N> + Dimension<D>
 {}
 
 impl<N, T, const D: usize> BoxBounds<N, T, D> for RangeTo<T>
 where
     N: Num + PartialOrd,
-    T: BoxableScalar<N, Output = N> + Dimension<D>
+    T: BoxableScalar<N> + Dimension<D>
 {}
 
 impl<N, T, const D: usize> BoxBounds<N, T, D> for Range<T>
 where
     N: Num + PartialOrd,
-    T: BoxableScalar<N, Output = N> + Dimension<D>
+    T: BoxableScalar<N> + Dimension<D>
 {}
 
 impl<N, T, const D: usize> BoxBounds<N, T, D> for RangeInclusive<T>
 where
     N: Num + PartialOrd,
-    T: BoxableScalar<N, Output = N> + Dimension<D>
+    T: BoxableScalar<N> + Dimension<D>
 {}
 
 impl<N, T, const D: usize> BoxBounds<N, T, D> for RangeToInclusive<T>
 where
     N: Num + PartialOrd,
-    T: BoxableScalar<N, Output = N> + Dimension<D>
+    T: BoxableScalar<N> + Dimension<D>
 {}
 
 impl<N, T, const D: usize> BoxBounds<N, T, D> for (Bound<T>, Bound<T>)
 where
     N: Num + PartialOrd,
-    T: BoxableScalar<N, Output = N> + Dimension<D>
+    T: BoxableScalar<N> + Dimension<D>
 {}
 
 // Tests

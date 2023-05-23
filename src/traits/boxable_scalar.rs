@@ -1,5 +1,4 @@
-use std::ops;
-use num_traits::Num;
+use std::ops::Index;
 
 /// Mark object as possible member of bounding box
-pub trait BoxableScalar<N: Num>: ops::Index<usize> {}
+pub trait BoxableScalar<N>: Index<usize, Output = N> {}
