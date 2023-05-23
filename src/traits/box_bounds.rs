@@ -20,8 +20,11 @@ where
     N: Num + PartialOrd,
     T: BoxableScalar<N, Output = N> + Dimension<D>
 {
-    fn contains_element(&self, elem: &N, idx: usize) -> bool {
-        let range = (
+    fn box_contains<U>(&self, item: &U) -> bool
+    where
+        U: BoxableScalar<N, Output = N> + Dimension<D>
+    {
+        (0..D).all(|idx| (
             match self.start_bound() {
                 Included(start) => Included(&start[idx]),
                 Excluded(start) => Excluded(&start[idx]),
@@ -32,17 +35,7 @@ where
                 Excluded(end) => Excluded(&end[idx]),
                 Unbounded => Unbounded,
             },
-        );
-
-        range.contains(&elem)
-    }
-
-    fn box_contains<U>(&self, item: &U) -> bool
-    where
-        U: BoxableScalar<N, Output = N> + Dimension<D>
-    {
-        item.iter().enumerate()
-            .all(|(idx, elem)| self.contains_element(elem, idx))
+        ).contains(&item[idx]))
     }
 }
 

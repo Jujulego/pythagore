@@ -7,13 +7,19 @@ use crate::traits::{Dimension, BoxableScalar};
 use crate::Vector;
 
 /// `Point<N, const D: usize>` structure for n dimension points
-#[derive(Clone, Copy, Debug, Default, Eq)]
+#[derive(Clone, Copy, Debug, Eq)]
 pub struct Point<N: Copy + Num, const D: usize> {
     pub(crate) scalar: Scalar<N, D>,
 }
 
 // Methods
 impl<N: Copy + Num, const D: usize> Point<N, D> {
+    /// Returns iterator on point elements
+    #[inline]
+    fn iter(&self) -> Iter<'_, N> {
+        self.scalar[..D-1].iter()
+    }
+
     /// Returns origin point
     ///
     /// ## Example
@@ -37,19 +43,20 @@ impl<N: Copy + Num, const D: usize> Point<N, D> {
 }
 
 // Utils
+impl<N: Copy + Num, const D: usize> BoxableScalar<N> for Point<N, D> {}
+
+impl<N: Copy + Num, const D: usize> Default for Point<N, D> {
+    #[inline]
+    fn default() -> Self {
+        Point::origin()
+    }
+}
+
 impl<N: Copy + Num, const D: usize> Dimension<D> for Point<N, D> {
     /// Returns point's dimension
     #[inline]
     fn dimension() -> usize {
         D - 1
-    }
-}
-
-impl<N: Copy + Num, const D: usize> BoxableScalar<N> for Point<N, D> {
-    /// Returns iterator on point elements
-    #[inline]
-    fn iter(&self) -> Iter<'_, N> {
-        self.scalar[..D-1].iter()
     }
 }
 

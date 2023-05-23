@@ -21,6 +21,12 @@ pub struct Scalar<N: Num, const D: usize> {
 
 // Methods
 impl<N: Copy + Num, const D: usize> Scalar<N, D> {
+    /// Returns iterator on point elements
+    #[inline]
+    fn iter(&self) -> Iter<'_, N> {
+        self.elements.iter()
+    }
+
     #[inline]
     fn map(&self, op: impl Fn(&N, usize) -> N) -> Self {
         let mut copy = self.clone();
@@ -38,9 +44,12 @@ impl<N: Copy + Num, const D: usize> Scalar<N, D> {
 }
 
 // Utils
+impl<N: Copy + Num, const D: usize> BoxableScalar<N> for Scalar<N, D> {}
+
 impl<N: Copy + Num, const D: usize> Default for Scalar<N, D> {
+    #[inline]
     fn default() -> Self {
-        Scalar::from([N::zero(); D])
+        Scalar { elements: [N::zero(); D] }
     }
 }
 
@@ -61,19 +70,13 @@ impl<N: Num, const D: usize> From<[N; D]> for Scalar<N, D> {
 }
 
 impl<N: Copy + Num, const D: usize> Zero for Scalar<N, D> {
+    #[inline]
     fn zero() -> Self {
         Scalar::from([N::zero(); D])
     }
 
     fn is_zero(&self) -> bool {
         self.elements.iter().all(|e| e.is_zero())
-    }
-}
-
-impl<N: Copy + Num, const D: usize> BoxableScalar<N> for Scalar<N, D> {
-    /// Returns iterator on scalar elements
-    fn iter(&self) -> Iter<'_, N> {
-        self.elements.iter()
     }
 }
 
