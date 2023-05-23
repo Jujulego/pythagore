@@ -1,3 +1,3 @@
-pub mod dimension;
+mod dimension;
 
 pub use crate::traits::dimension::*;
