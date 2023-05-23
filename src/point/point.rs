@@ -3,7 +3,7 @@ use std::slice::{Iter, SliceIndex};
 use num_traits::{Num, Zero};
 
 use crate::Scalar;
-use crate::traits::{Dimension, ScalarNum};
+use crate::traits::{Dimension, BoxableScalar};
 use crate::Vector;
 
 /// `Point<T, const D: usize>` structure for n dimension points
@@ -45,7 +45,7 @@ impl<T: Copy + Num, const D: usize> Dimension<D> for Point<T, D> {
     }
 }
 
-impl<T: Copy + Num, const D: usize> ScalarNum<T> for Point<T, D> {
+impl<T: Copy + Num, const D: usize> BoxableScalar<T> for Point<T, D> {
     /// Returns iterator on point elements
     #[inline]
     fn iter(&self) -> Iter<'_, T> {

@@ -5,17 +5,17 @@ use std::slice::{Iter, SliceIndex};
 use crate::Scalar;
 use crate::traits::Dimension;
 
-/// `Vector<T, const D: usize>` structure for n dimension vectors
+/// `Vector<N, const D: usize>` structure for n dimension vectors
 #[derive(Clone, Copy, Debug, Default, Eq)]
-pub struct Vector<T: Copy + Num, const D: usize> {
-    pub(crate) scalar: Scalar<T, D>,
+pub struct Vector<N: Copy + Num, const D: usize> {
+    pub(crate) scalar: Scalar<N, D>,
 }
 
 // Methods
-impl<T: Copy + Num, const D: usize> Vector<T, D> {
+impl<N: Copy + Num, const D: usize> Vector<N, D> {
     /// Returns iterator on vector elements
     #[inline]
-    pub fn iter(&self) -> Iter<'_, T> {
+    pub fn iter(&self) -> Iter<'_, N> {
         self.scalar[..D-1].iter()
     }
 
@@ -40,7 +40,7 @@ impl<T: Copy + Num, const D: usize> Vector<T, D> {
     }
 }
 
-impl<T: Copy + Num + ops::AddAssign, const D: usize> Vector<T, D> {
+impl<N: Copy + Num + ops::AddAssign, const D: usize> Vector<N, D> {
     /// Returns the squared norm of vector
     ///
     /// ## Example
@@ -50,8 +50,8 @@ impl<T: Copy + Num + ops::AddAssign, const D: usize> Vector<T, D> {
     /// assert_eq!(vector!{ dx: 2, dy: 3 }.square_norm(), 13);
     /// assert_eq!(vector!{ dx: 2, dy: 3, dz: 4 }.square_norm(), 29);
     /// ```
-    pub fn square_norm(&self) -> T {
-        let mut result = T::zero();
+    pub fn square_norm(&self) -> N {
+        let mut result = N::zero();
 
         for n in 0..D {
             result += self[n] * self[n];
@@ -61,7 +61,7 @@ impl<T: Copy + Num + ops::AddAssign, const D: usize> Vector<T, D> {
     }
 }
 
-impl<T: Copy + Float + ops::AddAssign, const D: usize> Vector<T, D> {
+impl<N: Copy + Float + ops::AddAssign, const D: usize> Vector<N, D> {
     /// Returns the norm of vector (only for float vectors)
     ///
     /// ## Example
@@ -71,7 +71,7 @@ impl<T: Copy + Float + ops::AddAssign, const D: usize> Vector<T, D> {
     /// assert_eq!(vector!{ dx: 1.0, dy: 0.0 }.norm(), 1.0);
     /// assert_eq!(vector!{ dx: 0.0, dy: 0.0, dz: 4.0 }.norm(), 4.0);
     /// ```
-    pub fn norm(&self) -> T {
+    pub fn norm(&self) -> N {
         self.square_norm().sqrt()
     }
 
@@ -89,7 +89,7 @@ impl<T: Copy + Float + ops::AddAssign, const D: usize> Vector<T, D> {
     }
 }
 
-impl<T: Copy + Signed + ops::AddAssign, const D: usize> Vector<T, D> {
+impl<N: Copy + Signed + ops::AddAssign, const D: usize> Vector<N, D> {
     /// Returns the norm of vector (only for signed vectors)
     ///
     /// ## Example
@@ -99,8 +99,8 @@ impl<T: Copy + Signed + ops::AddAssign, const D: usize> Vector<T, D> {
     /// assert_eq!(vector!{ dx: 1, dy: -2 }.manhattan_norm(), 3);
     /// assert_eq!(vector!{ dx: 1, dy: -2, dz: 3 }.manhattan_norm(), 6);
     /// ```
-    pub fn manhattan_norm(&self) -> T {
-        let mut result = T::zero();
+    pub fn manhattan_norm(&self) -> N {
+        let mut result = N::zero();
 
         for n in 0..D {
             result += self[n].abs();
@@ -111,7 +111,7 @@ impl<T: Copy + Signed + ops::AddAssign, const D: usize> Vector<T, D> {
 }
 
 // Utils
-impl<T: Copy + Num, const D: usize> Dimension<D> for Vector<T, D> {
+impl<N: Copy + Num, const D: usize> Dimension<D> for Vector<N, D> {
     /// Returns vector's dimension
     #[inline]
     fn dimension() -> usize {
@@ -122,8 +122,8 @@ impl<T: Copy + Num, const D: usize> Dimension<D> for Vector<T, D> {
 macro_rules! vector_from_array_impl {
     ($dim:literal) => {
         #[cfg(not(feature = "generic_const_exprs"))]
-        impl<T: Copy + Num> From<&[T; $dim]> for Vector<T, { $dim + 1 }> {
-            fn from(value: &[T; $dim]) -> Self {
+        impl<N: Copy + Num> From<&[N; $dim]> for Vector<N, { $dim + 1 }> {
+            fn from(value: &[N; $dim]) -> Self {
                 let mut scalar = Scalar::zero();
 
                 for n in 0..$dim {
@@ -142,9 +142,9 @@ vector_from_array_impl!(3);
 macro_rules! vector_from_scalar_impl {
     ($dim:literal) => {
         #[cfg(not(feature = "generic_const_exprs"))]
-        impl<T: Copy + Num> From<&Scalar<T, $dim>> for Vector<T, { $dim + 1 }> {
+        impl<N: Copy + Num> From<&Scalar<N, $dim>> for Vector<N, { $dim + 1 }> {
             #[inline]
-            fn from(value: &Scalar<T, $dim>) -> Self {
+            fn from(value: &Scalar<N, $dim>) -> Self {
                 Vector::from(&value.elements)
             }
         }
@@ -155,14 +155,14 @@ vector_from_scalar_impl!(2);
 vector_from_scalar_impl!(3);
 
 #[cfg(feature = "generic_const_exprs")]
-impl<T: Copy + Num, const D: usize> From<&Scalar<T, D>> for Vector<T, { D + 1 }> {
+impl<N: Copy + Num, const D: usize> From<&Scalar<N, D>> for Vector<N, { D + 1 }> {
     #[inline]
-    fn from(value: &Scalar<T, D>) -> Self {
+    fn from(value: &Scalar<N, D>) -> Self {
         Point::from(&value.elements)
     }
 }
 
-impl<T: Copy + Num, const D: usize> Zero for Vector<T, D> {
+impl<N: Copy + Num, const D: usize> Zero for Vector<N, D> {
     #[inline]
     fn zero() -> Self {
         Vector { scalar: Scalar::zero() }
@@ -175,13 +175,13 @@ impl<T: Copy + Num, const D: usize> Zero for Vector<T, D> {
 }
 
 // Operators
-impl<T: Copy + Num, const D: usize> PartialEq for Vector<T, D> {
+impl<N: Copy + Num, const D: usize> PartialEq for Vector<N, D> {
     fn eq(&self, other: &Self) -> bool {
         self.scalar == other.scalar
     }
 }
 
-impl<T: Copy + Num, I: SliceIndex<[T]>, const D: usize> ops::Index<I> for Vector<T, D> {
+impl<N: Copy + Num, I: SliceIndex<[N]>, const D: usize> ops::Index<I> for Vector<N, D> {
     type Output = I::Output;
 
     fn index(&self, index: I) -> &Self::Output {
@@ -189,7 +189,7 @@ impl<T: Copy + Num, I: SliceIndex<[T]>, const D: usize> ops::Index<I> for Vector
     }
 }
 
-impl<T: Copy + Num, I: SliceIndex<[T]>, const D: usize> ops::IndexMut<I> for Vector<T, D> {
+impl<N: Copy + Num, I: SliceIndex<[N]>, const D: usize> ops::IndexMut<I> for Vector<N, D> {
     fn index_mut(&mut self, index: I) -> &mut Self::Output {
         &mut self.scalar[index]
     }
@@ -207,8 +207,8 @@ macro_rules! vector_neg_impl {
     };
 }
 
-vector_neg_impl!(T, D, Vector<T, D>);
-vector_neg_impl!(T, D, &Vector<T, D>);
+vector_neg_impl!(N, D, Vector<N, D>);
+vector_neg_impl!(N, D, &Vector<N, D>);
 
 macro_rules! vector_add_assign_impl {
     ($tp:ident, $dp:ident, $rhs:ty) => {
@@ -220,8 +220,8 @@ macro_rules! vector_add_assign_impl {
     }
 }
 
-vector_add_assign_impl!(T, D, Vector<T, D>);
-vector_add_assign_impl!(T, D, &Vector<T, D>);
+vector_add_assign_impl!(N, D, Vector<N, D>);
+vector_add_assign_impl!(N, D, &Vector<N, D>);
 
 macro_rules! vector_add_impl {
     ($tp:ident, $dp:ident, $lhs:ty, $rhs:ty) => {
@@ -235,10 +235,10 @@ macro_rules! vector_add_impl {
     }
 }
 
-vector_add_impl!(T, D, Vector<T, D>, Vector<T, D>);
-vector_add_impl!(T, D, &Vector<T, D>, Vector<T, D>);
-vector_add_impl!(T, D, Vector<T, D>, &Vector<T, D>);
-vector_add_impl!(T, D, &Vector<T, D>, &Vector<T, D>);
+vector_add_impl!(N, D, Vector<N, D>, Vector<N, D>);
+vector_add_impl!(N, D, &Vector<N, D>, Vector<N, D>);
+vector_add_impl!(N, D, Vector<N, D>, &Vector<N, D>);
+vector_add_impl!(N, D, &Vector<N, D>, &Vector<N, D>);
 
 macro_rules! vector_sub_assign_impl {
     ($tp:ident, $dp:ident, $rhs:ty) => {
@@ -250,8 +250,8 @@ macro_rules! vector_sub_assign_impl {
     }
 }
 
-vector_sub_assign_impl!(T, D, Vector<T, D>);
-vector_sub_assign_impl!(T, D, &Vector<T, D>);
+vector_sub_assign_impl!(N, D, Vector<N, D>);
+vector_sub_assign_impl!(N, D, &Vector<N, D>);
 
 macro_rules! vector_sub_impl {
     ($tp:ident, $dp:ident, $lhs:ty, $rhs:ty) => {
@@ -265,10 +265,10 @@ macro_rules! vector_sub_impl {
     }
 }
 
-vector_sub_impl!(T, D, Vector<T, D>, Vector<T, D>);
-vector_sub_impl!(T, D, &Vector<T, D>, Vector<T, D>);
-vector_sub_impl!(T, D, Vector<T, D>, &Vector<T, D>);
-vector_sub_impl!(T, D, &Vector<T, D>, &Vector<T, D>);
+vector_sub_impl!(N, D, Vector<N, D>, Vector<N, D>);
+vector_sub_impl!(N, D, &Vector<N, D>, Vector<N, D>);
+vector_sub_impl!(N, D, Vector<N, D>, &Vector<N, D>);
+vector_sub_impl!(N, D, &Vector<N, D>, &Vector<N, D>);
 
 macro_rules! vector_mul_assign_impl {
     ($tp:ident, $dp:ident, $rhs:ty $(, $defer:tt)?) => {
@@ -280,8 +280,8 @@ macro_rules! vector_mul_assign_impl {
     }
 }
 
-vector_mul_assign_impl!(T, D, T);
-vector_mul_assign_impl!(T, D, &T, *);
+vector_mul_assign_impl!(N, D, N);
+vector_mul_assign_impl!(N, D, &N, *);
 
 macro_rules! vector_mul_impl {
     ($tp:ident, $dp:ident, $lhs:ty, $rhs:ty $(, $defer:tt)?) => {
@@ -295,10 +295,10 @@ macro_rules! vector_mul_impl {
     }
 }
 
-vector_mul_impl!(T, D, Vector<T, D>, T);
-vector_mul_impl!(T, D, &Vector<T, D>, T);
-vector_mul_impl!(T, D, Vector<T, D>, &T, *);
-vector_mul_impl!(T, D, &Vector<T, D>, &T, *);
+vector_mul_impl!(N, D, Vector<N, D>, N);
+vector_mul_impl!(N, D, &Vector<N, D>, N);
+vector_mul_impl!(N, D, Vector<N, D>, &N, *);
+vector_mul_impl!(N, D, &Vector<N, D>, &N, *);
 
 macro_rules! vector_scalar_impl {
     ($tp:ident, $dp:ident, $lhs:ty, $rhs:ty) => {
@@ -312,10 +312,10 @@ macro_rules! vector_scalar_impl {
     }
 }
 
-vector_scalar_impl!(T, D, Vector<T, D>, Vector<T, D>);
-vector_scalar_impl!(T, D, &Vector<T, D>, Vector<T, D>);
-vector_scalar_impl!(T, D, Vector<T, D>, &Vector<T, D>);
-vector_scalar_impl!(T, D, &Vector<T, D>, &Vector<T, D>);
+vector_scalar_impl!(N, D, Vector<N, D>, Vector<N, D>);
+vector_scalar_impl!(N, D, &Vector<N, D>, Vector<N, D>);
+vector_scalar_impl!(N, D, Vector<N, D>, &Vector<N, D>);
+vector_scalar_impl!(N, D, &Vector<N, D>, &Vector<N, D>);
 
 macro_rules! vector_div_assign_impl {
     ($tp:ident, $dp:ident, $rhs:ty $(, $defer:tt)?) => {
@@ -327,8 +327,8 @@ macro_rules! vector_div_assign_impl {
     }
 }
 
-vector_div_assign_impl!(T, D, T);
-vector_div_assign_impl!(T, D, &T, *);
+vector_div_assign_impl!(N, D, N);
+vector_div_assign_impl!(N, D, &N, *);
 
 macro_rules! vector_div_impl {
     ($tp:ident, $dp:ident, $lhs:ty, $rhs:ty $(, $defer:tt)?) => {
@@ -342,10 +342,10 @@ macro_rules! vector_div_impl {
     }
 }
 
-vector_div_impl!(T, D, Vector<T, D>, T);
-vector_div_impl!(T, D, &Vector<T, D>, T);
-vector_div_impl!(T, D, Vector<T, D>, &T, *);
-vector_div_impl!(T, D, &Vector<T, D>, &T, *);
+vector_div_impl!(N, D, Vector<N, D>, N);
+vector_div_impl!(N, D, &Vector<N, D>, N);
+vector_div_impl!(N, D, Vector<N, D>, &N, *);
+vector_div_impl!(N, D, &Vector<N, D>, &N, *);
 
 // Tests
 #[cfg(test)]

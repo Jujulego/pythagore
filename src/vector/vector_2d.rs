@@ -4,10 +4,10 @@ use crate::scalar;
 use crate::Vector;
 
 // Type
-pub type Vector2D<T> = Vector<T, 3>;
+pub type Vector2D<N> = Vector<N, 3>;
 
 // Methods
-impl<T: Copy + Num> Vector2D<T> {
+impl<N: Copy + Num> Vector2D<N> {
     /// Returns dx unit vector
     ///
     /// ## Example
@@ -18,7 +18,7 @@ impl<T: Copy + Num> Vector2D<T> {
     /// ```
     #[inline]
     pub fn unit_dx() -> Self {
-        Vector { scalar: scalar![T::one(), T::zero(), T::zero()] }
+        Vector { scalar: scalar![N::one(), N::zero(), N::zero()] }
     }
 
     /// Returns dy unit vector
@@ -31,7 +31,7 @@ impl<T: Copy + Num> Vector2D<T> {
     /// ```
     #[inline]
     pub fn unit_dy() -> Self {
-        Vector { scalar: scalar![T::zero(), T::one(), T::zero()] }
+        Vector { scalar: scalar![N::zero(), N::one(), N::zero()] }
     }
 
     /// Returns ref on dx element of vector
@@ -43,7 +43,7 @@ impl<T: Copy + Num> Vector2D<T> {
     /// assert_eq!(vector!{ dx: 1, dy: 2 }.dx(), &1);
     /// ```
     #[inline]
-    pub fn dx(&self) -> &T {
+    pub fn dx(&self) -> &N {
         &self.scalar[0]
     }
 
@@ -59,7 +59,7 @@ impl<T: Copy + Num> Vector2D<T> {
     /// assert_eq!(v.dx(), &5);
     /// ```
     #[inline]
-    pub fn dx_mut(&mut self) -> &mut T {
+    pub fn dx_mut(&mut self) -> &mut N {
         &mut self.scalar[0]
     }
 
@@ -72,7 +72,7 @@ impl<T: Copy + Num> Vector2D<T> {
     /// assert_eq!(vector!{ dx: 1, dy: 2 }.dy(), &2);
     /// ```
     #[inline]
-    pub fn dy(&self) -> &T {
+    pub fn dy(&self) -> &N {
         &self.scalar[1]
     }
 
@@ -88,7 +88,7 @@ impl<T: Copy + Num> Vector2D<T> {
     /// assert_eq!(v.dy(), &5);
     /// ```
     #[inline]
-    pub fn dy_mut(&mut self) -> &mut T {
+    pub fn dy_mut(&mut self) -> &mut N {
         &mut self.scalar[1]
     }
 }

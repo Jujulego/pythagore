@@ -4,10 +4,10 @@ use crate::scalar;
 use crate::Vector;
 
 // Type
-pub type Vector3D<T> = Vector<T, 4>;
+pub type Vector3D<N> = Vector<N, 4>;
 
 // Methods
-impl<T: Copy + Num> Vector3D<T> {
+impl<N: Copy + Num> Vector3D<N> {
     /// Returns dx unit vector
     ///
     /// ## Example
@@ -18,7 +18,7 @@ impl<T: Copy + Num> Vector3D<T> {
     /// ```
     #[inline]
     pub fn unit_dx() -> Self {
-        Vector { scalar: scalar![T::one(), T::zero(), T::zero(), T::zero()] }
+        Vector { scalar: scalar![N::one(), N::zero(), N::zero(), N::zero()] }
     }
 
     /// Returns dy unit vector
@@ -31,7 +31,7 @@ impl<T: Copy + Num> Vector3D<T> {
     /// ```
     #[inline]
     pub fn unit_dy() -> Self {
-        Vector { scalar: scalar![T::zero(), T::one(), T::zero(), T::zero()] }
+        Vector { scalar: scalar![N::zero(), N::one(), N::zero(), N::zero()] }
     }
 
     /// Returns dz unit vector
@@ -44,7 +44,7 @@ impl<T: Copy + Num> Vector3D<T> {
     /// ```
     #[inline]
     pub fn unit_dz() -> Self {
-        Vector { scalar: scalar![T::zero(), T::zero(), T::one(), T::zero()] }
+        Vector { scalar: scalar![N::zero(), N::zero(), N::one(), N::zero()] }
     }
 
     /// Returns ref on dx element of vector
@@ -56,7 +56,7 @@ impl<T: Copy + Num> Vector3D<T> {
     /// assert_eq!(vector!{ dx: 1, dy: 2, dz: 3 }.dx(), &1);
     /// ```
     #[inline]
-    pub fn dx(&self) -> &T {
+    pub fn dx(&self) -> &N {
         &self.scalar[0]
     }
 
@@ -72,7 +72,7 @@ impl<T: Copy + Num> Vector3D<T> {
     /// assert_eq!(v.dx(), &5);
     /// ```
     #[inline]
-    pub fn dx_mut(&mut self) -> &mut T {
+    pub fn dx_mut(&mut self) -> &mut N {
         &mut self.scalar[0]
     }
 
@@ -85,7 +85,7 @@ impl<T: Copy + Num> Vector3D<T> {
     /// assert_eq!(vector!{ dx: 1, dy: 2, dz: 3 }.dy(), &2);
     /// ```
     #[inline]
-    pub fn dy(&self) -> &T {
+    pub fn dy(&self) -> &N {
         &self.scalar[1]
     }
 
@@ -101,7 +101,7 @@ impl<T: Copy + Num> Vector3D<T> {
     /// assert_eq!(v.dy(), &5);
     /// ```
     #[inline]
-    pub fn dy_mut(&mut self) -> &mut T {
+    pub fn dy_mut(&mut self) -> &mut N {
         &mut self.scalar[1]
     }
 
@@ -114,7 +114,7 @@ impl<T: Copy + Num> Vector3D<T> {
     /// assert_eq!(vector!{ dx: 1, dy: 2, dz: 3 }.dz(), &3);
     /// ```
     #[inline]
-    pub fn dz(&self) -> &T {
+    pub fn dz(&self) -> &N {
         &self.scalar[2]
     }
 
@@ -130,7 +130,7 @@ impl<T: Copy + Num> Vector3D<T> {
     /// assert_eq!(v.dz(), &5);
     /// ```
     #[inline]
-    pub fn dz_mut(&mut self) -> &mut T {
+    pub fn dz_mut(&mut self) -> &mut N {
         &mut self.scalar[2]
     }
 }

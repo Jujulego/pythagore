@@ -2,7 +2,7 @@ use std::ops::Bound::*;
 use std::ops::{Bound, Range, RangeBounds, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive};
 use num_traits::Num;
 use crate::Scalar;
-use crate::traits::{Dimension, ScalarNum};
+use crate::traits::{Dimension, BoxableScalar};
 
 /// Implemented by range types to define bounding box using range syntax
 ///
@@ -18,7 +18,7 @@ use crate::traits::{Dimension, ScalarNum};
 pub trait BoxBounds<N, T, const D: usize>: RangeBounds<T>
 where
     N: Num + PartialOrd,
-    T: ScalarNum<N, Output = N> + Dimension<D>
+    T: BoxableScalar<N, Output = N> + Dimension<D>
 {
     fn contains_element(&self, elem: &N, idx: usize) -> bool {
         let range = (
@@ -39,7 +39,7 @@ where
 
     fn box_contains<U>(&self, item: &U) -> bool
     where
-        U: ScalarNum<N, Output = N> + Dimension<D>
+        U: BoxableScalar<N, Output = N> + Dimension<D>
     {
         item.iter().enumerate()
             .all(|(idx, elem)| self.contains_element(elem, idx))
@@ -55,37 +55,37 @@ where
 impl<N, T, const D: usize> BoxBounds<N, T, D> for RangeFrom<T>
 where
     N: Num + PartialOrd,
-    T: ScalarNum<N, Output = N> + Dimension<D>
+    T: BoxableScalar<N, Output = N> + Dimension<D>
 {}
 
 impl<N, T, const D: usize> BoxBounds<N, T, D> for RangeTo<T>
 where
     N: Num + PartialOrd,
-    T: ScalarNum<N, Output = N> + Dimension<D>
+    T: BoxableScalar<N, Output = N> + Dimension<D>
 {}
 
 impl<N, T, const D: usize> BoxBounds<N, T, D> for Range<T>
 where
     N: Num + PartialOrd,
-    T: ScalarNum<N, Output = N> + Dimension<D>
+    T: BoxableScalar<N, Output = N> + Dimension<D>
 {}
 
 impl<N, T, const D: usize> BoxBounds<N, T, D> for RangeInclusive<T>
 where
     N: Num + PartialOrd,
-    T: ScalarNum<N, Output = N> + Dimension<D>
+    T: BoxableScalar<N, Output = N> + Dimension<D>
 {}
 
 impl<N, T, const D: usize> BoxBounds<N, T, D> for RangeToInclusive<T>
 where
     N: Num + PartialOrd,
-    T: ScalarNum<N, Output = N> + Dimension<D>
+    T: BoxableScalar<N, Output = N> + Dimension<D>
 {}
 
 impl<N, T, const D: usize> BoxBounds<N, T, D> for (Bound<T>, Bound<T>)
 where
     N: Num + PartialOrd,
-    T: ScalarNum<N, Output = N> + Dimension<D>
+    T: BoxableScalar<N, Output = N> + Dimension<D>
 {}
 
 // Tests

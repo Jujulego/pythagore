@@ -2,7 +2,7 @@ use std::ops;
 use std::slice::{Iter, SliceIndex};
 use num_traits::{Num, Signed, Zero};
 
-use crate::traits::{Dimension, ScalarNum};
+use crate::traits::{Dimension, BoxableScalar};
 
 /// `Scalar<T, const D: usize>` utility structure for n dimension compute
 ///
@@ -70,7 +70,7 @@ impl<T: Copy + Num, const D: usize> Zero for Scalar<T, D> {
     }
 }
 
-impl<T: Copy + Num, const D: usize> ScalarNum<T> for Scalar<T, D> {
+impl<T: Copy + Num, const D: usize> BoxableScalar<T> for Scalar<T, D> {
     /// Returns iterator on scalar elements
     fn iter(&self) -> Iter<'_, T> {
         self.elements.iter()
