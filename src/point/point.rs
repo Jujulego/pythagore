@@ -3,7 +3,7 @@ use std::slice::{Iter, SliceIndex};
 use num_traits::{Num, Zero};
 
 use crate::Scalar;
-use crate::traits::Dimension;
+use crate::traits::{Dimension, ScalarNum};
 use crate::Vector;
 
 /// `Point<T, const D: usize>` structure for n dimension points
@@ -14,12 +14,6 @@ pub struct Point<T: Copy + Num, const D: usize> {
 
 // Methods
 impl<T: Copy + Num, const D: usize> Point<T, D> {
-    /// Returns iterator on point elements
-    #[inline]
-    pub fn iter(&self) -> Iter<'_, T> {
-        self.scalar[..D-1].iter()
-    }
-
     /// Returns origin point
     ///
     /// ## Example
@@ -48,6 +42,14 @@ impl<T: Copy + Num, const D: usize> Dimension<D> for Point<T, D> {
     #[inline]
     fn dimension() -> usize {
         D - 1
+    }
+}
+
+impl<T: Copy + Num, const D: usize> ScalarNum<T> for Point<T, D> {
+    /// Returns iterator on point elements
+    #[inline]
+    fn iter(&self) -> Iter<'_, T> {
+        self.scalar[..D-1].iter()
     }
 }
 

@@ -2,7 +2,7 @@ use std::ops;
 use std::slice::{Iter, SliceIndex};
 use num_traits::{Num, Signed, Zero};
 
-use crate::traits::Dimension;
+use crate::traits::{Dimension, ScalarNum};
 
 /// `Scalar<T, const D: usize>` utility structure for n dimension compute
 ///
@@ -21,11 +21,6 @@ pub struct Scalar<T: Num, const D: usize> {
 
 // Methods
 impl<T: Copy + Num, const D: usize> Scalar<T, D> {
-    /// Returns iterator on scalar elements
-    pub fn iter(&self) -> Iter<'_, T> {
-        self.elements.iter()
-    }
-
     #[inline]
     fn map(&self, op: impl Fn(&T, usize) -> T) -> Self {
         let mut copy = self.clone();
@@ -72,6 +67,13 @@ impl<T: Copy + Num, const D: usize> Zero for Scalar<T, D> {
 
     fn is_zero(&self) -> bool {
         self.elements.iter().all(|e| e.is_zero())
+    }
+}
+
+impl<T: Copy + Num, const D: usize> ScalarNum<T> for Scalar<T, D> {
+    /// Returns iterator on scalar elements
+    fn iter(&self) -> Iter<'_, T> {
+        self.elements.iter()
     }
 }
 
