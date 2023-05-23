@@ -74,6 +74,7 @@ point_from_array_impl!(4);
 macro_rules! point_from_scalar_impl {
     ($dim:literal) => {
         impl<T: Copy + Num> From<&Scalar<T, { $dim - 1 }>> for Point<T, $dim> {
+            #[inline]
             fn from(value: &Scalar<T, { $dim - 1 }>) -> Self {
                 Point::from(&value.elements)
             }

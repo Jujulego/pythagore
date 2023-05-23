@@ -118,9 +118,15 @@ impl<T: Copy + Num, const D: usize> Dimension<D> for Vector<T, D> {
 
 macro_rules! vector_from_array_impl {
     ($dim:literal) => {
-        impl<T: Copy + Num> From<[T; { $dim - 1 }]> for Vector<T, $dim> {
-            fn from(value: [T; { $dim - 1 }]) -> Self {
-                Scalar::from(value).into()
+        impl<T: Copy + Num> From<&[T; { $dim - 1 }]> for Vector<T, $dim> {
+            fn from(value: &[T; { $dim - 1 }]) -> Self {
+                let mut scalar = Scalar::zero();
+
+                for n in 0..$dim - 1 {
+                    scalar[n] = value[n];
+                }
+
+                Vector { scalar }
             }
         }
     };
@@ -131,15 +137,10 @@ vector_from_array_impl!(4);
 
 macro_rules! vector_from_scalar_impl {
     ($dim:literal) => {
-        impl<T: Copy + Num> From<Scalar<T, { $dim - 1 }>> for Vector<T, $dim> {
-            fn from(value: Scalar<T, { $dim - 1 }>) -> Self {
-                let mut scalar = Scalar::zero();
-
-                for n in 0..$dim - 1 {
-                    scalar[n] = value[n];
-                }
-
-                Vector { scalar }
+        impl<T: Copy + Num> From<&Scalar<T, { $dim - 1 }>> for Vector<T, $dim> {
+            #[inline]
+            fn from(value: &Scalar<T, { $dim - 1 }>) -> Self {
+                Vector::from(&value.elements)
             }
         }
     };
@@ -334,7 +335,7 @@ vector_div_impl!(T, D, &Vector<T, D>, &T, *);
 // Tests
 #[cfg(test)]
 mod tests {
-    use crate::vector;
+    use crate::{scalar, vector};
     use super::*;
 
     #[test]
@@ -375,5 +376,19 @@ mod tests {
 
         assert_eq!(v.unit().norm(), 1.0);
         assert_eq!(v.unit().scalar[3], 0.0);
+    }
+
+    #[test]
+    fn vector_from_array() {
+        let v = Vector::from(&[1, 2, 3]);
+
+        assert_eq!(v.scalar.elements, [1, 2, 3, 0]);
+    }
+
+    #[test]
+    fn vector_from_scalar() {
+        let v = Vector::from(&scalar![1, 2, 3]);
+
+        assert_eq!(v.scalar.elements, [1, 2, 3, 0]);
     }
 }
