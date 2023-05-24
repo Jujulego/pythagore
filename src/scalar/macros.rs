@@ -9,10 +9,10 @@
 /// ```
 #[macro_export]
 macro_rules! scalar {
-    ($elem:expr; $d:expr) => {
+    [$elem:expr; $d:expr] => {
         scalar::Scalar::from([$elem; $d])
     };
-    ($($x:expr),*) => {
+    [$($x:expr),*] => {
         scalar::Scalar::from([$($x), +])
     };
 }

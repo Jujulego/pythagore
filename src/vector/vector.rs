@@ -6,7 +6,7 @@ use num_traits::{Float, Num, Signed, Zero};
 use crate::{owned_binop, owned_op_assign, owned_unop, Scalar};
 use crate::traits::Dimension;
 
-/// `Vector<N, const D: usize>` structure for n dimension vectors
+/// `Vector<N, D>` structure for D dimension vectors
 #[derive(Clone, Copy, Debug, Eq)]
 pub struct Vector<N: Num, const D: usize> {
     pub(crate) scalar: Scalar<N, D>,

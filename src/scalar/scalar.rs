@@ -6,7 +6,7 @@ use crate::{forward_ref_binop, forward_ref_op_assign, owned_binop, owned_op_assi
 
 use crate::traits::{Dimension, BoxableScalar};
 
-/// `Scalar<N, const D: usize>` utility structure for n dimension compute
+/// `Scalar<N, D>` utility structure for D dimension compute
 ///
 /// ## Usage
 /// ```

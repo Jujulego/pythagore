@@ -5,7 +5,7 @@ use num_traits::{Num, Zero};
 use crate::{owned_binop, owned_op_assign, reverse_owned_binop, Scalar, Vector};
 use crate::traits::{Dimension, BoxableScalar};
 
-/// `Point<N, const D: usize>` structure for n dimension points
+/// `Point<N, D>` structure for D dimension points
 #[derive(Clone, Copy, Debug, Eq)]
 pub struct Point<N: Num, const D: usize> {
     pub(crate) scalar: Scalar<N, D>,
