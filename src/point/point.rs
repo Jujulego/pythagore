@@ -2,7 +2,7 @@ use std::ops::{Add, AddAssign, Index, IndexMut, Sub, SubAssign};
 use std::slice::{Iter, IterMut, SliceIndex};
 use num_traits::{Num, Zero};
 
-use crate::{forward_ref_binop, forward_ref_op_assign, reverse_binop, Scalar, Vector};
+use crate::{owned_binop, owned_op_assign, reverse_owned_binop, Scalar, Vector};
 use crate::traits::{Dimension, BoxableScalar};
 
 /// `Point<N, const D: usize>` structure for n dimension points
@@ -180,53 +180,53 @@ impl<N: Num, I: SliceIndex<[N]>, const D: usize> IndexMut<I> for Point<N, D> {
     }
 }
 
-impl<N: Copy + Num + AddAssign, const D: usize> AddAssign<Vector<N, D>> for Point<N, D> {
-    fn add_assign(&mut self, rhs: Vector<N, D>) {
+impl<N: Copy + Num + AddAssign, const D: usize> AddAssign<&Vector<N, D>> for Point<N, D> {
+    fn add_assign(&mut self, rhs: &Vector<N, D>) {
         self.scalar += &rhs.scalar;
     }
 }
 
-forward_ref_op_assign!(AddAssign, Point<N, D>, add_assign, Vector<N, D>, <N: Copy + Num + AddAssign, const D: usize>);
+owned_op_assign!(AddAssign, Point<N, D>, add_assign, Vector<N, D>, <N: Copy + Num + AddAssign, const D: usize>);
 
-impl<N: Copy + Num, const D: usize> Add<Vector<N, D>> for Point<N, D> {
+impl<N: Copy + Num, const D: usize> Add<&Vector<N, D>> for &Point<N, D> {
     type Output = Point<N, D>;
 
-    fn add(self, rhs: Vector<N, D>) -> Self::Output {
-        Point { scalar: self.scalar + rhs.scalar }
+    fn add(self, rhs: &Vector<N, D>) -> Self::Output {
+        Point { scalar: &self.scalar + &rhs.scalar }
     }
 }
 
-forward_ref_binop!(Add, Point<N, D>, add, Vector<N, D>, <N: Copy + Num, const D: usize>);
-reverse_binop!(Add, Point<N, D>, add, Vector<N, D>, <N: Copy + Num, const D: usize>);
+owned_binop!(Add, Point<N, D>, add, Vector<N, D>, <N: Copy + Num, const D: usize>);
+reverse_owned_binop!(Add, Point<N, D>, add, Vector<N, D>, <N: Copy + Num, const D: usize>);
 
-impl<N: Copy + Num + SubAssign, const D: usize> SubAssign<Vector<N, D>> for Point<N, D> {
-    fn sub_assign(&mut self, rhs: Vector<N, D>) {
+impl<N: Copy + Num + SubAssign, const D: usize> SubAssign<&Vector<N, D>> for Point<N, D> {
+    fn sub_assign(&mut self, rhs: &Vector<N, D>) {
         self.scalar -= &rhs.scalar;
     }
 }
 
-forward_ref_op_assign!(SubAssign, Point<N, D>, sub_assign, Vector<N, D>, <N: Copy + Num + SubAssign, const D: usize>);
+owned_op_assign!(SubAssign, Point<N, D>, sub_assign, Vector<N, D>, <N: Copy + Num + SubAssign, const D: usize>);
 
-impl<N: Copy + Num, const D: usize> Sub<Vector<N, D>> for Point<N, D> {
+impl<N: Copy + Num, const D: usize> Sub<&Vector<N, D>> for &Point<N, D> {
     type Output = Point<N, D>;
 
-    fn sub(self, rhs: Vector<N, D>) -> Self::Output {
-        Point { scalar: self.scalar - rhs.scalar }
+    fn sub(self, rhs: &Vector<N, D>) -> Self::Output {
+        Point { scalar: &self.scalar - &rhs.scalar }
     }
 }
 
-forward_ref_binop!(Sub, Point<N, D>, sub, Vector<N, D>, <N: Copy + Num, const D: usize>);
-reverse_binop!(Sub, Point<N, D>, sub, Vector<N, D>, <N: Copy + Num, const D: usize>);
+owned_binop!(Sub, Point<N, D>, sub, Vector<N, D>, <N: Copy + Num, const D: usize>);
+reverse_owned_binop!(Sub, Point<N, D>, sub, Vector<N, D>, <N: Copy + Num, const D: usize>);
 
-impl<N: Copy + Num, const D: usize> Sub for Point<N, D> {
+impl<N: Copy + Num, const D: usize> Sub for &Point<N, D> {
     type Output = Vector<N, D>;
 
-    fn sub(self, rhs: Point<N, D>) -> Self::Output {
-        Vector { scalar: self.scalar - rhs.scalar }
+    fn sub(self, rhs: &Point<N, D>) -> Self::Output {
+        Vector { scalar: &self.scalar - &rhs.scalar }
     }
 }
 
-forward_ref_binop!(Sub, Point<N, D>, sub, Point<N, D>, <N: Copy + Num, const D: usize>);
+owned_binop!(Sub, Point<N, D>, sub, Point<N, D>, <N: Copy + Num, const D: usize>);
 
 // Tests
 #[cfg(test)]
