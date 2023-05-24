@@ -7,8 +7,8 @@ use crate::Scalar;
 use crate::traits::Dimension;
 
 /// `Vector<N, const D: usize>` structure for n dimension vectors
-#[derive(Clone, Copy, Debug, Default, Eq)]
-pub struct Vector<N: Copy + Num, const D: usize> {
+#[derive(Clone, Copy, Debug, Eq)]
+pub struct Vector<N: Num, const D: usize> {
     pub(crate) scalar: Scalar<N, D>,
 }
 
@@ -176,7 +176,7 @@ impl<N: Copy + Num, const D: usize> Zero for Vector<N, D> {
 }
 
 // Operators
-impl<N: Copy + Num, const D: usize> PartialEq for Vector<N, D> {
+impl<N: Num, const D: usize> PartialEq for Vector<N, D> {
     fn eq(&self, other: &Self) -> bool {
         self.scalar == other.scalar
     }
@@ -213,7 +213,7 @@ vector_neg_impl!(N, D, &Vector<N, D>);
 
 macro_rules! vector_add_assign_impl {
     ($tp:ident, $dp:ident, $rhs:ty) => {
-        impl<$tp: Copy + Num, const $dp: usize> ops::AddAssign<$rhs> for Vector<$tp, $dp> {
+        impl<$tp: Copy + Num + ops::AddAssign, const $dp: usize> ops::AddAssign<$rhs> for Vector<$tp, $dp> {
             fn add_assign(&mut self, rhs: $rhs) {
                 self.scalar += rhs.scalar;
             }

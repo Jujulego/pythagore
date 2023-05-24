@@ -1,25 +1,18 @@
-use std::ops;
-use std::slice::{Iter, SliceIndex};
+use std::ops::{Add, AddAssign, Index, IndexMut, Sub, SubAssign};
+use std::slice::{Iter, IterMut, SliceIndex};
 use num_traits::{Num, Zero};
 
-use crate::Scalar;
+use crate::{forward_ref_binop, forward_ref_op_assign, reverse_binop, Scalar, Vector};
 use crate::traits::{Dimension, BoxableScalar};
-use crate::Vector;
 
 /// `Point<N, const D: usize>` structure for n dimension points
 #[derive(Clone, Copy, Debug, Eq)]
-pub struct Point<N: Copy + Num, const D: usize> {
+pub struct Point<N: Num, const D: usize> {
     pub(crate) scalar: Scalar<N, D>,
 }
 
 // Methods
 impl<N: Copy + Num, const D: usize> Point<N, D> {
-    /// Returns iterator on point elements
-    #[inline]
-    pub fn iter(&self) -> Iter<'_, N> {
-        self.scalar[..D-1].iter()
-    }
-
     /// Returns origin point
     ///
     /// ## Example
@@ -35,15 +28,25 @@ impl<N: Copy + Num, const D: usize> Point<N, D> {
 
         pt
     }
+}
+
+impl<N: Num, const D: usize> Point<N, D> {
+    pub fn iter(&self) -> Iter<N> {
+        self.scalar[..D-1].iter()
+    }
+
+    pub fn iter_mut(&mut self) -> IterMut<N> {
+        self.scalar[..D-1].iter_mut()
+    }
 
     /// Returns true if point is origin
     pub fn is_origin(&self) -> bool {
-        self.scalar.elements[..D - 1].iter().all(|e| e.is_zero())
+        self.iter().all(|e| e.is_zero())
     }
 }
 
 // Utils
-impl<N: Copy + Num, const D: usize> BoxableScalar<N> for Point<N, D> {}
+impl<N: Num, const D: usize> BoxableScalar<N> for Point<N, D> {}
 
 impl<N: Copy + Num, const D: usize> Default for Point<N, D> {
     #[inline]
@@ -52,7 +55,7 @@ impl<N: Copy + Num, const D: usize> Default for Point<N, D> {
     }
 }
 
-impl<N: Copy + Num, const D: usize> Dimension<D> for Point<N, D> {
+impl<N: Num, const D: usize> Dimension<D> for Point<N, D> {
     /// Returns point's dimension
     #[inline]
     fn dimension() -> usize {
@@ -60,7 +63,27 @@ impl<N: Copy + Num, const D: usize> Dimension<D> for Point<N, D> {
     }
 }
 
-macro_rules! point_from_array_impl {
+impl<'a, N: Num, const D: usize> IntoIterator for &'a Point<N, D> {
+    type Item = &'a N;
+    type IntoIter = Iter<'a, N>;
+
+    #[inline]
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
+impl<'a, N: Num, const D: usize> IntoIterator for &'a mut Point<N, D> {
+    type Item = &'a mut N;
+    type IntoIter = IterMut<'a, N>;
+
+    #[inline]
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter_mut()
+    }
+}
+
+macro_rules! from_array_impl {
     ($dim:literal) => {
         #[cfg(not(feature = "generic_const_exprs"))]
         impl<N: Copy + Num> From<&[N; $dim]> for Point<N, { $dim + 1 }> {
@@ -79,8 +102,8 @@ macro_rules! point_from_array_impl {
     };
 }
 
-point_from_array_impl!(2);
-point_from_array_impl!(3);
+from_array_impl!(2);
+from_array_impl!(3);
 
 #[cfg(feature = "generic_const_exprs")]
 impl<N: Copy + Num, const D: usize> From<&[N; D]> for Point<N, { D + 1 }> {
@@ -97,7 +120,7 @@ impl<N: Copy + Num, const D: usize> From<&[N; D]> for Point<N, { D + 1 }> {
     }
 }
 
-macro_rules! point_from_scalar_impl {
+macro_rules! from_scalar_impl {
     ($dim:literal) => {
         #[cfg(not(feature = "generic_const_exprs"))]
         impl<N: Copy + Num> From<&Scalar<N, $dim>> for Point<N, { $dim + 1 }> {
@@ -109,8 +132,8 @@ macro_rules! point_from_scalar_impl {
     };
 }
 
-point_from_scalar_impl!(2);
-point_from_scalar_impl!(3);
+from_scalar_impl!(2);
+from_scalar_impl!(3);
 
 #[cfg(feature = "generic_const_exprs")]
 impl<N: Copy + Num, const D: usize> From<&Scalar<N, D>> for Point<N, { D + 1 }> {
@@ -120,14 +143,28 @@ impl<N: Copy + Num, const D: usize> From<&Scalar<N, D>> for Point<N, { D + 1 }> 
     }
 }
 
+impl<N: Copy + Num, const D: usize> FromIterator<N> for Point<N, D> {
+    fn from_iter<T: IntoIterator<Item = N>>(iter: T) -> Self {
+        let mut point = Point::default();
+        let mut idx = 0;
+
+        for x in iter.into_iter().take(D - 1) {
+            point[idx] = x;
+            idx += 1;
+        }
+
+        point
+    }
+}
+
 // Operators
-impl<N: Copy + Num, const D: usize> PartialEq for Point<N, D> {
+impl<N: Num, const D: usize> PartialEq for Point<N, D> {
     fn eq(&self, other: &Self) -> bool {
         self.scalar == other.scalar
     }
 }
 
-impl<N: Copy + Num, I: SliceIndex<[N]>, const D: usize> ops::Index<I> for Point<N, D> {
+impl<N: Num, I: SliceIndex<[N]>, const D: usize> Index<I> for Point<N, D> {
     type Output = I::Output;
 
     fn index(&self, index: I) -> &Self::Output {
@@ -135,86 +172,59 @@ impl<N: Copy + Num, I: SliceIndex<[N]>, const D: usize> ops::Index<I> for Point<
     }
 }
 
-impl<N: Copy + Num, I: SliceIndex<[N]>, const D: usize> ops::IndexMut<I> for Point<N, D> {
+impl<N: Num, I: SliceIndex<[N]>, const D: usize> IndexMut<I> for Point<N, D> {
     fn index_mut(&mut self, index: I) -> &mut Self::Output {
         &mut self.scalar[index]
     }
 }
 
-macro_rules! point_add_assign_impl {
-    ($tp:ident, $dp:ident, $rhs:ty) => {
-        impl<$tp: Copy + Num, const $dp: usize> ops::AddAssign<$rhs> for Point<$tp, $dp> {
-            fn add_assign(&mut self, rhs: $rhs) {
-                self.scalar += rhs.scalar;
-            }
-        }
+impl<N: Copy + Num + AddAssign, const D: usize> AddAssign<Vector<N, D>> for Point<N, D> {
+    fn add_assign(&mut self, rhs: Vector<N, D>) {
+        self.scalar += &rhs.scalar;
     }
 }
 
-point_add_assign_impl!(N, D, Vector<N, D>);
-point_add_assign_impl!(N, D, &Vector<N, D>);
+forward_ref_op_assign!(AddAssign, Point<N, D>, add_assign, Vector<N, D>, <N: Copy + Num + AddAssign, const D: usize>);
 
-macro_rules! point_add_impl {
-    ($tp:ident, $dp:ident, $lhs:ty, $rhs:ty) => {
-        impl<$tp: Copy + Num, const $dp: usize> ops::Add<$rhs> for $lhs {
-            type Output = Point<$tp, $dp>;
+impl<N: Copy + Num, const D: usize> Add<Vector<N, D>> for Point<N, D> {
+    type Output = Point<N, D>;
 
-            fn add(self, rhs: $rhs) -> Self::Output {
-                Point { scalar: self.scalar + rhs.scalar }
-            }
-        }
+    fn add(self, rhs: Vector<N, D>) -> Self::Output {
+        Point { scalar: self.scalar + rhs.scalar }
     }
 }
 
-point_add_impl!(N, D, Point<N, D>, Vector<N, D>);
-point_add_impl!(N, D, &Point<N, D>, Vector<N, D>);
-point_add_impl!(N, D, Point<N, D>, &Vector<N, D>);
-point_add_impl!(N, D, &Point<N, D>, &Vector<N, D>);
+forward_ref_binop!(Add, Point<N, D>, add, Vector<N, D>, <N: Copy + Num, const D: usize>);
+reverse_binop!(Add, Point<N, D>, add, Vector<N, D>, <N: Copy + Num, const D: usize>);
 
-point_add_impl!(N, D, Vector<N, D>, Point<N, D>);
-point_add_impl!(N, D, &Vector<N, D>, Point<N, D>);
-point_add_impl!(N, D, Vector<N, D>, &Point<N, D>);
-point_add_impl!(N, D, &Vector<N, D>, &Point<N, D>);
-
-macro_rules! point_sub_assign_impl {
-    ($tp:ident, $dp:ident, $rhs:ty) => {
-        impl<$tp: Copy + Num, const $dp: usize> ops::SubAssign<$rhs> for Point<$tp, $dp> {
-            fn sub_assign(&mut self, rhs: $rhs) {
-                self.scalar -= rhs.scalar;
-            }
-        }
+impl<N: Copy + Num + SubAssign, const D: usize> SubAssign<Vector<N, D>> for Point<N, D> {
+    fn sub_assign(&mut self, rhs: Vector<N, D>) {
+        self.scalar -= &rhs.scalar;
     }
 }
 
-point_sub_assign_impl!(N, D, Vector<N, D>);
-point_sub_assign_impl!(N, D, &Vector<N, D>);
+forward_ref_op_assign!(SubAssign, Point<N, D>, sub_assign, Vector<N, D>, <N: Copy + Num + SubAssign, const D: usize>);
 
-macro_rules! point_sub_impl {
-    ($tp:ident, $dp:ident, $lhs:ty, $rhs:ty, $res:tt) => {
-        impl<$tp: Copy + Num, const $dp: usize> ops::Sub<$rhs> for $lhs {
-            type Output = $res<$tp, $dp>;
+impl<N: Copy + Num, const D: usize> Sub<Vector<N, D>> for Point<N, D> {
+    type Output = Point<N, D>;
 
-            fn sub(self, rhs: $rhs) -> Self::Output {
-                $res { scalar: self.scalar - rhs.scalar }
-            }
-        }
+    fn sub(self, rhs: Vector<N, D>) -> Self::Output {
+        Point { scalar: self.scalar - rhs.scalar }
     }
 }
 
-point_sub_impl!(N, D, Point<N, D>, Point<N, D>, Vector);
-point_sub_impl!(N, D, &Point<N, D>, Point<N, D>, Vector);
-point_sub_impl!(N, D, Point<N, D>, &Point<N, D>, Vector);
-point_sub_impl!(N, D, &Point<N, D>, &Point<N, D>, Vector);
+forward_ref_binop!(Sub, Point<N, D>, sub, Vector<N, D>, <N: Copy + Num, const D: usize>);
+reverse_binop!(Sub, Point<N, D>, sub, Vector<N, D>, <N: Copy + Num, const D: usize>);
 
-point_sub_impl!(N, D, Point<N, D>, Vector<N, D>, Point);
-point_sub_impl!(N, D, &Point<N, D>, Vector<N, D>, Point);
-point_sub_impl!(N, D, Point<N, D>, &Vector<N, D>, Point);
-point_sub_impl!(N, D, &Point<N, D>, &Vector<N, D>, Point);
+impl<N: Copy + Num, const D: usize> Sub for Point<N, D> {
+    type Output = Vector<N, D>;
 
-point_sub_impl!(N, D, Vector<N, D>, Point<N, D>, Point);
-point_sub_impl!(N, D, &Vector<N, D>, Point<N, D>, Point);
-point_sub_impl!(N, D, Vector<N, D>, &Point<N, D>, Point);
-point_sub_impl!(N, D, &Vector<N, D>, &Point<N, D>, Point);
+    fn sub(self, rhs: Point<N, D>) -> Self::Output {
+        Vector { scalar: self.scalar - rhs.scalar }
+    }
+}
+
+forward_ref_binop!(Sub, Point<N, D>, sub, Point<N, D>, <N: Copy + Num, const D: usize>);
 
 // Tests
 #[cfg(test)]
