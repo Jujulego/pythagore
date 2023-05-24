@@ -23,10 +23,12 @@ pub struct Scalar<N: Num, const D: usize> {
 
 // Methods
 impl<N: Num, const D: usize> Scalar<N, D> {
+    /// Returns iterator on scalar elements
     pub fn iter(&self) -> Iter<N> {
         self.elements.iter()
     }
 
+    /// Returns mutable iterator on scalar elements
     pub fn iter_mut(&mut self) -> IterMut<N> {
         self.elements.iter_mut()
     }

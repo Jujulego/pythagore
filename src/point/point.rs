@@ -12,6 +12,18 @@ pub struct Point<N: Num, const D: usize> {
 }
 
 // Methods
+impl<N: Num, const D: usize> Point<N, D> {
+    /// Returns iterator on point elements
+    pub fn iter(&self) -> Iter<N> {
+        self.scalar[..D-1].iter()
+    }
+
+    /// Returns mutable iterator on point elements
+    pub fn iter_mut(&mut self) -> IterMut<N> {
+        self.scalar[..D-1].iter_mut()
+    }
+}
+
 impl<N: Copy + Num, const D: usize> Point<N, D> {
     /// Returns origin point
     ///
@@ -27,16 +39,6 @@ impl<N: Copy + Num, const D: usize> Point<N, D> {
         pt.scalar[D - 1] = N::one();
 
         pt
-    }
-}
-
-impl<N: Num, const D: usize> Point<N, D> {
-    pub fn iter(&self) -> Iter<N> {
-        self.scalar[..D-1].iter()
-    }
-
-    pub fn iter_mut(&mut self) -> IterMut<N> {
-        self.scalar[..D-1].iter_mut()
     }
 
     /// Returns true if point is origin

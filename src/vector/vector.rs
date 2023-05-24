@@ -1,9 +1,9 @@
 use std::iter::Sum;
-use std::ops;
-use std::slice::{Iter, SliceIndex};
+use std::ops::{Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
+use std::slice::{Iter, IterMut, SliceIndex};
 use num_traits::{Float, Num, Signed, Zero};
 
-use crate::Scalar;
+use crate::{forward_ref_binop, forward_ref_op_assign, forward_ref_unop, Scalar};
 use crate::traits::Dimension;
 
 /// `Vector<N, const D: usize>` structure for n dimension vectors
@@ -14,12 +14,6 @@ pub struct Vector<N: Num, const D: usize> {
 
 // Methods
 impl<N: Copy + Num, const D: usize> Vector<N, D> {
-    /// Returns iterator on vector elements
-    #[inline]
-    pub fn iter(&self) -> Iter<'_, N> {
-        self.scalar[..D-1].iter()
-    }
-
     /// Returns a null vector
     ///
     /// ## Example
@@ -31,17 +25,29 @@ impl<N: Copy + Num, const D: usize> Vector<N, D> {
     /// ```
     #[inline]
     pub fn null() -> Self {
-        Self::zero()
+        Vector { scalar: Scalar::zero() }
     }
 
     /// Returns true if vector is null
     #[inline]
     pub fn is_null(&self) -> bool {
-        self.is_zero()
+        self.scalar.is_zero()
     }
 }
 
-impl<N: Copy + Num + ops::AddAssign, const D: usize> Vector<N, D> {
+impl<N: Num, const D: usize> Vector<N, D> {
+    /// Returns iterator on vector elements
+    pub fn iter(&self) -> Iter<'_, N> {
+        self.scalar[..D-1].iter()
+    }
+
+    /// Returns iterator on vector elements
+    pub fn iter_mut(&mut self) -> IterMut<'_, N> {
+        self.scalar[..D-1].iter_mut()
+    }
+}
+
+impl<N: Copy + Num + Sum, const D: usize> Vector<N, D> {
     /// Returns the squared norm of vector
     ///
     /// ## Example
@@ -52,17 +58,13 @@ impl<N: Copy + Num + ops::AddAssign, const D: usize> Vector<N, D> {
     /// assert_eq!(vector!{ dx: 2, dy: 3, dz: 4 }.square_norm(), 29);
     /// ```
     pub fn square_norm(&self) -> N {
-        let mut result = N::zero();
-
-        for n in 0..D {
-            result += self[n] * self[n];
-        }
-
-        result
+        self.iter()
+            .map(|&x| x * x)
+            .sum()
     }
 }
 
-impl<N: Copy + Float + ops::AddAssign, const D: usize> Vector<N, D> {
+impl<N: Copy + Float + Sum, const D: usize> Vector<N, D> {
     /// Returns the norm of vector (only for float vectors)
     ///
     /// ## Example
@@ -90,7 +92,7 @@ impl<N: Copy + Float + ops::AddAssign, const D: usize> Vector<N, D> {
     }
 }
 
-impl<N: Copy + Signed + ops::AddAssign, const D: usize> Vector<N, D> {
+impl<N: Copy + Signed + Sum, const D: usize> Vector<N, D> {
     /// Returns the norm of vector (only for signed vectors)
     ///
     /// ## Example
@@ -101,18 +103,14 @@ impl<N: Copy + Signed + ops::AddAssign, const D: usize> Vector<N, D> {
     /// assert_eq!(vector!{ dx: 1, dy: -2, dz: 3 }.manhattan_norm(), 6);
     /// ```
     pub fn manhattan_norm(&self) -> N {
-        let mut result = N::zero();
-
-        for n in 0..D {
-            result += self[n].abs();
-        }
-
-        result
+        self.iter()
+            .map(|x| x.abs())
+            .sum()
     }
 }
 
 // Utils
-impl<N: Copy + Num, const D: usize> Dimension<D> for Vector<N, D> {
+impl<N: Num, const D: usize> Dimension<D> for Vector<N, D> {
     /// Returns vector's dimension
     #[inline]
     fn dimension() -> usize {
@@ -120,7 +118,46 @@ impl<N: Copy + Num, const D: usize> Dimension<D> for Vector<N, D> {
     }
 }
 
-macro_rules! vector_from_array_impl {
+impl<N: Copy + Num, const D: usize> Default for Vector<N, D> {
+    #[inline]
+    fn default() -> Self {
+        Vector::null()
+    }
+}
+
+impl<N: Copy + Num, const D: usize> Zero for Vector<N, D> {
+    #[inline]
+    fn zero() -> Self {
+        Vector::null()
+    }
+
+    #[inline]
+    fn is_zero(&self) -> bool {
+        self.is_null()
+    }
+}
+
+impl<'a, N: Num, const D: usize> IntoIterator for &'a Vector<N, D> {
+    type Item = &'a N;
+    type IntoIter = Iter<'a, N>;
+
+    #[inline]
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
+impl<'a, N: Num, const D: usize> IntoIterator for &'a mut Vector<N, D> {
+    type Item = &'a mut N;
+    type IntoIter = IterMut<'a, N>;
+
+    #[inline]
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter_mut()
+    }
+}
+
+macro_rules! from_array_impl {
     ($dim:literal) => {
         #[cfg(not(feature = "generic_const_exprs"))]
         impl<N: Copy + Num> From<&[N; $dim]> for Vector<N, { $dim + 1 }> {
@@ -137,10 +174,25 @@ macro_rules! vector_from_array_impl {
     };
 }
 
-vector_from_array_impl!(2);
-vector_from_array_impl!(3);
+from_array_impl!(2);
+from_array_impl!(3);
 
-macro_rules! vector_from_scalar_impl {
+#[cfg(feature = "generic_const_exprs")]
+impl<N: Copy + Num, const D: usize> From<&[N; D]> for Vector<N, { D + 1 }> {
+    fn from(value: &[N; D]) -> Self {
+        let mut scalar = Scalar::zero();
+
+        for n in 0..D {
+            scalar[n] = value[n];
+        }
+
+        scalar[D] = N::one();
+
+        Vector { scalar }
+    }
+}
+
+macro_rules! from_scalar_impl {
     ($dim:literal) => {
         #[cfg(not(feature = "generic_const_exprs"))]
         impl<N: Copy + Num> From<&Scalar<N, $dim>> for Vector<N, { $dim + 1 }> {
@@ -152,8 +204,8 @@ macro_rules! vector_from_scalar_impl {
     };
 }
 
-vector_from_scalar_impl!(2);
-vector_from_scalar_impl!(3);
+from_scalar_impl!(2);
+from_scalar_impl!(3);
 
 #[cfg(feature = "generic_const_exprs")]
 impl<N: Copy + Num, const D: usize> From<&Scalar<N, D>> for Vector<N, { D + 1 }> {
@@ -163,15 +215,17 @@ impl<N: Copy + Num, const D: usize> From<&Scalar<N, D>> for Vector<N, { D + 1 }>
     }
 }
 
-impl<N: Copy + Num, const D: usize> Zero for Vector<N, D> {
-    #[inline]
-    fn zero() -> Self {
-        Vector { scalar: Scalar::zero() }
-    }
+impl<N: Copy + Num, const D: usize> FromIterator<N> for Vector<N, D> {
+    fn from_iter<T: IntoIterator<Item = N>>(iter: T) -> Self {
+        let mut vector = Vector::default();
+        let mut idx = 0;
 
-    #[inline]
-    fn is_zero(&self) -> bool {
-        self.scalar.is_zero()
+        for x in iter.into_iter().take(D - 1) {
+            vector[idx] = x;
+            idx += 1;
+        }
+
+        vector
     }
 }
 
@@ -182,7 +236,7 @@ impl<N: Num, const D: usize> PartialEq for Vector<N, D> {
     }
 }
 
-impl<N: Copy + Num, I: SliceIndex<[N]>, const D: usize> ops::Index<I> for Vector<N, D> {
+impl<N: Copy + Num, I: SliceIndex<[N]>, const D: usize> Index<I> for Vector<N, D> {
     type Output = I::Output;
 
     fn index(&self, index: I) -> &Self::Output {
@@ -190,163 +244,103 @@ impl<N: Copy + Num, I: SliceIndex<[N]>, const D: usize> ops::Index<I> for Vector
     }
 }
 
-impl<N: Copy + Num, I: SliceIndex<[N]>, const D: usize> ops::IndexMut<I> for Vector<N, D> {
+impl<N: Copy + Num, I: SliceIndex<[N]>, const D: usize> IndexMut<I> for Vector<N, D> {
     fn index_mut(&mut self, index: I) -> &mut Self::Output {
         &mut self.scalar[index]
     }
 }
 
-macro_rules! vector_neg_impl {
-    ($tp:ident, $dp:ident, $lhs:ty) => {
-        impl<$tp: Copy + Signed, const $dp: usize> ops::Neg for $lhs {
-            type Output = Vector<$tp, $dp>;
+impl<N: Copy + Signed, const D: usize> Neg for Vector<N, D> {
+    type Output = Vector<N, D>;
 
-            fn neg(self) -> Self::Output {
-                Vector { scalar: -self.scalar }
-            }
-        }
-    };
-}
-
-vector_neg_impl!(N, D, Vector<N, D>);
-vector_neg_impl!(N, D, &Vector<N, D>);
-
-macro_rules! vector_add_assign_impl {
-    ($tp:ident, $dp:ident, $rhs:ty) => {
-        impl<$tp: Copy + Num + ops::AddAssign, const $dp: usize> ops::AddAssign<$rhs> for Vector<$tp, $dp> {
-            fn add_assign(&mut self, rhs: $rhs) {
-                self.scalar += rhs.scalar;
-            }
-        }
+    fn neg(self) -> Self::Output {
+        Vector { scalar: -self.scalar }
     }
 }
 
-vector_add_assign_impl!(N, D, Vector<N, D>);
-vector_add_assign_impl!(N, D, &Vector<N, D>);
+forward_ref_unop!(Neg, Vector<N, D>, neg, <N: Copy + Signed, const D: usize>);
 
-macro_rules! vector_add_impl {
-    ($tp:ident, $dp:ident, $lhs:ty, $rhs:ty) => {
-        impl<$tp: Copy + Num, const $dp: usize> ops::Add<$rhs> for $lhs {
-            type Output = Vector<$tp, $dp>;
-
-            fn add(self, rhs: $rhs) -> Self::Output {
-                Vector { scalar: self.scalar + rhs.scalar }
-            }
-        }
+impl<N: Copy + Num + AddAssign, const D: usize> AddAssign<Vector<N, D>> for Vector<N, D> {
+    fn add_assign(&mut self, rhs: Vector<N, D>) {
+        self.scalar += rhs.scalar;
     }
 }
 
-vector_add_impl!(N, D, Vector<N, D>, Vector<N, D>);
-vector_add_impl!(N, D, &Vector<N, D>, Vector<N, D>);
-vector_add_impl!(N, D, Vector<N, D>, &Vector<N, D>);
-vector_add_impl!(N, D, &Vector<N, D>, &Vector<N, D>);
+forward_ref_op_assign!(AddAssign, Vector<N, D>, add_assign, Vector<N, D>, <N: Copy + Num + AddAssign, const D: usize>);
 
-macro_rules! vector_sub_assign_impl {
-    ($tp:ident, $dp:ident, $rhs:ty) => {
-        impl<$tp: Copy + Num, const $dp: usize> ops::SubAssign<$rhs> for Vector<$tp, $dp> {
-            fn sub_assign(&mut self, rhs: $rhs) {
-                self.scalar -= rhs.scalar;
-            }
-        }
+impl<N: Copy + Num, const D: usize> Add for Vector<N, D> {
+    type Output = Vector<N, D>;
+
+    fn add(self, rhs: Vector<N, D>) -> Self::Output {
+        Vector { scalar: self.scalar + rhs.scalar }
     }
 }
 
-vector_sub_assign_impl!(N, D, Vector<N, D>);
-vector_sub_assign_impl!(N, D, &Vector<N, D>);
+forward_ref_binop!(Add, Vector<N, D>, add, Vector<N, D>, <N: Copy + Num, const D: usize>);
 
-macro_rules! vector_sub_impl {
-    ($tp:ident, $dp:ident, $lhs:ty, $rhs:ty) => {
-        impl<$tp: Copy + Num, const $dp: usize> ops::Sub<$rhs> for $lhs {
-            type Output = Vector<$tp, $dp>;
-
-            fn sub(self, rhs: $rhs) -> Self::Output {
-                Vector { scalar: self.scalar - rhs.scalar }
-            }
-        }
+impl<N: Copy + Num + SubAssign, const D: usize> SubAssign<Vector<N, D>> for Vector<N, D> {
+    fn sub_assign(&mut self, rhs: Vector<N, D>) {
+        self.scalar -= rhs.scalar;
     }
 }
 
-vector_sub_impl!(N, D, Vector<N, D>, Vector<N, D>);
-vector_sub_impl!(N, D, &Vector<N, D>, Vector<N, D>);
-vector_sub_impl!(N, D, Vector<N, D>, &Vector<N, D>);
-vector_sub_impl!(N, D, &Vector<N, D>, &Vector<N, D>);
+forward_ref_op_assign!(SubAssign, Vector<N, D>, sub_assign, Vector<N, D>, <N: Copy + Num + SubAssign, const D: usize>);
 
-macro_rules! vector_mul_assign_impl {
-    ($tp:ident, $dp:ident, $rhs:ty $(, $defer:tt)?) => {
-        impl<$tp: Copy + Num, const $dp: usize> ops::MulAssign<$rhs> for Vector<$tp, $dp> {
-            fn mul_assign(&mut self, rhs: $rhs) {
-                self.scalar *= $($defer)?rhs;
-            }
-        }
+impl<N: Copy + Num, const D: usize> Sub for Vector<N, D> {
+    type Output = Vector<N, D>;
+
+    fn sub(self, rhs: Vector<N, D>) -> Self::Output {
+        Vector { scalar: self.scalar - rhs.scalar }
     }
 }
 
-vector_mul_assign_impl!(N, D, N);
-vector_mul_assign_impl!(N, D, &N, *);
+forward_ref_binop!(Sub, Vector<N, D>, sub, Vector<N, D>, <N: Copy + Num, const D: usize>);
 
-macro_rules! vector_mul_impl {
-    ($tp:ident, $dp:ident, $lhs:ty, $rhs:ty $(, $defer:tt)?) => {
-        impl<$tp: Copy + Num, const $dp: usize> ops::Mul<$rhs> for $lhs {
-            type Output = Vector<$tp, $dp>;
-
-            fn mul(self, rhs: $rhs) -> Self::Output {
-                Vector { scalar: self.scalar * $($defer)?rhs }
-            }
-        }
+impl<N: Copy + Num + MulAssign, const D: usize> MulAssign<N> for Vector<N, D> {
+    fn mul_assign(&mut self, rhs: N) {
+        self.scalar *= rhs;
     }
 }
 
-vector_mul_impl!(N, D, Vector<N, D>, N);
-vector_mul_impl!(N, D, &Vector<N, D>, N);
-vector_mul_impl!(N, D, Vector<N, D>, &N, *);
-vector_mul_impl!(N, D, &Vector<N, D>, &N, *);
+forward_ref_op_assign!(MulAssign, Vector<N, D>, mul_assign, N, <N: Copy + Num + MulAssign, const D: usize>);
 
-macro_rules! vector_scalar_impl {
-    ($tp:ident, $dp:ident, $lhs:ty, $rhs:ty) => {
-        impl<$tp: Copy + Num + Sum, const $dp: usize> ops::Mul<$rhs> for $lhs {
-            type Output = $tp;
+impl<N: Copy + Num, const D: usize> Mul<N> for Vector<N, D> {
+    type Output = Vector<N, D>;
 
-            fn mul(self, rhs: $rhs) -> Self::Output {
-                self.scalar * rhs.scalar
-            }
-        }
+    fn mul(self, rhs: N) -> Self::Output {
+        Vector { scalar: self.scalar * rhs }
     }
 }
 
-vector_scalar_impl!(N, D, Vector<N, D>, Vector<N, D>);
-vector_scalar_impl!(N, D, &Vector<N, D>, Vector<N, D>);
-vector_scalar_impl!(N, D, Vector<N, D>, &Vector<N, D>);
-vector_scalar_impl!(N, D, &Vector<N, D>, &Vector<N, D>);
+forward_ref_binop!(Mul, Vector<N, D>, mul, N, <N: Copy + Num, const D: usize>);
 
-macro_rules! vector_div_assign_impl {
-    ($tp:ident, $dp:ident, $rhs:ty $(, $defer:tt)?) => {
-        impl<$tp: Copy + Num, const $dp: usize> ops::DivAssign<$rhs> for Vector<$tp, $dp> {
-            fn div_assign(&mut self, rhs: $rhs) {
-                self.scalar /= $($defer)?rhs;
-            }
-        }
+impl<N: Copy + Num + Sum, const D: usize> Mul for Vector<N, D> {
+    type Output = N;
+
+    fn mul(self, rhs: Vector<N, D>) -> Self::Output {
+        self.scalar * rhs.scalar
     }
 }
 
-vector_div_assign_impl!(N, D, N);
-vector_div_assign_impl!(N, D, &N, *);
+forward_ref_binop!(Mul, Vector<N, D>, mul, Vector<N, D>, <N: Copy + Num + Sum, const D: usize>);
 
-macro_rules! vector_div_impl {
-    ($tp:ident, $dp:ident, $lhs:ty, $rhs:ty $(, $defer:tt)?) => {
-        impl<$tp: Copy + Num, const $dp: usize> ops::Div<$rhs> for $lhs {
-            type Output = Vector<$tp, $dp>;
-
-            fn div(self, rhs: $rhs) -> Self::Output {
-                Vector { scalar: self.scalar / $($defer)?rhs }
-            }
-        }
+impl<N: Copy + Num + DivAssign, const D: usize> DivAssign<N> for Vector<N, D> {
+    fn div_assign(&mut self, rhs: N) {
+        self.scalar /= rhs;
     }
 }
 
-vector_div_impl!(N, D, Vector<N, D>, N);
-vector_div_impl!(N, D, &Vector<N, D>, N);
-vector_div_impl!(N, D, Vector<N, D>, &N, *);
-vector_div_impl!(N, D, &Vector<N, D>, &N, *);
+forward_ref_op_assign!(DivAssign, Vector<N, D>, div_assign, N, <N: Copy + Num + DivAssign, const D: usize>);
+
+impl<N: Copy + Num, const D: usize> Div<N> for Vector<N, D> {
+    type Output = Vector<N, D>;
+
+    fn div(self, rhs: N) -> Self::Output {
+        Vector { scalar: self.scalar / rhs }
+    }
+}
+
+forward_ref_binop!(Div, Vector<N, D>, div, N, <N: Copy + Num, const D: usize>);
 
 // Tests
 #[cfg(test)]
