@@ -64,10 +64,10 @@ impl<N: Num, const L: usize, const C: usize> PartialEq for Matrix<N, L, C> {
 // Tests
 #[cfg(test)]
 mod tests {
-    use crate::Matrix;
+    use crate::{Matrix, scalar};
 
     #[test]
-    fn column_iterator() {
+    fn column_iter() {
         let matrix = Matrix::from([
             [1, 2, 3],
             [4, 5, 6],
@@ -77,5 +77,52 @@ mod tests {
         let column = matrix.column_iter(0).collect::<Vec<&i32>>();
 
         assert_eq!(column, vec![&1, &4, &7]);
+    }
+
+    #[test]
+    fn column_iter_mut() {
+        let mut matrix = Matrix::from([
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9]
+        ]);
+
+        matrix.column_iter_mut(0).for_each(|x| *x = 0);
+
+        assert_eq!(matrix.elements, [
+            scalar![0, 2, 3],
+            scalar![0, 5, 6],
+            scalar![0, 8, 9],
+        ]);
+    }
+
+    #[test]
+    fn line_iter() {
+        let matrix = Matrix::from([
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9]
+        ]);
+
+        let column = matrix.line_iter(0).collect::<Vec<&i32>>();
+
+        assert_eq!(column, vec![&1, &2, &3]);
+    }
+
+    #[test]
+    fn line_iter_mut() {
+        let mut matrix = Matrix::from([
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9]
+        ]);
+
+        matrix.line_iter_mut(0).for_each(|x| *x = 0);
+
+        assert_eq!(matrix.elements, [
+            scalar![0, 0, 0],
+            scalar![4, 5, 6],
+            scalar![7, 8, 9],
+        ]);
     }
 }
