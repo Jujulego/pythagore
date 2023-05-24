@@ -1,29 +1,30 @@
+use std::slice::{Iter, IterMut};
 use num_traits::Num;
 use crate::Scalar;
 
 #[derive(Clone, Copy, Debug, Eq)]
-pub struct Matrix<N: Copy + Num, const L: usize, const C: usize> {
-    elements: [Scalar<N, C>; L],
+pub struct Matrix<N: Num, const L: usize, const C: usize> {
+    pub(crate) elements: [Scalar<N, C>; L],
 }
 
 // Methods
-impl<N: Copy + Num, const L: usize, const C: usize> Matrix<N, L, C> {
-    pub fn column(&self, c: usize) -> Scalar<N, L> {
-        let mut column = Scalar::default();
-
-        for l in 0..L {
-            column[l] = self.elements[l][c]
-        }
-
-        column
+impl<N: Num, const L: usize, const C: usize> Matrix<N, L, C> {
+    pub fn column_iter(&self, column: usize) -> impl Iterator<Item=&N> {
+        self.elements.iter()
+            .map(move |l| &l[column])
     }
 
-    pub fn line(&self, l: usize) -> &Scalar<N, C> {
-        &self.elements[l]
+    pub fn column_iter_mut(&mut self, column: usize) -> impl Iterator<Item=&mut N> {
+        self.elements.iter_mut()
+            .map(move |l| &mut l[column])
     }
 
-    pub fn line_mut(&mut self, l: usize) -> &mut Scalar<N, C> {
-        &mut self.elements[l]
+    pub fn line_iter(&self, line: usize) -> Iter<N> {
+        self.elements[line].iter()
+    }
+
+    pub fn line_iter_mut(&mut self, line: usize) -> IterMut<N> {
+        self.elements[line].iter_mut()
     }
 }
 
@@ -35,7 +36,7 @@ impl<N: Copy + Num, const L: usize, const C: usize> Default for Matrix<N, L, C> 
     }
 }
 
-impl<N: Copy + Num, const L: usize, const C: usize> From<[Scalar<N, C>; L]> for Matrix<N, L, C> {
+impl<N: Num, const L: usize, const C: usize> From<[Scalar<N, C>; L]> for Matrix<N, L, C> {
     fn from(value: [Scalar<N, C>; L]) -> Self {
         Matrix { elements: value }
     }
@@ -54,8 +55,27 @@ impl<N: Copy + Num, const L: usize, const C: usize> From<[[N; C]; L]> for Matrix
 }
 
 // Operators
-impl<N: Copy + Num, const L: usize, const C: usize> PartialEq for Matrix<N, L, C> {
+impl<N: Num, const L: usize, const C: usize> PartialEq for Matrix<N, L, C> {
     fn eq(&self, other: &Self) -> bool {
         self.elements == other.elements
+    }
+}
+
+// Tests
+#[cfg(test)]
+mod tests {
+    use crate::Matrix;
+
+    #[test]
+    fn column_iterator() {
+        let matrix = Matrix::from([
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9]
+        ]);
+
+        let column = matrix.column_iter(0).collect::<Vec<&i32>>();
+
+        assert_eq!(column, vec![&1, &4, &7]);
     }
 }
