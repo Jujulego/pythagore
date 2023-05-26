@@ -1,8 +1,8 @@
 use std::iter::Flatten;
-use std::ops::{Add, AddAssign, Neg, Sub, SubAssign};
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 use std::slice::{Iter, IterMut};
 use num_traits::{Num, NumAssign, Signed, Zero};
-use crate::{owned_binop, owned_op_assign, owned_unop, Scalar};
+use crate::{forward_ref_binop, forward_ref_op_assign, owned_binop, owned_op_assign, owned_unop, Scalar};
 
 /// `Matrix<N, L, C>` utility structure for matrix LxC compute
 #[derive(Clone, Copy, Debug, Eq)]
@@ -187,6 +187,42 @@ impl<N: Copy + Num, const L: usize, const C: usize> Sub for &Matrix<N, L, C> {
 
 owned_binop!(Sub, Matrix<N, L, C>, sub, Matrix<N, L, C>, <N: Copy + Num, const L: usize, const C: usize>);
 
+impl<N: Copy + NumAssign, const L: usize, const C: usize> MulAssign<N> for Matrix<N, L, C> {
+    fn mul_assign(&mut self, rhs: N) {
+        self.iter_mut().for_each(|x| *x *= rhs)
+    }
+}
+
+forward_ref_op_assign!(MulAssign, Matrix<N, L, C>, mul_assign, N, <N: Copy + NumAssign, const L: usize, const C: usize>);
+
+impl<N: Copy + Num, const L: usize, const C: usize> Mul<N> for &Matrix<N, L, C> {
+    type Output = Matrix<N, L, C>;
+
+    fn mul(self, rhs: N) -> Self::Output {
+        self.iter().map(|&x| x * rhs).collect()
+    }
+}
+
+forward_ref_binop!(Mul, Matrix<N, L, C>, mul, N, <N: Copy + Num, const L: usize, const C: usize>);
+
+impl<N: Copy + NumAssign, const L: usize, const C: usize> DivAssign<N> for Matrix<N, L, C> {
+    fn div_assign(&mut self, rhs: N) {
+        self.iter_mut().for_each(|x| *x /= rhs)
+    }
+}
+
+forward_ref_op_assign!(DivAssign, Matrix<N, L, C>, div_assign, N, <N: Copy + NumAssign, const L: usize, const C: usize>);
+
+impl<N: Copy + Num, const L: usize, const C: usize> Div<N> for &Matrix<N, L, C> {
+    type Output = Matrix<N, L, C>;
+
+    fn div(self, rhs: N) -> Self::Output {
+        self.iter().map(|&x| x / rhs).collect()
+    }
+}
+
+forward_ref_binop!(Div, Matrix<N, L, C>, div, N, <N: Copy + Num, const L: usize, const C: usize>);
+
 // Tests
 #[cfg(test)]
 mod tests {
@@ -330,5 +366,67 @@ mod tests {
         ];
 
         assert_eq!(a - b, Matrix::zero());
+    }
+
+    #[test]
+    fn matrix_mul_num_assign() {
+        let mut a = matrix![
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9],
+        ];
+        a *= 2;
+
+        assert_eq!(a, matrix![
+            [ 2,  4,  6],
+            [ 8, 10, 12],
+            [14, 16, 18],
+        ]);
+    }
+
+    #[test]
+    fn matrix_mul_num() {
+        let a = matrix![
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9],
+        ];
+
+        assert_eq!(a * 2, matrix![
+            [ 2,  4,  6],
+            [ 8, 10, 12],
+            [14, 16, 18],
+        ]);
+    }
+
+    #[test]
+    fn matrix_div_num_assign() {
+        let mut a = matrix![
+            [ 2,  4,  6],
+            [ 8, 10, 12],
+            [14, 16, 18],
+        ];
+        a /= 2;
+
+        assert_eq!(a, matrix![
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9],
+        ]);
+    }
+
+    #[test]
+    fn matrix_div_num() {
+        let a = matrix![
+            [ 2,  4,  6],
+            [ 8, 10, 12],
+            [14, 16, 18],
+        ];
+
+        assert_eq!(a / 2, matrix![
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9],
+        ]);
     }
 }
