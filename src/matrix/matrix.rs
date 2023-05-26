@@ -1,5 +1,5 @@
 use std::iter::Flatten;
-use std::ops::{Add, AddAssign, Neg};
+use std::ops::{Add, AddAssign, Neg, Sub, SubAssign};
 use std::slice::{Iter, IterMut};
 use num_traits::{Num, NumAssign, Signed, Zero};
 use crate::{owned_binop, owned_op_assign, owned_unop, Scalar};
@@ -165,6 +165,28 @@ impl<N: Copy + Num, const L: usize, const C: usize> Add for &Matrix<N, L, C> {
 
 owned_binop!(Add, Matrix<N, L, C>, add, Matrix<N, L, C>, <N: Copy + Num, const L: usize, const C: usize>);
 
+impl<N: Copy + NumAssign, const L: usize, const C: usize> SubAssign<&Matrix<N, L, C>> for Matrix<N, L, C> {
+    fn sub_assign(&mut self, rhs: &Matrix<N, L, C>) {
+        self.iter_mut()
+            .zip(rhs.iter())
+            .for_each(|(l, &r)| *l -= r)
+    }
+}
+
+owned_op_assign!(SubAssign, Matrix<N, L, C>, sub_assign, Matrix<N, L, C>, <N: Copy + NumAssign, const L: usize, const C: usize>);
+
+impl<N: Copy + Num, const L: usize, const C: usize> Sub for &Matrix<N, L, C> {
+    type Output = Matrix<N, L, C>;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        self.iter()
+            .zip(rhs.iter())
+            .map(|(&l, &r)| l - r).collect()
+    }
+}
+
+owned_binop!(Sub, Matrix<N, L, C>, sub, Matrix<N, L, C>, <N: Copy + Num, const L: usize, const C: usize>);
+
 // Tests
 #[cfg(test)]
 mod tests {
@@ -276,5 +298,37 @@ mod tests {
         ];
 
         assert_eq!(a + b, Matrix::zero());
+    }
+
+    #[test]
+    fn matrix_sub_assign() {
+        let mut a = matrix![
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9],
+        ];
+        a -= matrix![
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9],
+        ];
+
+        assert_eq!(a, Matrix::zero());
+    }
+
+    #[test]
+    fn matrix_sub() {
+        let a = matrix![
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9],
+        ];
+        let b = matrix![
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9],
+        ];
+
+        assert_eq!(a - b, Matrix::zero());
     }
 }
