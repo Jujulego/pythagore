@@ -1,4 +1,4 @@
-use std::iter::Flatten;
+use std::iter::{Flatten, Sum};
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 use std::slice::{Iter, IterMut};
 use num_traits::{Num, NumAssign, Signed, Zero};
@@ -205,6 +205,27 @@ impl<N: Copy + Num, const L: usize, const C: usize> Mul<N> for &Matrix<N, L, C> 
 
 forward_ref_binop!(Mul, Matrix<N, L, C>, mul, N, <N: Copy + Num, const L: usize, const C: usize>);
 
+impl<N: Copy + Num + Sum, const L: usize, const T: usize, const C: usize> Mul<&Matrix<N, T, C>> for &Matrix<N, L, T> {
+    type Output = Matrix<N, L, C>;
+
+    fn mul(self, rhs: &Matrix<N, T, C>) -> Self::Output {
+        let mut result = Matrix::zero();
+
+        for l in 0..L {
+            for c in 0..C {
+                result.elements[l][c] = self.line_iter(l)
+                    .zip(rhs.column_iter(c))
+                    .map(|(&l, &r)| l * r)
+                    .sum();
+            }
+        }
+
+        result
+    }
+}
+
+owned_binop!(Mul, Matrix<N, L, T>, mul, Matrix<N, T, C>, <N: Copy + Num + Sum, const L: usize, const T: usize, const C: usize>);
+
 impl<N: Copy + NumAssign, const L: usize, const C: usize> DivAssign<N> for Matrix<N, L, C> {
     fn div_assign(&mut self, rhs: N) {
         self.iter_mut().for_each(|x| *x /= rhs)
@@ -396,6 +417,25 @@ mod tests {
             [ 2,  4,  6],
             [ 8, 10, 12],
             [14, 16, 18],
+        ]);
+    }
+
+    #[test]
+    fn matrix_mul_matrix() {
+        let a = matrix![
+            [1, 2],
+            [3, 4],
+            [5, 6],
+        ];
+        let b = matrix![
+            [1, 2, 3],
+            [4, 5, 6],
+        ];
+
+        assert_eq!(a * b, matrix![
+            [ 9, 12, 15],
+            [19, 26, 33],
+            [29, 40, 51],
         ]);
     }
 
