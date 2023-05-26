@@ -219,6 +219,25 @@ impl<N: Copy + Num, const L: usize, const C: usize> Mul<N> for &Matrix<N, L, C> 
 
 forward_ref_binop!(Mul, Matrix<N, L, C>, mul, N, <N: Copy + Num, const L: usize, const C: usize>);
 
+impl<N: Copy + Num + Sum, const L: usize, const C: usize> Mul<&Matrix<N, L, C>> for &Scalar<N, L> {
+    type Output = Scalar<N, C>;
+
+    fn mul(self, rhs: &Matrix<N, L, C>) -> Self::Output {
+        let mut result = Scalar::zero();
+
+        for c in 0..C {
+            result[c] = self.iter()
+                .zip(rhs.column_iter(c))
+                .map(|(&l, &r)| l * r)
+                .sum();
+        }
+
+        result
+    }
+}
+
+owned_binop!(Mul, Scalar<N, L>, mul, Matrix<N, L, C>, <N: Copy + Num + Sum, const L: usize, const C: usize>);
+
 impl<N: Copy + Num + Sum, const L: usize, const T: usize, const C: usize> Mul<&Matrix<N, T, C>> for &Matrix<N, L, T> {
     type Output = Matrix<N, L, C>;
 
@@ -261,7 +280,7 @@ forward_ref_binop!(Div, Matrix<N, L, C>, div, N, <N: Copy + Num, const L: usize,
 // Tests
 #[cfg(test)]
 mod tests {
-    use crate::matrix;
+    use crate::{matrix, scalar};
     use super::*;
 
     #[test]
@@ -432,6 +451,18 @@ mod tests {
             [ 8, 10, 12],
             [14, 16, 18],
         ]);
+    }
+
+    #[test]
+    fn scalar_mul_matrix() {
+        let a = scalar![1, 2, 3];
+        let b = matrix![
+            [1, 2],
+            [3, 4],
+            [5, 6],
+        ];
+
+        assert_eq!(a * b, scalar![22, 28]);
     }
 
     #[test]
