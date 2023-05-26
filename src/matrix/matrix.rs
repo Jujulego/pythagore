@@ -1,8 +1,8 @@
 use std::iter::Flatten;
-use std::ops::Neg;
+use std::ops::{Add, AddAssign, Neg};
 use std::slice::{Iter, IterMut};
-use num_traits::{Num, Signed, Zero};
-use crate::{owned_unop, Scalar};
+use num_traits::{Num, NumAssign, Signed, Zero};
+use crate::{owned_binop, owned_op_assign, owned_unop, Scalar};
 
 /// `Matrix<N, L, C>` utility structure for matrix LxC compute
 #[derive(Clone, Copy, Debug, Eq)]
@@ -53,6 +53,17 @@ impl<N: Copy + Num, const L: usize, const C: usize> Default for Matrix<N, L, C> 
     #[inline]
     fn default() -> Self {
         Matrix { elements: [Scalar::zero(); L] }
+    }
+}
+
+impl<N: Copy + Num, const L: usize, const C: usize> Zero for Matrix<N, L, C> {
+    #[inline]
+    fn zero() -> Self {
+        Self::default()
+    }
+
+    fn is_zero(&self) -> bool {
+        self.iter().all(|x| x.is_zero())
     }
 }
 
@@ -132,10 +143,33 @@ impl<N: Copy + Signed, const L: usize, const C: usize> Neg for &Matrix<N, L, C> 
 
 owned_unop!(Neg, Matrix<N, L, C>, neg, <N: Copy + Signed, const L: usize, const C: usize>);
 
+impl<N: Copy + NumAssign, const L: usize, const C: usize> AddAssign<&Matrix<N, L, C>> for Matrix<N, L, C> {
+    fn add_assign(&mut self, rhs: &Matrix<N, L, C>) {
+        self.iter_mut()
+            .zip(rhs.iter())
+            .for_each(|(l, &r)| *l += r)
+    }
+}
+
+owned_op_assign!(AddAssign, Matrix<N, L, C>, add_assign, Matrix<N, L, C>, <N: Copy + NumAssign, const L: usize, const C: usize>);
+
+impl<N: Copy + Num, const L: usize, const C: usize> Add for &Matrix<N, L, C> {
+    type Output = Matrix<N, L, C>;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        self.iter()
+            .zip(rhs.iter())
+            .map(|(&l, &r)| l + r).collect()
+    }
+}
+
+owned_binop!(Add, Matrix<N, L, C>, add, Matrix<N, L, C>, <N: Copy + Num, const L: usize, const C: usize>);
+
 // Tests
 #[cfg(test)]
 mod tests {
     use crate::matrix;
+    use super::*;
 
     #[test]
     fn column_iter() {
@@ -210,5 +244,37 @@ mod tests {
             [-4, -5, -6],
             [-7, -8, -9],
         ]);
+    }
+
+    #[test]
+    fn matrix_add_assign() {
+        let mut a = matrix![
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9],
+        ];
+        a += matrix![
+            [-1, -2, -3],
+            [-4, -5, -6],
+            [-7, -8, -9],
+        ];
+
+        assert_eq!(a, Matrix::zero());
+    }
+
+    #[test]
+    fn matrix_add() {
+        let a = matrix![
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9],
+        ];
+        let b = matrix![
+            [-1, -2, -3],
+            [-4, -5, -6],
+            [-7, -8, -9],
+        ];
+
+        assert_eq!(a + b, Matrix::zero());
     }
 }
