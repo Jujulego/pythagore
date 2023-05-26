@@ -1,5 +1,5 @@
 use std::iter::{Flatten, Sum};
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
+use std::ops::{Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
 use std::slice::{Iter, IterMut};
 use num_traits::{Num, NumAssign, Signed, Zero};
 use crate::{forward_ref_binop, forward_ref_op_assign, owned_binop, owned_op_assign, owned_unop, Scalar};
@@ -64,6 +64,20 @@ impl<N: Copy + Num, const L: usize, const C: usize> Zero for Matrix<N, L, C> {
 
     fn is_zero(&self) -> bool {
         self.iter().all(|x| x.is_zero())
+    }
+}
+
+impl<N: Copy + Num, const L: usize, const C: usize> Index<(usize, usize)> for Matrix<N, L, C> {
+    type Output = N;
+
+    fn index(&self, index: (usize, usize)) -> &Self::Output {
+        &self.elements[index.0][index.1]
+    }
+}
+
+impl<N: Copy + Num, const L: usize, const C: usize> IndexMut<(usize, usize)> for Matrix<N, L, C> {
+    fn index_mut(&mut self, index: (usize, usize)) -> &mut Self::Output {
+        &mut self.elements[index.0][index.1]
     }
 }
 
@@ -213,7 +227,7 @@ impl<N: Copy + Num + Sum, const L: usize, const T: usize, const C: usize> Mul<&M
 
         for l in 0..L {
             for c in 0..C {
-                result.elements[l][c] = self.line_iter(l)
+                result[(l, c)] = self.line_iter(l)
                     .zip(rhs.column_iter(c))
                     .map(|(&l, &r)| l * r)
                     .sum();
