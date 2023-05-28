@@ -7,7 +7,7 @@ use crate::{owned_binop, owned_op_assign, owned_unop, Vector};
 use crate::traits::Dimension;
 
 /// `Force<N, D>` structure for D dimension forces
-#[derive(Clone, Copy, Debug, Eq)]
+#[derive(Clone, Copy, Debug, Eq, Hash)]
 pub struct Force<N: Num, const D: usize> {
     pub(crate) vector: Vector<N, D>,
 }

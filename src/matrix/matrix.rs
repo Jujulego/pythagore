@@ -5,7 +5,7 @@ use num_traits::{Num, NumAssign, Signed, Zero};
 use crate::{forward_ref_binop, forward_ref_op_assign, owned_binop, owned_op_assign, owned_unop, Vector};
 
 /// `Matrix<N, L, C>` utility structure for matrix LxC compute
-#[derive(Clone, Copy, Debug, Eq)]
+#[derive(Clone, Copy, Debug, Eq, Hash)]
 pub struct Matrix<N: Num, const L: usize, const C: usize> {
     pub(crate) elements: [Vector<N, C>; L],
 }

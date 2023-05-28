@@ -16,7 +16,7 @@ use crate::traits::{Dimension, BoxableVector};
 ///
 /// assert_eq!(s[0], 1);
 /// ```
-#[derive(Clone, Copy, Debug, Eq)]
+#[derive(Clone, Copy, Debug, Eq, Hash)]
 pub struct Vector<N: Num, const D: usize> {
     pub(crate) elements: [N; D],
 }

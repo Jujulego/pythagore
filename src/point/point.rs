@@ -6,7 +6,7 @@ use crate::{owned_binop, owned_op_assign, reverse_owned_binop, Vector, Force};
 use crate::traits::{Dimension, BoxableVector};
 
 /// `Point<N, D>` structure for D dimension points
-#[derive(Clone, Copy, Debug, Eq)]
+#[derive(Clone, Copy, Debug, Eq, Hash)]
 pub struct Point<N: Num, const D: usize> {
     pub(crate) vector: Vector<N, D>,
 }
