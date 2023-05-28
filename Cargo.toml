@@ -2,7 +2,7 @@
 name = "pythagore"
 version = "0.1.0"
 edition = "2021"
-license-file = "LICENSE.txt"
+license-file = "LICENSE"
 repository = "https://github.com/Jujulego/pythagore"
 categories = ["mathematics"]
 keywords = ["maths", "point", "vector", "matrix"]
