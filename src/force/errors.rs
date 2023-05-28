@@ -1,10 +1,13 @@
+use std::error::Error;
 use std::fmt::{Display, Formatter};
 
 #[derive(Clone, Debug)]
-pub struct DoesNotEndWithZeroError;
+pub struct ForceMustEndWithZeroError;
 
-impl Display for DoesNotEndWithZeroError {
+impl Error for ForceMustEndWithZeroError {}
+
+impl Display for ForceMustEndWithZeroError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Given vector is not a valid force, it must end with 0")
+        write!(f, "given vector is not a valid force, it must end with 0")
     }
 }

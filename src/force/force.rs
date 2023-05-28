@@ -4,7 +4,7 @@ use std::slice::{Iter, IterMut, SliceIndex};
 use num_traits::{Float, Num, Signed, Zero};
 
 use crate::{owned_binop, owned_op_assign, owned_unop, Vector};
-use crate::force::errors::DoesNotEndWithZeroError;
+use crate::force::errors::ForceMustEndWithZeroError;
 use crate::traits::Dimension;
 
 /// `Force<N, D>` structure for D dimension forces
@@ -189,13 +189,13 @@ impl<N: Copy + Num, const D: usize> From<&Vector<N, D>> for Force<N, { D + 1 }> 
 }
 
 impl<N: Copy + Num, const D: usize> TryFrom<Vector<N, D>> for Force<N, D> {
-    type Error = DoesNotEndWithZeroError;
+    type Error = ForceMustEndWithZeroError;
 
     fn try_from(vector: Vector<N, D>) -> Result<Self, Self::Error> {
         if vector[D - 1] == N::zero() {
             Ok(Force { vector })
         } else {
-            Err(DoesNotEndWithZeroError {})
+            Err(ForceMustEndWithZeroError {})
         }
     }
 }

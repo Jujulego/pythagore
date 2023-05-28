@@ -3,7 +3,7 @@ use std::slice::{Iter, IterMut, SliceIndex};
 use num_traits::{Num, Zero};
 
 use crate::{owned_binop, owned_op_assign, reverse_owned_binop, Vector, Force};
-use crate::point::errors::DoesNotEndWithOneError;
+use crate::point::errors::PointMustEndWithOneError;
 use crate::traits::{Dimension, BoxableVector};
 
 /// `Point<N, D>` structure for D dimension points
@@ -117,13 +117,13 @@ impl<N: Copy + Num, const D: usize> From<&Vector<N, D>> for Point<N, { D + 1 }> 
 }
 
 impl<N: Copy + Num, const D: usize> TryFrom<Vector<N, D>> for Point<N, D> {
-    type Error = DoesNotEndWithOneError;
+    type Error = PointMustEndWithOneError;
 
     fn try_from(vector: Vector<N, D>) -> Result<Self, Self::Error> {
         if vector[D - 1] == N::one() {
             Ok(Point { vector })
         } else {
-            Err(DoesNotEndWithOneError {})
+            Err(PointMustEndWithOneError {})
         }
     }
 }
