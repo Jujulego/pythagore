@@ -2,16 +2,16 @@ use std::iter::{Flatten, Sum};
 use std::ops::{Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
 use std::slice::{Iter, IterMut};
 use num_traits::{Num, NumAssign, Signed, Zero};
-use crate::{forward_ref_binop, forward_ref_op_assign, owned_binop, owned_op_assign, owned_unop, Scalar};
+use crate::{forward_ref_binop, forward_ref_op_assign, owned_binop, owned_op_assign, owned_unop, Vector};
 
 /// `Matrix<N, L, C>` utility structure for matrix LxC compute
 #[derive(Clone, Copy, Debug, Eq)]
 pub struct Matrix<N: Num, const L: usize, const C: usize> {
-    pub(crate) elements: [Scalar<N, C>; L],
+    pub(crate) elements: [Vector<N, C>; L],
 }
 
-type MatrixIter<'a, N, const C: usize> = Flatten<Iter<'a, Scalar<N, C>>>;
-type MatrixIterMut<'a, N, const C: usize> = Flatten<IterMut<'a, Scalar<N, C>>>;
+type MatrixIter<'a, N, const C: usize> = Flatten<Iter<'a, Vector<N, C>>>;
+type MatrixIterMut<'a, N, const C: usize> = Flatten<IterMut<'a, Vector<N, C>>>;
 
 // Methods
 impl<N: Num, const L: usize, const C: usize> Matrix<N, L, C> {
@@ -52,7 +52,7 @@ impl<N: Num, const L: usize, const C: usize> Matrix<N, L, C> {
 impl<N: Copy + Num, const L: usize, const C: usize> Default for Matrix<N, L, C> {
     #[inline]
     fn default() -> Self {
-        Matrix { elements: [Scalar::zero(); L] }
+        Matrix { elements: [Vector::zero(); L] }
     }
 }
 
@@ -81,8 +81,8 @@ impl<N: Copy + Num, const L: usize, const C: usize> IndexMut<(usize, usize)> for
     }
 }
 
-impl<N: Num, const L: usize, const C: usize> From<[Scalar<N, C>; L]> for Matrix<N, L, C> {
-    fn from(value: [Scalar<N, C>; L]) -> Self {
+impl<N: Num, const L: usize, const C: usize> From<[Vector<N, C>; L]> for Matrix<N, L, C> {
+    fn from(value: [Vector<N, C>; L]) -> Self {
         Matrix { elements: value }
     }
 }
@@ -92,7 +92,7 @@ impl<N: Copy + Num, const L: usize, const C: usize> From<[[N; C]; L]> for Matrix
         let mut matrix = Matrix::default();
 
         for l in 0..L {
-            matrix.elements[l] = Scalar::from(value[l])
+            matrix.elements[l] = Vector::from(value[l])
         }
 
         matrix
@@ -219,11 +219,11 @@ impl<N: Copy + Num, const L: usize, const C: usize> Mul<N> for &Matrix<N, L, C> 
 
 forward_ref_binop!(Mul, Matrix<N, L, C>, mul, N, <N: Copy + Num, const L: usize, const C: usize>);
 
-impl<N: Copy + Num + Sum, const L: usize, const C: usize> Mul<&Matrix<N, L, C>> for &Scalar<N, L> {
-    type Output = Scalar<N, C>;
+impl<N: Copy + Num + Sum, const L: usize, const C: usize> Mul<&Matrix<N, L, C>> for &Vector<N, L> {
+    type Output = Vector<N, C>;
 
     fn mul(self, rhs: &Matrix<N, L, C>) -> Self::Output {
-        let mut result = Scalar::zero();
+        let mut result = Vector::zero();
 
         for c in 0..C {
             result[c] = self.iter()
@@ -236,7 +236,7 @@ impl<N: Copy + Num + Sum, const L: usize, const C: usize> Mul<&Matrix<N, L, C>> 
     }
 }
 
-owned_binop!(Mul, Scalar<N, L>, mul, Matrix<N, L, C>, <N: Copy + Num + Sum, const L: usize, const C: usize>);
+owned_binop!(Mul, Vector<N, L>, mul, Matrix<N, L, C>, <N: Copy + Num + Sum, const L: usize, const C: usize>);
 
 impl<N: Copy + Num + Sum, const L: usize, const T: usize, const C: usize> Mul<&Matrix<N, T, C>> for &Matrix<N, L, T> {
     type Output = Matrix<N, L, C>;
@@ -280,7 +280,7 @@ forward_ref_binop!(Div, Matrix<N, L, C>, div, N, <N: Copy + Num, const L: usize,
 // Tests
 #[cfg(test)]
 mod tests {
-    use crate::{matrix, scalar};
+    use crate::{matrix, vector};
     use super::*;
 
     #[test]
@@ -454,15 +454,15 @@ mod tests {
     }
 
     #[test]
-    fn scalar_mul_matrix() {
-        let a = scalar![1, 2, 3];
+    fn vector_mul_matrix() {
+        let a = vector![1, 2, 3];
         let b = matrix![
             [1, 2],
             [3, 4],
             [5, 6],
         ];
 
-        assert_eq!(a * b, scalar![22, 28]);
+        assert_eq!(a * b, vector![22, 28]);
     }
 
     #[test]

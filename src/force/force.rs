@@ -3,13 +3,13 @@ use std::ops::{Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, 
 use std::slice::{Iter, IterMut, SliceIndex};
 use num_traits::{Float, Num, Signed, Zero};
 
-use crate::{owned_binop, owned_op_assign, owned_unop, Scalar};
+use crate::{owned_binop, owned_op_assign, owned_unop, Vector};
 use crate::traits::Dimension;
 
 /// `Force<N, D>` structure for D dimension forces
 #[derive(Clone, Copy, Debug, Eq)]
 pub struct Force<N: Num, const D: usize> {
-    pub(crate) scalar: Scalar<N, D>,
+    pub(crate) vector: Vector<N, D>,
 }
 
 // Methods
@@ -25,25 +25,25 @@ impl<N: Copy + Num, const D: usize> Force<N, D> {
     /// ```
     #[inline]
     pub fn null() -> Self {
-        Force { scalar: Scalar::zero() }
+        Force { vector: Vector::zero() }
     }
 
     /// Returns true if force is null
     #[inline]
     pub fn is_null(&self) -> bool {
-        self.scalar.is_zero()
+        self.vector.is_zero()
     }
 }
 
 impl<N: Num, const D: usize> Force<N, D> {
     /// Returns iterator on force elements
     pub fn iter(&self) -> Iter<'_, N> {
-        self.scalar[..D-1].iter()
+        self.vector[..D-1].iter()
     }
 
     /// Returns iterator on force elements
     pub fn iter_mut(&mut self) -> IterMut<'_, N> {
-        self.scalar[..D-1].iter_mut()
+        self.vector[..D-1].iter_mut()
     }
 }
 
@@ -162,13 +162,13 @@ macro_rules! from_array_impl {
         #[cfg(not(feature = "generic_const_exprs"))]
         impl<N: Copy + Num> From<&[N; $dim]> for Force<N, { $dim + 1 }> {
             fn from(value: &[N; $dim]) -> Self {
-                let mut scalar = Scalar::zero();
+                let mut vector = Vector::zero();
 
                 for n in 0..$dim {
-                    scalar[n] = value[n];
+                    vector[n] = value[n];
                 }
 
-                Force { scalar }
+                Force { vector }
             }
         }
     };
@@ -180,37 +180,37 @@ from_array_impl!(3);
 #[cfg(feature = "generic_const_exprs")]
 impl<N: Copy + Num, const D: usize> From<&[N; D]> for Force<N, { D + 1 }> {
     fn from(value: &[N; D]) -> Self {
-        let mut scalar = Scalar::zero();
+        let mut vector = Vector::zero();
 
         for n in 0..D {
-            scalar[n] = value[n];
+            vector[n] = value[n];
         }
 
-        scalar[D] = N::one();
+        vector[D] = N::one();
 
-        Force { scalar }
+        Force { vector }
     }
 }
 
-macro_rules! from_scalar_impl {
+macro_rules! from_vector_impl {
     ($dim:literal) => {
         #[cfg(not(feature = "generic_const_exprs"))]
-        impl<N: Copy + Num> From<&Scalar<N, $dim>> for Force<N, { $dim + 1 }> {
+        impl<N: Copy + Num> From<&Vector<N, $dim>> for Force<N, { $dim + 1 }> {
             #[inline]
-            fn from(value: &Scalar<N, $dim>) -> Self {
+            fn from(value: &Vector<N, $dim>) -> Self {
                 Force::from(&value.elements)
             }
         }
     };
 }
 
-from_scalar_impl!(2);
-from_scalar_impl!(3);
+from_vector_impl!(2);
+from_vector_impl!(3);
 
 #[cfg(feature = "generic_const_exprs")]
-impl<N: Copy + Num, const D: usize> From<&Scalar<N, D>> for Force<N, { D + 1 }> {
+impl<N: Copy + Num, const D: usize> From<&Vector<N, D>> for Force<N, { D + 1 }> {
     #[inline]
-    fn from(value: &Scalar<N, D>) -> Self {
+    fn from(value: &Vector<N, D>) -> Self {
         Point::from(&value.elements)
     }
 }
@@ -232,7 +232,7 @@ impl<N: Copy + Num, const D: usize> FromIterator<N> for Force<N, D> {
 // Operators
 impl<N: Num, const D: usize> PartialEq for Force<N, D> {
     fn eq(&self, other: &Self) -> bool {
-        self.scalar == other.scalar
+        self.vector == other.vector
     }
 }
 
@@ -240,13 +240,13 @@ impl<N: Copy + Num, I: SliceIndex<[N]>, const D: usize> Index<I> for Force<N, D>
     type Output = I::Output;
 
     fn index(&self, index: I) -> &Self::Output {
-        &self.scalar[index]
+        &self.vector[index]
     }
 }
 
 impl<N: Copy + Num, I: SliceIndex<[N]>, const D: usize> IndexMut<I> for Force<N, D> {
     fn index_mut(&mut self, index: I) -> &mut Self::Output {
-        &mut self.scalar[index]
+        &mut self.vector[index]
     }
 }
 
@@ -254,7 +254,7 @@ impl<N: Copy + Signed, const D: usize> Neg for &Force<N, D> {
     type Output = Force<N, D>;
 
     fn neg(self) -> Self::Output {
-        Force { scalar: -self.scalar }
+        Force { vector: -self.vector }
     }
 }
 
@@ -262,7 +262,7 @@ owned_unop!(Neg, Force<N, D>, neg, <N: Copy + Signed, const D: usize>);
 
 impl<N: Copy + Num + AddAssign, const D: usize> AddAssign<&Force<N, D>> for Force<N, D> {
     fn add_assign(&mut self, rhs: &Force<N, D>) {
-        self.scalar += &rhs.scalar;
+        self.vector += &rhs.vector;
     }
 }
 
@@ -272,7 +272,7 @@ impl<N: Copy + Num, const D: usize> Add for &Force<N, D> {
     type Output = Force<N, D>;
 
     fn add(self, rhs: &Force<N, D>) -> Self::Output {
-        Force { scalar: &self.scalar + &rhs.scalar }
+        Force { vector: &self.vector + &rhs.vector }
     }
 }
 
@@ -280,7 +280,7 @@ owned_binop!(Add, Force<N, D>, add, Force<N, D>, <N: Copy + Num, const D: usize>
 
 impl<N: Copy + Num + SubAssign, const D: usize> SubAssign<&Force<N, D>> for Force<N, D> {
     fn sub_assign(&mut self, rhs: &Force<N, D>) {
-        self.scalar -= &rhs.scalar;
+        self.vector -= &rhs.vector;
     }
 }
 
@@ -290,7 +290,7 @@ impl<N: Copy + Num, const D: usize> Sub for &Force<N, D> {
     type Output = Force<N, D>;
 
     fn sub(self, rhs: &Force<N, D>) -> Self::Output {
-        Force { scalar: &self.scalar - &rhs.scalar }
+        Force { vector: &self.vector - &rhs.vector }
     }
 }
 
@@ -298,7 +298,7 @@ owned_binop!(Sub, Force<N, D>, sub, Force<N, D>, <N: Copy + Num, const D: usize>
 
 impl<N: Copy + Num + MulAssign, const D: usize> MulAssign<&N> for Force<N, D> {
     fn mul_assign(&mut self, rhs: &N) {
-        self.scalar *= rhs;
+        self.vector *= rhs;
     }
 }
 
@@ -308,7 +308,7 @@ impl<N: Copy + Num, const D: usize> Mul<&N> for &Force<N, D> {
     type Output = Force<N, D>;
 
     fn mul(self, rhs: &N) -> Self::Output {
-        Force { scalar: &self.scalar * rhs }
+        Force { vector: &self.vector * rhs }
     }
 }
 
@@ -318,7 +318,7 @@ impl<N: Copy + Num + Sum, const D: usize> Mul for &Force<N, D> {
     type Output = N;
 
     fn mul(self, rhs: &Force<N, D>) -> Self::Output {
-        &self.scalar * &rhs.scalar
+        &self.vector * &rhs.vector
     }
 }
 
@@ -326,7 +326,7 @@ owned_binop!(Mul, Force<N, D>, mul, Force<N, D>, <N: Copy + Num + Sum, const D: 
 
 impl<N: Copy + Num + DivAssign, const D: usize> DivAssign<&N> for Force<N, D> {
     fn div_assign(&mut self, rhs: &N) {
-        self.scalar /= rhs;
+        self.vector /= rhs;
     }
 }
 
@@ -336,7 +336,7 @@ impl<N: Copy + Num, const D: usize> Div<&N> for &Force<N, D> {
     type Output = Force<N, D>;
 
     fn div(self, rhs: &N) -> Self::Output {
-        Force { scalar: &self.scalar / rhs }
+        Force { vector: &self.vector / rhs }
     }
 }
 
@@ -345,7 +345,7 @@ owned_binop!(Div, Force<N, D>, div, N, <N: Copy + Num, const D: usize>);
 // Tests
 #[cfg(test)]
 mod tests {
-    use crate::{scalar, force};
+    use crate::{vector, force};
     use super::*;
 
     #[test]
@@ -374,7 +374,7 @@ mod tests {
         assert_eq!(v.unit(), force!{ dx: v.dx() / norm, dy: v.dy() / norm });
 
         assert_eq!(v.unit().norm(), 1.0);
-        assert_eq!(v.unit().scalar[2], 0.0);
+        assert_eq!(v.unit().vector[2], 0.0);
     }
 
     #[test]
@@ -385,21 +385,21 @@ mod tests {
         assert_eq!(v.unit(), force!{ dx: v.dx() / norm, dy: v.dy() / norm, dz: v.dz() / norm });
 
         assert_eq!(v.unit().norm(), 1.0);
-        assert_eq!(v.unit().scalar[3], 0.0);
+        assert_eq!(v.unit().vector[3], 0.0);
     }
 
     #[test]
     fn force_from_array() {
         let v = Force::from(&[1, 2, 3]);
 
-        assert_eq!(v.scalar.elements, [1, 2, 3, 0]);
+        assert_eq!(v.vector.elements, [1, 2, 3, 0]);
     }
 
     #[test]
-    fn force_from_scalar() {
-        let v = Force::from(&scalar![1, 2, 3]);
+    fn force_from_vector() {
+        let v = Force::from(&vector![1, 2, 3]);
 
-        assert_eq!(v.scalar.elements, [1, 2, 3, 0]);
+        assert_eq!(v.vector.elements, [1, 2, 3, 0]);
     }
 
     #[test]
@@ -407,7 +407,7 @@ mod tests {
         let v = -force!{ dx: 1, dy: 2 };
 
         assert_eq!(v, force!{ dx: -1, dy: -2 });
-        assert_eq!(v.scalar[2], 0);
+        assert_eq!(v.vector[2], 0);
     }
 
     #[test]
@@ -416,7 +416,7 @@ mod tests {
         v += force!{ dx: 3, dy: 4 };
 
         assert_eq!(v, force!{ dx: 4, dy: 6 });
-        assert_eq!(v.scalar[2], 0);
+        assert_eq!(v.vector[2], 0);
     }
 
     #[test]
@@ -425,7 +425,7 @@ mod tests {
         let u = v + force!{ dx: 3, dy: 4 };
 
         assert_eq!(u, force!{ dx: 4, dy: 6 });
-        assert_eq!(u.scalar[2], 0);
+        assert_eq!(u.vector[2], 0);
     }
 
     #[test]
@@ -434,7 +434,7 @@ mod tests {
         v -= force!{ dx: 3, dy: 4 };
 
         assert_eq!(v, force!{ dx: -2, dy: -2 });
-        assert_eq!(v.scalar[2], 0);
+        assert_eq!(v.vector[2], 0);
     }
 
     #[test]
@@ -443,7 +443,7 @@ mod tests {
         let u = v - force!{ dx: 3, dy: 4 };
 
         assert_eq!(u, force!{ dx: -2, dy: -2 });
-        assert_eq!(u.scalar[2], 0);
+        assert_eq!(u.vector[2], 0);
     }
 
     #[test]
@@ -452,7 +452,7 @@ mod tests {
         v *= 2;
 
         assert_eq!(v, force!{ dx: 2, dy: 4 });
-        assert_eq!(v.scalar[2], 0);
+        assert_eq!(v.vector[2], 0);
     }
 
     #[test]
@@ -461,7 +461,7 @@ mod tests {
         let u = v * 2;
 
         assert_eq!(u, force!{ dx: 2, dy: 4 });
-        assert_eq!(u.scalar[2], 0);
+        assert_eq!(u.vector[2], 0);
     }
 
     #[test]
@@ -477,7 +477,7 @@ mod tests {
         v /= 2;
 
         assert_eq!(v, force!{ dx: 1, dy: 2 });
-        assert_eq!(v.scalar[2], 0);
+        assert_eq!(v.vector[2], 0);
     }
 
     #[test]
@@ -486,6 +486,6 @@ mod tests {
         let u = v / 2;
 
         assert_eq!(u, force!{ dx: 1, dy: 2 });
-        assert_eq!(u.scalar[2], 0);
+        assert_eq!(u.vector[2], 0);
     }
 }

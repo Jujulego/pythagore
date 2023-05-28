@@ -1,6 +1,6 @@
 use num_traits::Num;
 
-use crate::scalar;
+use crate::vector;
 use crate::Force;
 
 // Type
@@ -18,7 +18,7 @@ impl<N: Copy + Num> Force3D<N> {
     /// ```
     #[inline]
     pub fn unit_dx() -> Self {
-        Force { scalar: scalar![N::one(), N::zero(), N::zero(), N::zero()] }
+        Force { vector: vector![N::one(), N::zero(), N::zero(), N::zero()] }
     }
 
     /// Returns dy unit force
@@ -31,7 +31,7 @@ impl<N: Copy + Num> Force3D<N> {
     /// ```
     #[inline]
     pub fn unit_dy() -> Self {
-        Force { scalar: scalar![N::zero(), N::one(), N::zero(), N::zero()] }
+        Force { vector: vector![N::zero(), N::one(), N::zero(), N::zero()] }
     }
 
     /// Returns dz unit force
@@ -44,7 +44,7 @@ impl<N: Copy + Num> Force3D<N> {
     /// ```
     #[inline]
     pub fn unit_dz() -> Self {
-        Force { scalar: scalar![N::zero(), N::zero(), N::one(), N::zero()] }
+        Force { vector: vector![N::zero(), N::zero(), N::one(), N::zero()] }
     }
 
     /// Returns ref on dx element of force
@@ -57,7 +57,7 @@ impl<N: Copy + Num> Force3D<N> {
     /// ```
     #[inline]
     pub fn dx(&self) -> &N {
-        &self.scalar[0]
+        &self.vector[0]
     }
 
     /// Returns mutable ref on dx element of force
@@ -73,7 +73,7 @@ impl<N: Copy + Num> Force3D<N> {
     /// ```
     #[inline]
     pub fn dx_mut(&mut self) -> &mut N {
-        &mut self.scalar[0]
+        &mut self.vector[0]
     }
 
     /// Returns ref on dy element of force
@@ -86,7 +86,7 @@ impl<N: Copy + Num> Force3D<N> {
     /// ```
     #[inline]
     pub fn dy(&self) -> &N {
-        &self.scalar[1]
+        &self.vector[1]
     }
 
     /// Returns mutable ref on dy element of force
@@ -102,7 +102,7 @@ impl<N: Copy + Num> Force3D<N> {
     /// ```
     #[inline]
     pub fn dy_mut(&mut self) -> &mut N {
-        &mut self.scalar[1]
+        &mut self.vector[1]
     }
 
     /// Returns ref on dz element of force
@@ -115,7 +115,7 @@ impl<N: Copy + Num> Force3D<N> {
     /// ```
     #[inline]
     pub fn dz(&self) -> &N {
-        &self.scalar[2]
+        &self.vector[2]
     }
 
     /// Returns mutable ref on dz element of force
@@ -131,6 +131,6 @@ impl<N: Copy + Num> Force3D<N> {
     /// ```
     #[inline]
     pub fn dz_mut(&mut self) -> &mut N {
-        &mut self.scalar[2]
+        &mut self.vector[2]
     }
 }

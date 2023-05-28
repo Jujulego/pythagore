@@ -1,14 +1,14 @@
 use std::ops::Bound::*;
 use std::ops::{Bound, Range, RangeBounds, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive};
 use num_traits::Num;
-use crate::Scalar;
-use crate::traits::{Dimension, BoxableScalar};
+use crate::Vector;
+use crate::traits::{Dimension, BoxableVector};
 
 /// Implemented by range types to define bounding box using range syntax
 ///
 /// ## Example
 /// ```
-/// use pythagore::{point, Point, scalar};
+/// use pythagore::{point, Point, vector};
 /// use pythagore::traits::BoxBounds;
 ///
 /// let bbox = Point::origin()..point!{ x: 5, y: 5 };
@@ -18,11 +18,11 @@ use crate::traits::{Dimension, BoxableScalar};
 pub trait BoxBounds<N, T, const D: usize>: RangeBounds<T>
 where
     N: Num + PartialOrd,
-    T: BoxableScalar<N> + Dimension<D>
+    T: BoxableVector<N> + Dimension<D>
 {
     fn box_contains<U>(&self, item: &U) -> bool
     where
-        U: BoxableScalar<N> + Dimension<D>
+        U: BoxableVector<N> + Dimension<D>
     {
         (0..D - 1).all(|idx| (
             match self.start_bound() {
@@ -40,7 +40,7 @@ where
 }
 
 // Implementations
-impl<N, const D: usize> BoxBounds<N, Scalar<N, D>, D> for RangeFull
+impl<N, const D: usize> BoxBounds<N, Vector<N, D>, D> for RangeFull
 where
     N: Copy + Num + PartialOrd,
 {}
@@ -48,37 +48,37 @@ where
 impl<N, T, const D: usize> BoxBounds<N, T, D> for RangeFrom<T>
 where
     N: Num + PartialOrd,
-    T: BoxableScalar<N> + Dimension<D>
+    T: BoxableVector<N> + Dimension<D>
 {}
 
 impl<N, T, const D: usize> BoxBounds<N, T, D> for RangeTo<T>
 where
     N: Num + PartialOrd,
-    T: BoxableScalar<N> + Dimension<D>
+    T: BoxableVector<N> + Dimension<D>
 {}
 
 impl<N, T, const D: usize> BoxBounds<N, T, D> for Range<T>
 where
     N: Num + PartialOrd,
-    T: BoxableScalar<N> + Dimension<D>
+    T: BoxableVector<N> + Dimension<D>
 {}
 
 impl<N, T, const D: usize> BoxBounds<N, T, D> for RangeInclusive<T>
 where
     N: Num + PartialOrd,
-    T: BoxableScalar<N> + Dimension<D>
+    T: BoxableVector<N> + Dimension<D>
 {}
 
 impl<N, T, const D: usize> BoxBounds<N, T, D> for RangeToInclusive<T>
 where
     N: Num + PartialOrd,
-    T: BoxableScalar<N> + Dimension<D>
+    T: BoxableVector<N> + Dimension<D>
 {}
 
 impl<N, T, const D: usize> BoxBounds<N, T, D> for (Bound<T>, Bound<T>)
 where
     N: Num + PartialOrd,
-    T: BoxableScalar<N> + Dimension<D>
+    T: BoxableVector<N> + Dimension<D>
 {}
 
 // Tests

@@ -17,7 +17,7 @@ impl<N: Copy + Num> Point3D<N> {
     /// ```
     #[inline]
     pub fn x(&self) -> &N {
-        &self.scalar[0]
+        &self.vector[0]
     }
 
     /// Returns mutable ref on x element of point
@@ -33,7 +33,7 @@ impl<N: Copy + Num> Point3D<N> {
     /// ```
     #[inline]
     pub fn x_mut(&mut self) -> &mut N {
-        &mut self.scalar[0]
+        &mut self.vector[0]
     }
 
     /// Returns ref on y element of point
@@ -46,7 +46,7 @@ impl<N: Copy + Num> Point3D<N> {
     /// ```
     #[inline]
     pub fn y(&self) -> &N {
-        &self.scalar[1]
+        &self.vector[1]
     }
 
     /// Returns mutable ref on y element of point
@@ -62,7 +62,7 @@ impl<N: Copy + Num> Point3D<N> {
     /// ```
     #[inline]
     pub fn y_mut(&mut self) -> &mut N {
-        &mut self.scalar[1]
+        &mut self.vector[1]
     }
 
     /// Returns ref on z element of point
@@ -75,7 +75,7 @@ impl<N: Copy + Num> Point3D<N> {
     /// ```
     #[inline]
     pub fn z(&self) -> &N {
-        &self.scalar[2]
+        &self.vector[2]
     }
 
     /// Returns mutable ref on z element of point
@@ -91,6 +91,6 @@ impl<N: Copy + Num> Point3D<N> {
     /// ```
     #[inline]
     pub fn z_mut(&mut self) -> &mut N {
-        &mut self.scalar[2]
+        &mut self.vector[2]
     }
 }

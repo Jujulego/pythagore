@@ -2,25 +2,25 @@ use std::ops::{Add, AddAssign, Index, IndexMut, Sub, SubAssign};
 use std::slice::{Iter, IterMut, SliceIndex};
 use num_traits::{Num, Zero};
 
-use crate::{owned_binop, owned_op_assign, reverse_owned_binop, Scalar, Force};
-use crate::traits::{Dimension, BoxableScalar};
+use crate::{owned_binop, owned_op_assign, reverse_owned_binop, Vector, Force};
+use crate::traits::{Dimension, BoxableVector};
 
 /// `Point<N, D>` structure for D dimension points
 #[derive(Clone, Copy, Debug, Eq)]
 pub struct Point<N: Num, const D: usize> {
-    pub(crate) scalar: Scalar<N, D>,
+    pub(crate) vector: Vector<N, D>,
 }
 
 // Methods
 impl<N: Num, const D: usize> Point<N, D> {
     /// Returns iterator on point elements
     pub fn iter(&self) -> Iter<N> {
-        self.scalar[..D-1].iter()
+        self.vector[..D-1].iter()
     }
 
     /// Returns mutable iterator on point elements
     pub fn iter_mut(&mut self) -> IterMut<N> {
-        self.scalar[..D-1].iter_mut()
+        self.vector[..D-1].iter_mut()
     }
 }
 
@@ -35,8 +35,8 @@ impl<N: Copy + Num, const D: usize> Point<N, D> {
     /// assert_eq!(Point3D::origin(), point!{ x: 0, y: 0, z: 0 });
     /// ```
     pub fn origin() -> Self {
-        let mut pt = Point { scalar: Scalar::zero() };
-        pt.scalar[D - 1] = N::one();
+        let mut pt = Point { vector: Vector::zero() };
+        pt.vector[D - 1] = N::one();
 
         pt
     }
@@ -48,7 +48,7 @@ impl<N: Copy + Num, const D: usize> Point<N, D> {
 }
 
 // Utils
-impl<N: Num, const D: usize> BoxableScalar<N> for Point<N, D> {}
+impl<N: Num, const D: usize> BoxableVector<N> for Point<N, D> {}
 
 impl<N: Copy + Num, const D: usize> Default for Point<N, D> {
     #[inline]
@@ -90,15 +90,15 @@ macro_rules! from_array_impl {
         #[cfg(not(feature = "generic_const_exprs"))]
         impl<N: Copy + Num> From<&[N; $dim]> for Point<N, { $dim + 1 }> {
             fn from(value: &[N; $dim]) -> Self {
-                let mut scalar = Scalar::zero();
+                let mut vector = Vector::zero();
 
                 for n in 0..$dim {
-                    scalar[n] = value[n];
+                    vector[n] = value[n];
                 }
 
-                scalar[$dim] = N::one();
+                vector[$dim] = N::one();
 
-                Point { scalar }
+                Point { vector }
             }
         }
     };
@@ -110,37 +110,37 @@ from_array_impl!(3);
 #[cfg(feature = "generic_const_exprs")]
 impl<N: Copy + Num, const D: usize> From<&[N; D]> for Point<N, { D + 1 }> {
     fn from(value: &[N; D]) -> Self {
-        let mut scalar = Scalar::zero();
+        let mut vector = Vector::zero();
 
         for n in 0..D {
-            scalar[n] = value[n];
+            vector[n] = value[n];
         }
 
-        scalar[D] = N::one();
+        vector[D] = N::one();
 
-        Point { scalar }
+        Point { vector }
     }
 }
 
-macro_rules! from_scalar_impl {
+macro_rules! from_vector_impl {
     ($dim:literal) => {
         #[cfg(not(feature = "generic_const_exprs"))]
-        impl<N: Copy + Num> From<&Scalar<N, $dim>> for Point<N, { $dim + 1 }> {
+        impl<N: Copy + Num> From<&Vector<N, $dim>> for Point<N, { $dim + 1 }> {
             #[inline]
-            fn from(value: &Scalar<N, $dim>) -> Self {
+            fn from(value: &Vector<N, $dim>) -> Self {
                 Point::from(&value.elements)
             }
         }
     };
 }
 
-from_scalar_impl!(2);
-from_scalar_impl!(3);
+from_vector_impl!(2);
+from_vector_impl!(3);
 
 #[cfg(feature = "generic_const_exprs")]
-impl<N: Copy + Num, const D: usize> From<&Scalar<N, D>> for Point<N, { D + 1 }> {
+impl<N: Copy + Num, const D: usize> From<&Vector<N, D>> for Point<N, { D + 1 }> {
     #[inline]
-    fn from(value: &Scalar<N, D>) -> Self {
+    fn from(value: &Vector<N, D>) -> Self {
         Point::from(&value.elements)
     }
 }
@@ -162,7 +162,7 @@ impl<N: Copy + Num, const D: usize> FromIterator<N> for Point<N, D> {
 // Operators
 impl<N: Num, const D: usize> PartialEq for Point<N, D> {
     fn eq(&self, other: &Self) -> bool {
-        self.scalar == other.scalar
+        self.vector == other.vector
     }
 }
 
@@ -170,19 +170,19 @@ impl<N: Num, I: SliceIndex<[N]>, const D: usize> Index<I> for Point<N, D> {
     type Output = I::Output;
 
     fn index(&self, index: I) -> &Self::Output {
-        &self.scalar[index]
+        &self.vector[index]
     }
 }
 
 impl<N: Num, I: SliceIndex<[N]>, const D: usize> IndexMut<I> for Point<N, D> {
     fn index_mut(&mut self, index: I) -> &mut Self::Output {
-        &mut self.scalar[index]
+        &mut self.vector[index]
     }
 }
 
 impl<N: Copy + Num + AddAssign, const D: usize> AddAssign<&Force<N, D>> for Point<N, D> {
     fn add_assign(&mut self, rhs: &Force<N, D>) {
-        self.scalar += &rhs.scalar;
+        self.vector += &rhs.vector;
     }
 }
 
@@ -192,7 +192,7 @@ impl<N: Copy + Num, const D: usize> Add<&Force<N, D>> for &Point<N, D> {
     type Output = Point<N, D>;
 
     fn add(self, rhs: &Force<N, D>) -> Self::Output {
-        Point { scalar: &self.scalar + &rhs.scalar }
+        Point { vector: &self.vector + &rhs.vector }
     }
 }
 
@@ -201,7 +201,7 @@ reverse_owned_binop!(Add, Point<N, D>, add, Force<N, D>, <N: Copy + Num, const D
 
 impl<N: Copy + Num + SubAssign, const D: usize> SubAssign<&Force<N, D>> for Point<N, D> {
     fn sub_assign(&mut self, rhs: &Force<N, D>) {
-        self.scalar -= &rhs.scalar;
+        self.vector -= &rhs.vector;
     }
 }
 
@@ -211,7 +211,7 @@ impl<N: Copy + Num, const D: usize> Sub<&Force<N, D>> for &Point<N, D> {
     type Output = Point<N, D>;
 
     fn sub(self, rhs: &Force<N, D>) -> Self::Output {
-        Point { scalar: &self.scalar - &rhs.scalar }
+        Point { vector: &self.vector - &rhs.vector }
     }
 }
 
@@ -222,7 +222,7 @@ impl<N: Copy + Num, const D: usize> Sub for &Point<N, D> {
     type Output = Force<N, D>;
 
     fn sub(self, rhs: &Point<N, D>) -> Self::Output {
-        Force { scalar: &self.scalar - &rhs.scalar }
+        Force { vector: &self.vector - &rhs.vector }
     }
 }
 
@@ -231,7 +231,7 @@ owned_binop!(Sub, Point<N, D>, sub, Point<N, D>, <N: Copy + Num, const D: usize>
 // Tests
 #[cfg(test)]
 mod tests {
-    use crate::{point, scalar, force};
+    use crate::{point, vector, force};
     use super::*;
 
     #[test]
@@ -246,14 +246,14 @@ mod tests {
     fn point_from_array() {
         let pt = Point::from(&[1, 2, 3]);
 
-        assert_eq!(pt.scalar.elements, [1, 2, 3, 1]);
+        assert_eq!(pt.vector.elements, [1, 2, 3, 1]);
     }
 
     #[test]
-    fn point_from_scalar() {
-        let pt = Point::from(&scalar![1, 2, 3]);
+    fn point_from_vector() {
+        let pt = Point::from(&vector![1, 2, 3]);
 
-        assert_eq!(pt.scalar.elements, [1, 2, 3, 1]);
+        assert_eq!(pt.vector.elements, [1, 2, 3, 1]);
     }
 
     #[test]
@@ -262,7 +262,7 @@ mod tests {
         a += force!{ dx: 3, dy: 4 };
 
         assert_eq!(a, point!{ x: 4, y: 6 });
-        assert_eq!(a.scalar[2], 1);
+        assert_eq!(a.vector[2], 1);
     }
 
     #[test]
@@ -271,7 +271,7 @@ mod tests {
         let b = a + force!{ dx: 3, dy: 4 };
 
         assert_eq!(b, point!{ x: 4, y: 6 });
-        assert_eq!(b.scalar[2], 1);
+        assert_eq!(b.vector[2], 1);
     }
 
     #[test]
@@ -280,7 +280,7 @@ mod tests {
         a -= force!{ dx: 3, dy: 4 };
 
         assert_eq!(a, point!{ x: -2, y: -2 });
-        assert_eq!(a.scalar[2], 1);
+        assert_eq!(a.vector[2], 1);
     }
 
     #[test]
@@ -289,7 +289,7 @@ mod tests {
         let b = a - force!{ dx: 3, dy: 4 };
 
         assert_eq!(b, point!{ x: -2, y: -2 });
-        assert_eq!(b.scalar[2], 1);
+        assert_eq!(b.vector[2], 1);
     }
 
     #[test]
@@ -298,6 +298,6 @@ mod tests {
         let b = a - point!{ x: 3, y: 4 };
 
         assert_eq!(b, force!{ dx: -2, dy: -2 });
-        assert_eq!(b.scalar[2], 0);
+        assert_eq!(b.vector[2], 0);
     }
 }
