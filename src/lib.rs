@@ -1,11 +1,11 @@
-mod macros;
+pub mod force;
 pub mod matrix;
 pub mod point;
 pub mod scalar;
 pub mod traits;
-pub mod vector;
+mod macros;
 
 pub use crate::matrix::*;
 pub use crate::point::*;
 pub use crate::scalar::*;
-pub use crate::vector::*;
+pub use crate::force::*;

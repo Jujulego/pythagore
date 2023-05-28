@@ -2,7 +2,7 @@ use std::ops::{Add, AddAssign, Index, IndexMut, Sub, SubAssign};
 use std::slice::{Iter, IterMut, SliceIndex};
 use num_traits::{Num, Zero};
 
-use crate::{owned_binop, owned_op_assign, reverse_owned_binop, Scalar, Vector};
+use crate::{owned_binop, owned_op_assign, reverse_owned_binop, Scalar, Force};
 use crate::traits::{Dimension, BoxableScalar};
 
 /// `Point<N, D>` structure for D dimension points
@@ -180,49 +180,49 @@ impl<N: Num, I: SliceIndex<[N]>, const D: usize> IndexMut<I> for Point<N, D> {
     }
 }
 
-impl<N: Copy + Num + AddAssign, const D: usize> AddAssign<&Vector<N, D>> for Point<N, D> {
-    fn add_assign(&mut self, rhs: &Vector<N, D>) {
+impl<N: Copy + Num + AddAssign, const D: usize> AddAssign<&Force<N, D>> for Point<N, D> {
+    fn add_assign(&mut self, rhs: &Force<N, D>) {
         self.scalar += &rhs.scalar;
     }
 }
 
-owned_op_assign!(AddAssign, Point<N, D>, add_assign, Vector<N, D>, <N: Copy + Num + AddAssign, const D: usize>);
+owned_op_assign!(AddAssign, Point<N, D>, add_assign, Force<N, D>, <N: Copy + Num + AddAssign, const D: usize>);
 
-impl<N: Copy + Num, const D: usize> Add<&Vector<N, D>> for &Point<N, D> {
+impl<N: Copy + Num, const D: usize> Add<&Force<N, D>> for &Point<N, D> {
     type Output = Point<N, D>;
 
-    fn add(self, rhs: &Vector<N, D>) -> Self::Output {
+    fn add(self, rhs: &Force<N, D>) -> Self::Output {
         Point { scalar: &self.scalar + &rhs.scalar }
     }
 }
 
-owned_binop!(Add, Point<N, D>, add, Vector<N, D>, <N: Copy + Num, const D: usize>);
-reverse_owned_binop!(Add, Point<N, D>, add, Vector<N, D>, <N: Copy + Num, const D: usize>);
+owned_binop!(Add, Point<N, D>, add, Force<N, D>, <N: Copy + Num, const D: usize>);
+reverse_owned_binop!(Add, Point<N, D>, add, Force<N, D>, <N: Copy + Num, const D: usize>);
 
-impl<N: Copy + Num + SubAssign, const D: usize> SubAssign<&Vector<N, D>> for Point<N, D> {
-    fn sub_assign(&mut self, rhs: &Vector<N, D>) {
+impl<N: Copy + Num + SubAssign, const D: usize> SubAssign<&Force<N, D>> for Point<N, D> {
+    fn sub_assign(&mut self, rhs: &Force<N, D>) {
         self.scalar -= &rhs.scalar;
     }
 }
 
-owned_op_assign!(SubAssign, Point<N, D>, sub_assign, Vector<N, D>, <N: Copy + Num + SubAssign, const D: usize>);
+owned_op_assign!(SubAssign, Point<N, D>, sub_assign, Force<N, D>, <N: Copy + Num + SubAssign, const D: usize>);
 
-impl<N: Copy + Num, const D: usize> Sub<&Vector<N, D>> for &Point<N, D> {
+impl<N: Copy + Num, const D: usize> Sub<&Force<N, D>> for &Point<N, D> {
     type Output = Point<N, D>;
 
-    fn sub(self, rhs: &Vector<N, D>) -> Self::Output {
+    fn sub(self, rhs: &Force<N, D>) -> Self::Output {
         Point { scalar: &self.scalar - &rhs.scalar }
     }
 }
 
-owned_binop!(Sub, Point<N, D>, sub, Vector<N, D>, <N: Copy + Num, const D: usize>);
-reverse_owned_binop!(Sub, Point<N, D>, sub, Vector<N, D>, <N: Copy + Num, const D: usize>);
+owned_binop!(Sub, Point<N, D>, sub, Force<N, D>, <N: Copy + Num, const D: usize>);
+reverse_owned_binop!(Sub, Point<N, D>, sub, Force<N, D>, <N: Copy + Num, const D: usize>);
 
 impl<N: Copy + Num, const D: usize> Sub for &Point<N, D> {
-    type Output = Vector<N, D>;
+    type Output = Force<N, D>;
 
     fn sub(self, rhs: &Point<N, D>) -> Self::Output {
-        Vector { scalar: &self.scalar - &rhs.scalar }
+        Force { scalar: &self.scalar - &rhs.scalar }
     }
 }
 
@@ -231,7 +231,7 @@ owned_binop!(Sub, Point<N, D>, sub, Point<N, D>, <N: Copy + Num, const D: usize>
 // Tests
 #[cfg(test)]
 mod tests {
-    use crate::{point, scalar, vector};
+    use crate::{point, scalar, force};
     use super::*;
 
     #[test]
@@ -259,16 +259,16 @@ mod tests {
     #[test]
     fn point_add_assign() {
         let mut a = point!{ x: 1, y: 2 };
-        a += vector!{ dx: 3, dy: 4 };
+        a += force!{ dx: 3, dy: 4 };
 
         assert_eq!(a, point!{ x: 4, y: 6 });
         assert_eq!(a.scalar[2], 1);
     }
 
     #[test]
-    fn point_add_vector() {
+    fn point_add_force() {
         let a = point!{ x: 1, y: 2 };
-        let b = a + vector!{ dx: 3, dy: 4 };
+        let b = a + force!{ dx: 3, dy: 4 };
 
         assert_eq!(b, point!{ x: 4, y: 6 });
         assert_eq!(b.scalar[2], 1);
@@ -277,16 +277,16 @@ mod tests {
     #[test]
     fn point_sub_assign() {
         let mut a = point!{ x: 1, y: 2 };
-        a -= vector!{ dx: 3, dy: 4 };
+        a -= force!{ dx: 3, dy: 4 };
 
         assert_eq!(a, point!{ x: -2, y: -2 });
         assert_eq!(a.scalar[2], 1);
     }
 
     #[test]
-    fn point_sub_vector() {
+    fn point_sub_force() {
         let a = point!{ x: 1, y: 2 };
-        let b = a - vector!{ dx: 3, dy: 4 };
+        let b = a - force!{ dx: 3, dy: 4 };
 
         assert_eq!(b, point!{ x: -2, y: -2 });
         assert_eq!(b.scalar[2], 1);
@@ -297,7 +297,7 @@ mod tests {
         let a = point!{ x: 1, y: 2 };
         let b = a - point!{ x: 3, y: 4 };
 
-        assert_eq!(b, vector!{ dx: -2, dy: -2 });
+        assert_eq!(b, force!{ dx: -2, dy: -2 });
         assert_eq!(b.scalar[2], 0);
     }
 }
