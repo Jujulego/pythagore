@@ -18,7 +18,7 @@ use crate::traits::{Dimension, BoxableVector};
 /// ```
 #[derive(Clone, Copy, Debug, Eq, Hash)]
 pub struct Vector<N: Num, const D: usize> {
-    pub(crate) elements: [N; D],
+    elements: [N; D],
 }
 
 // Methods
@@ -102,6 +102,12 @@ impl<N: Copy + Num, const D: usize> FromIterator<N> for Vector<N, D> {
         }
 
         vector
+    }
+}
+
+impl<'a, N: Copy + Num, const D: usize> FromIterator<&'a N> for Vector<N, D> {
+    fn from_iter<T: IntoIterator<Item = &'a N>>(iter: T) -> Self {
+        Self::from_iter(iter.into_iter().map(|&x| x))
     }
 }
 

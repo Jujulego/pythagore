@@ -162,13 +162,7 @@ macro_rules! from_array_impl {
         #[cfg(not(feature = "generic_const_exprs"))]
         impl<N: Copy + Num> From<&[N; $dim]> for Force<N, { $dim + 1 }> {
             fn from(value: &[N; $dim]) -> Self {
-                let mut vector = Vector::zero();
-
-                for n in 0..$dim {
-                    vector[n] = value[n];
-                }
-
-                Force { vector }
+                value.iter().collect()
             }
         }
     };
@@ -180,15 +174,7 @@ from_array_impl!(3);
 #[cfg(feature = "generic_const_exprs")]
 impl<N: Copy + Num, const D: usize> From<&[N; D]> for Force<N, { D + 1 }> {
     fn from(value: &[N; D]) -> Self {
-        let mut vector = Vector::zero();
-
-        for n in 0..D {
-            vector[n] = value[n];
-        }
-
-        vector[D] = N::one();
-
-        Force { vector }
+        value.iter().collect()
     }
 }
 
@@ -198,7 +184,7 @@ macro_rules! from_vector_impl {
         impl<N: Copy + Num> From<&Vector<N, $dim>> for Force<N, { $dim + 1 }> {
             #[inline]
             fn from(value: &Vector<N, $dim>) -> Self {
-                Force::from(&value.elements)
+                value.iter().collect()
             }
         }
     };
@@ -211,7 +197,7 @@ from_vector_impl!(3);
 impl<N: Copy + Num, const D: usize> From<&Vector<N, D>> for Force<N, { D + 1 }> {
     #[inline]
     fn from(value: &Vector<N, D>) -> Self {
-        Point::from(&value.elements)
+        value.iter().collect()
     }
 }
 
@@ -226,6 +212,12 @@ impl<N: Copy + Num, const D: usize> FromIterator<N> for Force<N, D> {
         }
 
         force
+    }
+}
+
+impl<'a, N: Copy + Num, const D: usize> FromIterator<&'a N> for Force<N, D> {
+    fn from_iter<T: IntoIterator<Item = &'a N>>(iter: T) -> Self {
+        Self::from_iter(iter.into_iter().map(|&x| x))
     }
 }
 
@@ -392,14 +384,14 @@ mod tests {
     fn force_from_array() {
         let v = Force::from(&[1, 2, 3]);
 
-        assert_eq!(v.vector.elements, [1, 2, 3, 0]);
+        assert_eq!(v.vector, vector![1, 2, 3, 0]);
     }
 
     #[test]
     fn force_from_vector() {
         let v = Force::from(&vector![1, 2, 3]);
 
-        assert_eq!(v.vector.elements, [1, 2, 3, 0]);
+        assert_eq!(v.vector, vector![1, 2, 3, 0]);
     }
 
     #[test]
