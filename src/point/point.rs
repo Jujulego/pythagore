@@ -8,7 +8,7 @@ use crate::traits::{Dimension, BoxableVector};
 /// `Point<N, D>` structure for D dimension points
 #[derive(Clone, Copy, Debug, Eq, Hash)]
 pub struct Point<N: Num, const D: usize> {
-    pub(crate) vector: Vector<N, D>,
+    vector: Vector<N, D>,
 }
 
 // Methods
@@ -65,23 +65,9 @@ impl<N: Num, const D: usize> Dimension<D> for Point<N, D> {
     }
 }
 
-impl<'a, N: Num, const D: usize> IntoIterator for &'a Point<N, D> {
-    type Item = &'a N;
-    type IntoIter = Iter<'a, N>;
-
-    #[inline]
-    fn into_iter(self) -> Self::IntoIter {
-        self.iter()
-    }
-}
-
-impl<'a, N: Num, const D: usize> IntoIterator for &'a mut Point<N, D> {
-    type Item = &'a mut N;
-    type IntoIter = IterMut<'a, N>;
-
-    #[inline]
-    fn into_iter(self) -> Self::IntoIter {
-        self.iter_mut()
+impl<N: Copy + Num, const D: usize> AsRef<Vector<N, D>> for Point<N, D> {
+    fn as_ref(&self) -> &Vector<N, D> {
+        &self.vector
     }
 }
 
@@ -126,6 +112,26 @@ impl<N: Copy + Num, const D: usize> From<&Vector<N, D>> for Point<N, { D + 1 }> 
     #[inline]
     fn from(value: &Vector<N, D>) -> Self {
         value.iter().collect()
+    }
+}
+
+impl<'a, N: Num, const D: usize> IntoIterator for &'a Point<N, D> {
+    type Item = &'a N;
+    type IntoIter = Iter<'a, N>;
+
+    #[inline]
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
+impl<'a, N: Num, const D: usize> IntoIterator for &'a mut Point<N, D> {
+    type Item = &'a mut N;
+    type IntoIter = IterMut<'a, N>;
+
+    #[inline]
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter_mut()
     }
 }
 

@@ -17,7 +17,7 @@ impl<N: Copy + Num> Point2D<N> {
     /// ```
     #[inline]
     pub fn x(&self) -> &N {
-        &self.vector[0]
+        &self[0]
     }
 
     /// Returns mutable ref on x element of point
@@ -33,7 +33,7 @@ impl<N: Copy + Num> Point2D<N> {
     /// ```
     #[inline]
     pub fn x_mut(&mut self) -> &mut N {
-        &mut self.vector[0]
+        &mut self[0]
     }
 
     /// Returns ref on y element of point
@@ -46,7 +46,7 @@ impl<N: Copy + Num> Point2D<N> {
     /// ```
     #[inline]
     pub fn y(&self) -> &N {
-        &self.vector[1]
+        &self[1]
     }
 
     /// Returns mutable ref on y element of point
@@ -62,6 +62,6 @@ impl<N: Copy + Num> Point2D<N> {
     /// ```
     #[inline]
     pub fn y_mut(&mut self) -> &mut N {
-        &mut self.vector[1]
+        &mut self[1]
     }
 }
