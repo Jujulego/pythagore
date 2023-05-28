@@ -57,6 +57,12 @@ impl<N: Copy + Num, const D: usize> Zero for Vector<N, D> {
     }
 }
 
+impl<N: Num, const D: usize> AsRef<Vector<N, D>> for Vector<N, D> {
+    fn as_ref(&self) -> &Vector<N, D> {
+        self
+    }
+}
+
 impl<N: Num, const D: usize> From<[N; D]> for Vector<N, D> {
     /// Builds a new vector form given fixed array
     ///

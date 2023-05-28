@@ -178,7 +178,7 @@ impl<N: Num, I: SliceIndex<[N]>, const D: usize> IndexMut<I> for Point<N, D> {
 
 impl<N: Copy + Num + AddAssign, const D: usize> AddAssign<&Force<N, D>> for Point<N, D> {
     fn add_assign(&mut self, rhs: &Force<N, D>) {
-        self.vector += &rhs.vector;
+        self.vector += rhs.as_ref();
     }
 }
 
@@ -188,7 +188,7 @@ impl<N: Copy + Num, const D: usize> Add<&Force<N, D>> for &Point<N, D> {
     type Output = Point<N, D>;
 
     fn add(self, rhs: &Force<N, D>) -> Self::Output {
-        Point { vector: &self.vector + &rhs.vector }
+        Point { vector: &self.vector + rhs.as_ref() }
     }
 }
 
@@ -197,7 +197,7 @@ reverse_owned_binop!(Add, Point<N, D>, add, Force<N, D>, <N: Copy + Num, const D
 
 impl<N: Copy + Num + SubAssign, const D: usize> SubAssign<&Force<N, D>> for Point<N, D> {
     fn sub_assign(&mut self, rhs: &Force<N, D>) {
-        self.vector -= &rhs.vector;
+        self.vector -= rhs.as_ref();
     }
 }
 
@@ -207,7 +207,7 @@ impl<N: Copy + Num, const D: usize> Sub<&Force<N, D>> for &Point<N, D> {
     type Output = Point<N, D>;
 
     fn sub(self, rhs: &Force<N, D>) -> Self::Output {
-        Point { vector: &self.vector - &rhs.vector }
+        Point { vector: &self.vector - rhs.as_ref() }
     }
 }
 
@@ -218,7 +218,7 @@ impl<N: Copy + Num, const D: usize> Sub for &Point<N, D> {
     type Output = Force<N, D>;
 
     fn sub(self, rhs: &Point<N, D>) -> Self::Output {
-        Force { vector: &self.vector - &rhs.vector }
+        Force::try_from(&self.vector - rhs.as_ref()).unwrap()
     }
 }
 
@@ -294,6 +294,6 @@ mod tests {
         let b = a - point!{ x: 3, y: 4 };
 
         assert_eq!(b, force!{ dx: -2, dy: -2 });
-        assert_eq!(b.vector[2], 0);
+        assert_eq!(b[2], 0);
     }
 }

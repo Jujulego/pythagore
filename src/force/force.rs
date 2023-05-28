@@ -4,12 +4,13 @@ use std::slice::{Iter, IterMut, SliceIndex};
 use num_traits::{Float, Num, Signed, Zero};
 
 use crate::{owned_binop, owned_op_assign, owned_unop, Vector};
+use crate::force::errors::DoesNotEndWithZeroError;
 use crate::traits::Dimension;
 
 /// `Force<N, D>` structure for D dimension forces
 #[derive(Clone, Copy, Debug, Eq, Hash)]
 pub struct Force<N: Num, const D: usize> {
-    pub(crate) vector: Vector<N, D>,
+    vector: Vector<N, D>,
 }
 
 // Methods
@@ -137,23 +138,9 @@ impl<N: Copy + Num, const D: usize> Zero for Force<N, D> {
     }
 }
 
-impl<'a, N: Num, const D: usize> IntoIterator for &'a Force<N, D> {
-    type Item = &'a N;
-    type IntoIter = Iter<'a, N>;
-
-    #[inline]
-    fn into_iter(self) -> Self::IntoIter {
-        self.iter()
-    }
-}
-
-impl<'a, N: Num, const D: usize> IntoIterator for &'a mut Force<N, D> {
-    type Item = &'a mut N;
-    type IntoIter = IterMut<'a, N>;
-
-    #[inline]
-    fn into_iter(self) -> Self::IntoIter {
-        self.iter_mut()
+impl<N: Copy + Num, const D: usize> AsRef<Vector<N, D>> for Force<N, D> {
+    fn as_ref(&self) -> &Vector<N, D> {
+        &self.vector
     }
 }
 
@@ -198,6 +185,38 @@ impl<N: Copy + Num, const D: usize> From<&Vector<N, D>> for Force<N, { D + 1 }> 
     #[inline]
     fn from(value: &Vector<N, D>) -> Self {
         value.iter().collect()
+    }
+}
+
+impl<N: Copy + Num, const D: usize> TryFrom<Vector<N, D>> for Force<N, D> {
+    type Error = DoesNotEndWithZeroError;
+
+    fn try_from(vector: Vector<N, D>) -> Result<Self, Self::Error> {
+        if vector[D - 1] == N::zero() {
+            Ok(Force { vector })
+        } else {
+            Err(DoesNotEndWithZeroError {})
+        }
+    }
+}
+
+impl<'a, N: Num, const D: usize> IntoIterator for &'a Force<N, D> {
+    type Item = &'a N;
+    type IntoIter = Iter<'a, N>;
+
+    #[inline]
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
+impl<'a, N: Num, const D: usize> IntoIterator for &'a mut Force<N, D> {
+    type Item = &'a mut N;
+    type IntoIter = IterMut<'a, N>;
+
+    #[inline]
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter_mut()
     }
 }
 
@@ -337,7 +356,7 @@ owned_binop!(Div, Force<N, D>, div, N, <N: Copy + Num, const D: usize>);
 // Tests
 #[cfg(test)]
 mod tests {
-    use crate::{vector, force};
+    use crate::{force, vector};
     use super::*;
 
     #[test]
