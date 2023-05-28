@@ -7,7 +7,7 @@ use crate::{forward_ref_binop, forward_ref_op_assign, owned_binop, owned_op_assi
 /// `Matrix<N, L, C>` utility structure for matrix LxC compute
 #[derive(Clone, Copy, Debug, Eq, Hash)]
 pub struct Matrix<N: Num, const L: usize, const C: usize> {
-    pub(crate) elements: [Vector<N, C>; L],
+    elements: [Vector<N, C>; L],
 }
 
 type MatrixIter<'a, N, const C: usize> = Flatten<Iter<'a, Vector<N, C>>>;
