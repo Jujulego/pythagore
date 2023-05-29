@@ -1,3 +1,4 @@
+use std::hash::{Hash, Hasher};
 use std::iter::Sum;
 use std::ops::{Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
 use std::slice::{Iter, IterMut, SliceIndex};
@@ -16,7 +17,7 @@ use crate::traits::{Dimension, BoxableVector};
 ///
 /// assert_eq!(s[0], 1);
 /// ```
-#[derive(Clone, Copy, Debug, Eq, Hash)]
+#[derive(Clone, Copy, Debug, Eq)]
 pub struct Vector<N: Num, const D: usize> {
     elements: [N; D],
 }
@@ -54,6 +55,12 @@ impl<N: Copy + Num, const D: usize> Zero for Vector<N, D> {
 
     fn is_zero(&self) -> bool {
         self.elements.iter().all(|e| e.is_zero())
+    }
+}
+
+impl<N: Num + Hash, const D: usize> Hash for Vector<N, D> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.elements.hash(state);
     }
 }
 
@@ -100,20 +107,12 @@ impl<'a, N: Num, const D: usize> IntoIterator for &'a mut Vector<N, D> {
 impl<N: Copy + Num, const D: usize> FromIterator<N> for Vector<N, D> {
     fn from_iter<T: IntoIterator<Item = N>>(iter: T) -> Self {
         let mut vector = Vector::default();
-        let mut idx = 0;
 
-        for x in iter.into_iter().take(D) {
+        for (idx, x) in iter.into_iter().take(D).enumerate() {
             vector[idx] = x;
-            idx += 1;
         }
 
         vector
-    }
-}
-
-impl<'a, N: Copy + Num, const D: usize> FromIterator<&'a N> for Vector<N, D> {
-    fn from_iter<T: IntoIterator<Item = &'a N>>(iter: T) -> Self {
-        Self::from_iter(iter.into_iter().map(|&x| x))
     }
 }
 

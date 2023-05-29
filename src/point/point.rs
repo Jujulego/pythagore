@@ -1,3 +1,4 @@
+use std::hash::{Hash, Hasher};
 use std::ops::{Add, AddAssign, Index, IndexMut, Sub, SubAssign};
 use std::slice::{Iter, IterMut, SliceIndex};
 use num_traits::{Num, Zero};
@@ -7,7 +8,7 @@ use crate::point::errors::PointMustEndWithOneError;
 use crate::traits::{Dimension, BoxableVector};
 
 /// `Point<N, D>` structure for D dimension points
-#[derive(Clone, Copy, Debug, Eq, Hash)]
+#[derive(Clone, Copy, Debug, Eq)]
 pub struct Point<N: Num, const D: usize> {
     vector: Vector<N, D>,
 }
@@ -66,7 +67,13 @@ impl<N: Num, const D: usize> Dimension<D> for Point<N, D> {
     }
 }
 
-impl<N: Copy + Num, const D: usize> AsRef<Vector<N, D>> for Point<N, D> {
+impl<N: Num + Hash, const D: usize> Hash for Point<N, D> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.vector.hash(state);
+    }
+}
+
+impl<N: Num, const D: usize> AsRef<Vector<N, D>> for Point<N, D> {
     fn as_ref(&self) -> &Vector<N, D> {
         &self.vector
     }
@@ -77,7 +84,7 @@ macro_rules! from_array_impl {
         #[cfg(not(feature = "generic_const_exprs"))]
         impl<N: Copy + Num> From<&[N; $dim]> for Point<N, { $dim + 1 }> {
             fn from(value: &[N; $dim]) -> Self {
-                value.iter().collect()
+                value.iter().copied().collect()
             }
         }
     };
@@ -89,7 +96,7 @@ from_array_impl!(3);
 #[cfg(feature = "generic_const_exprs")]
 impl<N: Copy + Num, const D: usize> From<&[N; D]> for Point<N, { D + 1 }> {
     fn from(value: &[N; D]) -> Self {
-        value.iter().collect()
+        value.iter().copied().collect()
     }
 }
 
@@ -99,7 +106,7 @@ macro_rules! from_vector_impl {
         impl<N: Copy + Num> From<&Vector<N, $dim>> for Point<N, { $dim + 1 }> {
             #[inline]
             fn from(value: &Vector<N, $dim>) -> Self {
-                value.iter().collect()
+                value.iter().copied().collect()
             }
         }
     };
@@ -112,11 +119,11 @@ from_vector_impl!(3);
 impl<N: Copy + Num, const D: usize> From<&Vector<N, D>> for Point<N, { D + 1 }> {
     #[inline]
     fn from(value: &Vector<N, D>) -> Self {
-        value.iter().collect()
+        value.iter().copied().collect()
     }
 }
 
-impl<N: Copy + Num, const D: usize> TryFrom<Vector<N, D>> for Point<N, D> {
+impl<N: Num, const D: usize> TryFrom<Vector<N, D>> for Point<N, D> {
     type Error = PointMustEndWithOneError;
 
     fn try_from(vector: Vector<N, D>) -> Result<Self, Self::Error> {
@@ -151,20 +158,12 @@ impl<'a, N: Num, const D: usize> IntoIterator for &'a mut Point<N, D> {
 impl<N: Copy + Num, const D: usize> FromIterator<N> for Point<N, D> {
     fn from_iter<T: IntoIterator<Item = N>>(iter: T) -> Self {
         let mut point = Point::default();
-        let mut idx = 0;
 
-        for x in iter.into_iter().take(D - 1) {
+        for (idx, x) in iter.into_iter().take(D - 1).enumerate() {
             point[idx] = x;
-            idx += 1;
         }
 
         point
-    }
-}
-
-impl<'a, N: Copy + Num, const D: usize> FromIterator<&'a N> for Point<N, D> {
-    fn from_iter<T: IntoIterator<Item = &'a N>>(iter: T) -> Self {
-        Self::from_iter(iter.into_iter().map(|&x| x))
     }
 }
 
@@ -201,7 +200,7 @@ impl<N: Copy + Num, const D: usize> Add<&Force<N, D>> for &Point<N, D> {
     type Output = Point<N, D>;
 
     fn add(self, rhs: &Force<N, D>) -> Self::Output {
-        Point { vector: &self.vector + rhs.as_ref() }
+        Point { vector: self.vector + rhs.as_ref() }
     }
 }
 
@@ -220,7 +219,7 @@ impl<N: Copy + Num, const D: usize> Sub<&Force<N, D>> for &Point<N, D> {
     type Output = Point<N, D>;
 
     fn sub(self, rhs: &Force<N, D>) -> Self::Output {
-        Point { vector: &self.vector - rhs.as_ref() }
+        Point { vector: self.vector - rhs.as_ref() }
     }
 }
 
@@ -231,7 +230,7 @@ impl<N: Copy + Num, const D: usize> Sub for &Point<N, D> {
     type Output = Force<N, D>;
 
     fn sub(self, rhs: &Point<N, D>) -> Self::Output {
-        Force::try_from(&self.vector - rhs.as_ref()).unwrap()
+        Force::try_from(self.vector - rhs.as_ref()).unwrap()
     }
 }
 

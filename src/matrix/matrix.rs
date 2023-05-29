@@ -1,3 +1,4 @@
+use std::hash::{Hash, Hasher};
 use std::iter::{Flatten, Sum};
 use std::ops::{Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
 use std::slice::{Iter, IterMut};
@@ -5,7 +6,7 @@ use num_traits::{Num, NumAssign, Signed, Zero};
 use crate::{forward_ref_binop, forward_ref_op_assign, owned_binop, owned_op_assign, owned_unop, Vector};
 
 /// `Matrix<N, L, C>` utility structure for matrix LxC compute
-#[derive(Clone, Copy, Debug, Eq, Hash)]
+#[derive(Clone, Copy, Debug, Eq)]
 pub struct Matrix<N: Num, const L: usize, const C: usize> {
     elements: [Vector<N, C>; L],
 }
@@ -67,17 +68,9 @@ impl<N: Copy + Num, const L: usize, const C: usize> Zero for Matrix<N, L, C> {
     }
 }
 
-impl<N: Copy + Num, const L: usize, const C: usize> Index<(usize, usize)> for Matrix<N, L, C> {
-    type Output = N;
-
-    fn index(&self, index: (usize, usize)) -> &Self::Output {
-        &self.elements[index.0][index.1]
-    }
-}
-
-impl<N: Copy + Num, const L: usize, const C: usize> IndexMut<(usize, usize)> for Matrix<N, L, C> {
-    fn index_mut(&mut self, index: (usize, usize)) -> &mut Self::Output {
-        &mut self.elements[index.0][index.1]
+impl<N: Num + Hash, const L: usize, const C: usize> Hash for Matrix<N, L, C> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.elements.hash(state);
     }
 }
 
@@ -91,8 +84,8 @@ impl<N: Copy + Num, const L: usize, const C: usize> From<[[N; C]; L]> for Matrix
     fn from(value: [[N; C]; L]) -> Self {
         let mut matrix = Matrix::default();
 
-        for l in 0..L {
-            matrix.elements[l] = Vector::from(value[l])
+        for (l, arr) in value.iter().enumerate().take(L) {
+            matrix.elements[l] = Vector::from(*arr)
         }
 
         matrix
@@ -144,6 +137,20 @@ impl<N: Copy + Num, const L: usize, const C: usize> FromIterator<N> for Matrix<N
 impl<N: Num, const L: usize, const C: usize> PartialEq for Matrix<N, L, C> {
     fn eq(&self, other: &Self) -> bool {
         self.elements == other.elements
+    }
+}
+
+impl<N: Num, const L: usize, const C: usize> Index<(usize, usize)> for Matrix<N, L, C> {
+    type Output = N;
+
+    fn index(&self, index: (usize, usize)) -> &Self::Output {
+        &self.elements[index.0][index.1]
+    }
+}
+
+impl<N: Num, const L: usize, const C: usize> IndexMut<(usize, usize)> for Matrix<N, L, C> {
+    fn index_mut(&mut self, index: (usize, usize)) -> &mut Self::Output {
+        &mut self.elements[index.0][index.1]
     }
 }
 

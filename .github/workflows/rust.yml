@@ -7,24 +7,88 @@ on:
   pull_request:
     branches: [ "master" ]
 
+concurrency:
+  group: rust-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  lint:
     runs-on: ubuntu-latest
-    environment: crates.io
+
+    permissions:
+      contents: read
+      security-events: write
 
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-    - name: Build
-      run: cargo build --verbose
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          components: clippy
 
-    - name: Run tests
-      run: cargo test --verbose
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v1
 
-    - name: Publish
-      run: cargo publish -v --locked
-      env:
-        CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+      - name: Install SARIF utils
+        run: cargo install clippy-sarif sarif-fmt
+
+      - name: Run clippy
+        run: cargo clippy --message-format=json | clippy-sarif | tee results.sarif | sarif-fmt
+
+      - uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: results.sarif
+          wait-for-processing: true
+
+  tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          components: clippy
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v1
+
+      - name: Run tests
+        run: cargo test -v
+
+  publish:
+    if: github.event_name == 'push'
+
+    runs-on: ubuntu-latest
+    environment: crates.io
+    needs: [lint, tests]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          components: clippy
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v1
+
+      - name: Publish
+        run: cargo publish -v
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}

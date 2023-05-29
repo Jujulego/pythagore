@@ -1,3 +1,4 @@
+use std::hash::{Hash, Hasher};
 use std::iter::Sum;
 use std::ops::{Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
 use std::slice::{Iter, IterMut, SliceIndex};
@@ -8,7 +9,7 @@ use crate::force::errors::ForceMustEndWithZeroError;
 use crate::traits::Dimension;
 
 /// `Force<N, D>` structure for D dimension forces
-#[derive(Clone, Copy, Debug, Eq, Hash)]
+#[derive(Clone, Copy, Debug, Eq)]
 pub struct Force<N: Num, const D: usize> {
     vector: Vector<N, D>,
 }
@@ -138,7 +139,13 @@ impl<N: Copy + Num, const D: usize> Zero for Force<N, D> {
     }
 }
 
-impl<N: Copy + Num, const D: usize> AsRef<Vector<N, D>> for Force<N, D> {
+impl<N: Num + Hash, const D: usize> Hash for Force<N, D> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.vector.hash(state);
+    }
+}
+
+impl<N: Num, const D: usize> AsRef<Vector<N, D>> for Force<N, D> {
     fn as_ref(&self) -> &Vector<N, D> {
         &self.vector
     }
@@ -149,7 +156,7 @@ macro_rules! from_array_impl {
         #[cfg(not(feature = "generic_const_exprs"))]
         impl<N: Copy + Num> From<&[N; $dim]> for Force<N, { $dim + 1 }> {
             fn from(value: &[N; $dim]) -> Self {
-                value.iter().collect()
+                value.iter().copied().collect()
             }
         }
     };
@@ -161,7 +168,7 @@ from_array_impl!(3);
 #[cfg(feature = "generic_const_exprs")]
 impl<N: Copy + Num, const D: usize> From<&[N; D]> for Force<N, { D + 1 }> {
     fn from(value: &[N; D]) -> Self {
-        value.iter().collect()
+        value.iter().copied().collect()
     }
 }
 
@@ -171,7 +178,7 @@ macro_rules! from_vector_impl {
         impl<N: Copy + Num> From<&Vector<N, $dim>> for Force<N, { $dim + 1 }> {
             #[inline]
             fn from(value: &Vector<N, $dim>) -> Self {
-                value.iter().collect()
+                value.iter().copied().collect()
             }
         }
     };
@@ -184,11 +191,11 @@ from_vector_impl!(3);
 impl<N: Copy + Num, const D: usize> From<&Vector<N, D>> for Force<N, { D + 1 }> {
     #[inline]
     fn from(value: &Vector<N, D>) -> Self {
-        value.iter().collect()
+        value.iter().copied().collect()
     }
 }
 
-impl<N: Copy + Num, const D: usize> TryFrom<Vector<N, D>> for Force<N, D> {
+impl<N: Num, const D: usize> TryFrom<Vector<N, D>> for Force<N, D> {
     type Error = ForceMustEndWithZeroError;
 
     fn try_from(vector: Vector<N, D>) -> Result<Self, Self::Error> {
@@ -223,20 +230,12 @@ impl<'a, N: Num, const D: usize> IntoIterator for &'a mut Force<N, D> {
 impl<N: Copy + Num, const D: usize> FromIterator<N> for Force<N, D> {
     fn from_iter<T: IntoIterator<Item = N>>(iter: T) -> Self {
         let mut force = Force::default();
-        let mut idx = 0;
 
-        for x in iter.into_iter().take(D - 1) {
+        for (idx, x) in iter.into_iter().take(D - 1).enumerate() {
             force[idx] = x;
-            idx += 1;
         }
 
         force
-    }
-}
-
-impl<'a, N: Copy + Num, const D: usize> FromIterator<&'a N> for Force<N, D> {
-    fn from_iter<T: IntoIterator<Item = &'a N>>(iter: T) -> Self {
-        Self::from_iter(iter.into_iter().map(|&x| x))
     }
 }
 
@@ -247,7 +246,7 @@ impl<N: Num, const D: usize> PartialEq for Force<N, D> {
     }
 }
 
-impl<N: Copy + Num, I: SliceIndex<[N]>, const D: usize> Index<I> for Force<N, D> {
+impl<N: Num, I: SliceIndex<[N]>, const D: usize> Index<I> for Force<N, D> {
     type Output = I::Output;
 
     fn index(&self, index: I) -> &Self::Output {
@@ -255,7 +254,7 @@ impl<N: Copy + Num, I: SliceIndex<[N]>, const D: usize> Index<I> for Force<N, D>
     }
 }
 
-impl<N: Copy + Num, I: SliceIndex<[N]>, const D: usize> IndexMut<I> for Force<N, D> {
+impl<N: Num, I: SliceIndex<[N]>, const D: usize> IndexMut<I> for Force<N, D> {
     fn index_mut(&mut self, index: I) -> &mut Self::Output {
         &mut self.vector[index]
     }
@@ -273,7 +272,7 @@ owned_unop!(Neg, Force<N, D>, neg, <N: Copy + Signed, const D: usize>);
 
 impl<N: Copy + Num + AddAssign, const D: usize> AddAssign<&Force<N, D>> for Force<N, D> {
     fn add_assign(&mut self, rhs: &Force<N, D>) {
-        self.vector += &rhs.vector;
+        self.vector += rhs.vector;
     }
 }
 
@@ -283,7 +282,7 @@ impl<N: Copy + Num, const D: usize> Add for &Force<N, D> {
     type Output = Force<N, D>;
 
     fn add(self, rhs: &Force<N, D>) -> Self::Output {
-        Force { vector: &self.vector + &rhs.vector }
+        Force { vector: self.vector + rhs.vector }
     }
 }
 
@@ -301,7 +300,7 @@ impl<N: Copy + Num, const D: usize> Sub for &Force<N, D> {
     type Output = Force<N, D>;
 
     fn sub(self, rhs: &Force<N, D>) -> Self::Output {
-        Force { vector: &self.vector - &rhs.vector }
+        Force { vector: self.vector - rhs.vector }
     }
 }
 
@@ -319,7 +318,7 @@ impl<N: Copy + Num, const D: usize> Mul<&N> for &Force<N, D> {
     type Output = Force<N, D>;
 
     fn mul(self, rhs: &N) -> Self::Output {
-        Force { vector: &self.vector * rhs }
+        Force { vector: self.vector * rhs }
     }
 }
 
@@ -329,7 +328,7 @@ impl<N: Copy + Num + Sum, const D: usize> Mul for &Force<N, D> {
     type Output = N;
 
     fn mul(self, rhs: &Force<N, D>) -> Self::Output {
-        &self.vector * &rhs.vector
+        self.vector * rhs.vector
     }
 }
 
@@ -347,7 +346,7 @@ impl<N: Copy + Num, const D: usize> Div<&N> for &Force<N, D> {
     type Output = Force<N, D>;
 
     fn div(self, rhs: &N) -> Self::Output {
-        Force { vector: &self.vector / rhs }
+        Force { vector: self.vector / rhs }
     }
 }
 
