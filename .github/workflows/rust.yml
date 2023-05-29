@@ -25,14 +25,19 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - uses: actions-rs/toolchain@v1
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
         with:
           profile: minimal
+          toolchain: stable
+          override: true
           components: clippy
 
-      - uses: Swatinem/rust-cache@v1
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v1
 
-      - run: cargo install clippy-sarif sarif-fmt
+      - name: Install SARIF utils
+        run: cargo install clippy-sarif sarif-fmt
 
       - name: Run clippy
         run: cargo clippy --message-format=json | clippy-sarif | tee results.sarif | sarif-fmt
@@ -48,6 +53,17 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          components: clippy
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v1
+
       - name: Run tests
         run: cargo test -v
 
@@ -59,9 +75,20 @@ jobs:
     needs: [lint, tests]
 
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-    - name: Publish
-      run: cargo publish -v
-      env:
-        CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          components: clippy
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v1
+
+      - name: Publish
+        run: cargo publish -v
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
