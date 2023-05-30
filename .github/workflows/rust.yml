@@ -120,6 +120,6 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           name: ${{ steps.status.outputs.version }}
-          tag_name: v${{ steps.status.outputs.tag }}
+          tag_name: ${{ steps.status.outputs.tag }}
           draft: true
           generate_release_notes: true
