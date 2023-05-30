@@ -58,7 +58,7 @@ jobs:
         run: cargo test -v
 
   publish:
-    if: github.event_name == 'push'
+    if: ${{ github.event_name == 'push' }}
 
     runs-on: ubuntu-latest
     environment: crates.io
@@ -73,7 +73,47 @@ jobs:
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
 
+      - name: Read version
+        id: status
+        run: |
+          VERSION=$(cargo metadata --format-version 1 | jq -r '.packages | map(select(.name == "pythagore")) | .[0].version')
+          TAG="v$VERSION"
+          
+          echo "::group::Load tags"
+          
+          git fetch --tags
+          
+          echo "::endgroup::"
+          
+          if [[ $(git tag -l $TAG) == $TAG ]]; then
+            echo "::notice::Version $VERSION already published
+          else
+            echo "publish=true" >> $GITHUB_OUTPUT
+          fi
+          
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
       - name: Publish
+        if: ${{ steps.status.outputs.publish }}
         run: cargo publish -v
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+      - name: Tag ${{ steps.status.outputs.tag }}
+        if: ${{ steps.status.outputs.publish }}
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          
+          git tag ${{ steps.status.outputs.tag }}
+          git push --tags
+
+      - name: Release notes
+        if: ${{ steps.status.outputs.publish }}
+        uses: softprops/action-gh-release@v1
+        with:
+          name: ${{ steps.status.outputs.version }}
+          tag_name: v${{ steps.status.outputs.tag }}
+          draft: true
+          generate_release_notes: true
