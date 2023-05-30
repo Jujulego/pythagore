@@ -51,11 +51,20 @@ jobs:
       - name: Setup Rust
         run: rustup toolchain install stable --profile minimal
 
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
+
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
 
       - name: Run tests
-        run: cargo test -v
+        run: cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage
+          path: lcov.info
 
   publish:
     if: ${{ github.event_name == 'push' }}
@@ -82,7 +91,7 @@ jobs:
       - name: Read version
         id: status
         run: |
-          VERSION=$(cargo metadata --format-version 1 | jq -r '.packages | map(select(.name == "pythagore")) | .[0].version')
+          VERSION=$(cargo metadata -q --format-version 1 | jq -r '.packages | map(select(.name == "pythagore")) | .[0].version')
           TAG="v$VERSION"
           
           echo "::group::Load tags"
@@ -123,3 +132,38 @@ jobs:
           tag_name: ${{ steps.status.outputs.tag }}
           draft: true
           generate_release_notes: true
+
+  sonarcloud:
+    if: ${{ !startsWith(github.head_ref, 'renovate/') }}
+    runs-on: ubuntu-latest
+    needs: [ tests ]
+
+    steps:
+      - uses: actions/checkout@v3.5.2
+        with:
+          fetch-depth: 0
+
+      - name: Setup Rust
+        run: rustup toolchain install stable --profile minimal
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Read version
+        id: info
+        run: echo "version=$(cargo metadata -q --format-version 1 | jq -r '.packages | map(select(.name == "pythagore")) | .[0].version')" >> $GITHUB_OUTPUT
+
+      - name: Download test coverage
+        uses: actions/download-artifact@v3
+        with:
+          name: coverage
+          path: lcov.info
+
+      - name: Sonarcloud
+        uses: sonarsource/sonarcloud-github-action@v1.9
+        with:
+          args: >
+            -Dsonar.projectVersion=${{ steps.info.outputs.version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
