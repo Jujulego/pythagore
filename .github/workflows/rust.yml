@@ -86,7 +86,7 @@ jobs:
           echo "::endgroup::"
           
           if [[ $(git tag -l $TAG) == $TAG ]]; then
-            echo "::notice::Version $VERSION already published
+            echo "::notice::Version $VERSION already published"
           else
             echo "publish=true" >> $GITHUB_OUTPUT
           fi
