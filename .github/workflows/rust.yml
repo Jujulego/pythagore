@@ -143,7 +143,6 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: coverage
-          path: lcov.info
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
