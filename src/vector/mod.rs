@@ -1,4 +1,4 @@
 mod macros;
-pub mod vector;
+pub mod vector_nd;
 
-pub use crate::vector::vector::*;
+pub use crate::vector::vector_nd::*;
