@@ -79,50 +79,6 @@ impl<N: Num, const D: usize> AsRef<Vector<N, D>> for Point<N, D> {
     }
 }
 
-macro_rules! from_array_impl {
-    ($dim:literal) => {
-        #[cfg(not(feature = "generic_const_exprs"))]
-        impl<N: Copy + Num> From<&[N; $dim]> for Point<N, { $dim + 1 }> {
-            fn from(value: &[N; $dim]) -> Self {
-                value.iter().copied().collect()
-            }
-        }
-    };
-}
-
-from_array_impl!(2);
-from_array_impl!(3);
-
-#[cfg(feature = "generic_const_exprs")]
-impl<N: Copy + Num, const D: usize> From<&[N; D]> for Point<N, { D + 1 }> {
-    fn from(value: &[N; D]) -> Self {
-        value.iter().copied().collect()
-    }
-}
-
-macro_rules! from_vector_impl {
-    ($dim:literal) => {
-        #[cfg(not(feature = "generic_const_exprs"))]
-        impl<N: Copy + Num> From<&Vector<N, $dim>> for Point<N, { $dim + 1 }> {
-            #[inline]
-            fn from(value: &Vector<N, $dim>) -> Self {
-                value.iter().copied().collect()
-            }
-        }
-    };
-}
-
-from_vector_impl!(2);
-from_vector_impl!(3);
-
-#[cfg(feature = "generic_const_exprs")]
-impl<N: Copy + Num, const D: usize> From<&Vector<N, D>> for Point<N, { D + 1 }> {
-    #[inline]
-    fn from(value: &Vector<N, D>) -> Self {
-        value.iter().copied().collect()
-    }
-}
-
 impl<N: Num, const D: usize> TryFrom<Vector<N, D>> for Point<N, D> {
     type Error = PointMustEndWithOneError;
 
@@ -239,7 +195,7 @@ owned_binop!(Sub, Point<N, D>, sub, Point<N, D>, <N: Copy + Num, const D: usize>
 // Tests
 #[cfg(test)]
 mod tests {
-    use crate::{point, vector, force};
+    use crate::{point, force};
     use super::*;
 
     #[test]
@@ -248,20 +204,6 @@ mod tests {
 
         assert!(!point!{ x: 1, y: 2 }.is_origin());
         assert!(!point!{ x: 1, y: 2, z: 3 }.is_origin());
-    }
-
-    #[test]
-    fn point_from_array() {
-        let pt = Point::from(&[1, 2, 3]);
-
-        assert_eq!(pt.vector, vector![1, 2, 3, 1]);
-    }
-
-    #[test]
-    fn point_from_vector() {
-        let pt = Point::from(&vector![1, 2, 3]);
-
-        assert_eq!(pt.vector, vector![1, 2, 3, 1]);
     }
 
     #[test]
