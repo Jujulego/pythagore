@@ -1,6 +1,8 @@
 use std::hash::{Hash, Hasher};
+use std::iter::Sum;
+use std::ops::{Mul, MulAssign};
 use num_traits::Num;
-use crate::{Force, Matrix, SquareMatrix};
+use crate::{Force, Matrix, owned_binop, owned_op_assign, Point, SquareMatrix};
 use crate::traits::Dimension;
 use crate::transform::errors::InvalidLastColumnError;
 
@@ -88,10 +90,64 @@ impl<N: Num, const D: usize> PartialEq for Transform<N, D> {
     }
 }
 
+impl<N: Copy + Num + Sum, const D: usize> MulAssign<&Transform<N, D>> for Force<N, D> {
+    fn mul_assign(&mut self, rhs: &Transform<N, D>) {
+        *self = *self * rhs;
+    }
+}
+
+owned_op_assign!(MulAssign, Force<N, D>, mul_assign, Transform<N, D>, <N: Copy + Num + Sum, const D: usize>);
+
+impl<N: Copy + Num + Sum, const D: usize> Mul<&Transform<N, D>> for &Force<N, D> {
+    type Output = Force<N, D>;
+
+    fn mul(self, rhs: &Transform<N, D>) -> Self::Output {
+        Force::try_from(self.as_ref() * rhs.matrix).unwrap()
+    }
+}
+
+owned_binop!(Mul, Force<N, D>, mul, Transform<N, D>, <N: Copy + Num + Sum, const D: usize>);
+
+impl<N: Copy + Num + Sum, const D: usize> MulAssign<&Transform<N, D>> for Point<N, D> {
+    fn mul_assign(&mut self, rhs: &Transform<N, D>) {
+        *self = *self * rhs;
+    }
+}
+
+owned_op_assign!(MulAssign, Point<N, D>, mul_assign, Transform<N, D>, <N: Copy + Num + Sum, const D: usize>);
+
+impl<N: Copy + Num + Sum, const D: usize> Mul<&Transform<N, D>> for &Point<N, D> {
+    type Output = Point<N, D>;
+
+    fn mul(self, rhs: &Transform<N, D>) -> Self::Output {
+        Point::try_from(self.as_ref() * rhs.matrix).unwrap()
+    }
+}
+
+owned_binop!(Mul, Point<N, D>, mul, Transform<N, D>, <N: Copy + Num + Sum, const D: usize>);
+
+impl<N: Copy + Num + Sum, const D: usize> MulAssign<&Transform<N, D>> for Transform<N, D> {
+    fn mul_assign(&mut self, rhs: &Transform<N, D>) {
+        self.matrix *= rhs.matrix;
+    }
+}
+
+owned_op_assign!(MulAssign, Transform<N, D>, mul_assign, Transform<N, D>, <N: Copy + Num + Sum, const D: usize>);
+
+impl<N: Copy + Num + Sum, const D: usize> Mul<&Transform<N, D>> for &Transform<N, D> {
+    type Output = Transform<N, D>;
+
+    fn mul(self, rhs: &Transform<N, D>) -> Self::Output {
+        Transform::try_from(self.matrix * rhs.matrix).unwrap()
+    }
+}
+
+owned_binop!(Mul, Transform<N, D>, mul, Transform<N, D>, <N: Copy + Num + Sum, const D: usize>);
+
 // Tests
 #[cfg(test)]
 mod tests {
-    use crate::{force, matrix};
+    use crate::{force, matrix, point};
     use super::*;
 
     #[test]
@@ -104,27 +160,53 @@ mod tests {
 
     #[test]
     fn transform_scale() {
+        let matrix = Transform::scale(&force![1, 2, 3]);
+
         assert_eq!(
-            Transform::scale(&force![1, 2, 3]).as_ref(),
+            matrix.as_ref(),
             &matrix![
                 [1, 0, 0, 0],
                 [0, 2, 0, 0],
                 [0, 0, 3, 0],
                 [0, 0, 0, 1],
             ]
-        )
+        );
+
+        assert_eq!(force![1, 1, 1] * matrix, force![1, 2, 3]);
+        assert_eq!(point![1, 1, 1] * matrix, point![1, 2, 3]);
     }
 
     #[test]
     fn transform_translate() {
+        let matrix = Transform::translate(&force![1, 2, 3]);
+
         assert_eq!(
-            Transform::translate(&force![1, 2, 3]).as_ref(),
+            matrix.as_ref(),
             &matrix![
                 [1, 0, 0, 0],
                 [0, 1, 0, 0],
                 [0, 0, 1, 0],
                 [1, 2, 3, 1],
             ]
-        )
+        );
+
+        assert_eq!(force![1, 1, 1] * matrix, force![1, 1, 1]);
+        assert_eq!(point![1, 1, 1] * matrix, point![2, 3, 4]);
+    }
+
+    #[test]
+    fn transform_combination() {
+        let scale = Transform::scale(&force![1, 2, 3]);
+        let translate = Transform::translate(&force![1, 2, 3]);
+
+        assert_eq!(
+            (scale * translate).as_ref(),
+            &matrix![
+                [1, 0, 0, 0],
+                [0, 2, 0, 0],
+                [0, 0, 3, 0],
+                [1, 2, 3, 1],
+            ]
+        );
     }
 }
