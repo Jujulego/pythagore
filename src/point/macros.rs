@@ -17,35 +17,35 @@
 #[macro_export]
 macro_rules! point {
     { x: $x:expr, y: $y:expr } => {
-        point![$x, $y]
+        [$x, $y].iter().copied().collect::<point::Point<_, 3>>()
     };
     { y: $y:expr, x: $x:expr } => {
-        point![$x, $y]
+        point!{ x: $x, y: $y }
     };
     { x: $x:expr, y: $y:expr, z: $z:expr } => {
-        point![$x, $y, $z]
+        [$x, $y, $z].iter().copied().collect::<point::Point<_, 4>>()
     };
     { y: $y:expr, x: $x:expr, z: $z:expr } => {
-        point![$x, $y, $z]
+        point!{ x: $x, y: $y, z: $z }
     };
     { x: $x:expr, z: $z:expr, y: $y:expr } => {
-        point![$x, $y, $z]
+        point!{ x: $x, y: $y, z: $z }
     };
     { y: $y:expr, z: $z:expr, x: $x:expr } => {
-        point![$x, $y, $z]
+        point!{ x: $x, y: $y, z: $z }
     };
     { z: $z:expr, x: $x:expr, y: $y:expr } => {
-        point![$x, $y, $z]
+        point!{ x: $x, y: $y, z: $z }
     };
     { z: $z:expr, y: $y:expr, x: $x:expr } => {
-        point![$x, $y, $z]
+        point!{ x: $x, y: $y, z: $z }
     };
     [$elem:expr; $d:expr] => {
         [$elem; $d].iter().copied().collect::<point::Point<_, { $d + 1 }>>()
     };
-    [$($x:expr),+] => {{
+    [$($x:expr),+] => {
         [$($x), +].iter().copied().collect::<point::Point<_, { (point!(@count $($x)+)) + 1 }>>()
-    }};
+    };
     (@count) => { 0 };
     (@count $odd:tt $($a:tt $b:tt)*) => { (point!(@count $($a)*) << 1) | 1 };
     (@count $($a:tt $even:tt)*) => { point!(@count $($a)*) << 1 };
