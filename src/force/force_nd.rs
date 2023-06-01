@@ -151,50 +151,6 @@ impl<N: Num, const D: usize> AsRef<Vector<N, D>> for Force<N, D> {
     }
 }
 
-macro_rules! from_array_impl {
-    ($dim:literal) => {
-        #[cfg(not(feature = "generic_const_exprs"))]
-        impl<N: Copy + Num> From<&[N; $dim]> for Force<N, { $dim + 1 }> {
-            fn from(value: &[N; $dim]) -> Self {
-                value.iter().copied().collect()
-            }
-        }
-    };
-}
-
-from_array_impl!(2);
-from_array_impl!(3);
-
-#[cfg(feature = "generic_const_exprs")]
-impl<N: Copy + Num, const D: usize> From<&[N; D]> for Force<N, { D + 1 }> {
-    fn from(value: &[N; D]) -> Self {
-        value.iter().copied().collect()
-    }
-}
-
-macro_rules! from_vector_impl {
-    ($dim:literal) => {
-        #[cfg(not(feature = "generic_const_exprs"))]
-        impl<N: Copy + Num> From<&Vector<N, $dim>> for Force<N, { $dim + 1 }> {
-            #[inline]
-            fn from(value: &Vector<N, $dim>) -> Self {
-                value.iter().copied().collect()
-            }
-        }
-    };
-}
-
-from_vector_impl!(2);
-from_vector_impl!(3);
-
-#[cfg(feature = "generic_const_exprs")]
-impl<N: Copy + Num, const D: usize> From<&Vector<N, D>> for Force<N, { D + 1 }> {
-    #[inline]
-    fn from(value: &Vector<N, D>) -> Self {
-        value.iter().copied().collect()
-    }
-}
-
 impl<N: Num, const D: usize> TryFrom<Vector<N, D>> for Force<N, D> {
     type Error = ForceMustEndWithZeroError;
 
@@ -355,7 +311,7 @@ owned_binop!(Div, Force<N, D>, div, N, <N: Copy + Num, const D: usize>);
 // Tests
 #[cfg(test)]
 mod tests {
-    use crate::{force, vector};
+    use crate::force;
     use super::*;
 
     #[test]
@@ -396,20 +352,6 @@ mod tests {
 
         assert_eq!(v.unit().norm(), 1.0);
         assert_eq!(v.unit().vector[3], 0.0);
-    }
-
-    #[test]
-    fn force_from_array() {
-        let v = Force::from(&[1, 2, 3]);
-
-        assert_eq!(v.vector, vector![1, 2, 3, 0]);
-    }
-
-    #[test]
-    fn force_from_vector() {
-        let v = Force::from(&vector![1, 2, 3]);
-
-        assert_eq!(v.vector, vector![1, 2, 3, 0]);
     }
 
     #[test]
