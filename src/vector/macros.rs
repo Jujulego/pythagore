@@ -12,7 +12,7 @@ macro_rules! vector {
     [$elem:expr; $d:expr] => {
         vector::Vector::from([$elem; $d])
     };
-    [$($x:expr),*] => {
+    [$($x:expr),+] => {
         vector::Vector::from([$($x), +])
     };
 }
