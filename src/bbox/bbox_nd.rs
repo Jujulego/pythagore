@@ -89,7 +89,7 @@ impl<'a, N: Num, const D: usize> PartialEq for BBox<'a, N, D> {
 #[cfg(test)]
 mod tests {
     use std::ops::Bound::{Excluded, Included, Unbounded};
-    use crate::bbox::bbox::BBox;
+    use crate::bbox::bbox_nd::BBox;
     use crate::point;
 
     #[test]

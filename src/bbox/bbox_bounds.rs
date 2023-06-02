@@ -1,7 +1,7 @@
 use std::ops::Bound::*;
 use std::ops::{Bound, Range, RangeBounds, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive};
 use num_traits::Num;
-use crate::bbox::bbox::BBox;
+use crate::bbox::bbox_nd::BBox;
 use crate::Point;
 
 /// Implemented by range types to define bounding box using range syntax
