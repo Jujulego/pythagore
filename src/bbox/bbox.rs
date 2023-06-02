@@ -1,127 +1,38 @@
-use std::ops::Bound::*;
-use std::ops::{Bound, Range, RangeBounds, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive};
+use std::ops::{Bound, RangeBounds};
+use std::ops::Bound::Unbounded;
 use num_traits::Num;
-use crate::Point;
+use crate::{BBoxBounded, Point};
 
-/// Implemented by range types to define bounding box using range syntax
-///
-/// ## Example
-/// ```
-/// use pythagore::{BBox, point, Point};
-///
-/// let bbox = Point::origin()..point!{ x: 5, y: 5 };
-///
-/// assert!(bbox.box_contains(&point!{ x: 2, y: 2 }));
-/// ```
-pub trait BBox<N: Num + PartialOrd, const D: usize>: RangeBounds<Point<N, D>> {
-    fn box_contains(&self, item: &Point<N, D>) -> bool {
-        (0..D - 1).all(|idx| (
-            match self.start_bound() {
-                Included(start) => Included(&start[idx]),
-                Excluded(start) => Excluded(&start[idx]),
-                Unbounded => Unbounded,
-            },
-            match self.end_bound() {
-                Included(end) => Included(&end[idx]),
-                Excluded(end) => Excluded(&end[idx]),
-                Unbounded => Unbounded,
-            },
-        ).contains(&item[idx]))
+#[derive(Clone, Copy, Debug)]
+pub struct BBox<'a, N, const D: usize> {
+    bounds: [(Bound<&'a N>, Bound<&'a N>); D],
+}
+
+// Methods
+impl<N: Num + PartialOrd, const D: usize> BBox<'_, N, D> {
+    /// Returns true if bbox contains given point
+    pub fn contains(&self, pt: &Point<N, D>) -> bool {
+        self.bounds.iter()
+            .zip(pt.iter())
+            .all(|(bounds, x)| bounds.contains(x))
     }
 }
 
-// Implementations
-impl<N: Num + PartialOrd, const D: usize> BBox<N, D> for RangeFull {}
-
-impl<N: Num + PartialOrd, const D: usize> BBox<N, D> for RangeFrom<Point<N, D>> {}
-
-impl<N: Num + PartialOrd, const D: usize> BBox<N, D> for RangeTo<Point<N, D>> {}
-
-impl<N: Num + PartialOrd, const D: usize> BBox<N, D> for Range<Point<N, D>> {}
-
-impl<N: Num + PartialOrd, const D: usize> BBox<N, D> for RangeInclusive<Point<N, D>> {}
-
-impl<N: Num + PartialOrd, const D: usize> BBox<N, D> for RangeToInclusive<Point<N, D>> {}
-
-impl<N: Num + PartialOrd, const D: usize> BBox<N, D> for (Bound<Point<N, D>>, Bound<Point<N, D>>) {}
-
-// Tests
-#[cfg(test)]
-mod tests {
-    use crate::{point, Point};
-    use super::*;
-
-    #[test]
-    fn range_full_box_contains() {
-        assert!((..).box_contains(&point!{ x: 1, y: 1 }));
+// Utils
+impl<'a, N: Num, const D: usize> From<[(Bound<&'a N>, Bound<&'a N>); D]> for BBox<'a, N, D> {
+    fn from(bounds: [(Bound<&'a N>, Bound<&'a N>); D]) -> Self {
+        BBox { bounds }
     }
+}
 
-    #[test]
-    fn range_from_box_contains() {
-        let range = Point::origin()..;
+impl<'a, N: Num, const D: usize> FromIterator<(Bound<&'a N>, Bound<&'a N>)> for BBox<'a, N, D> {
+    fn from_iter<T: IntoIterator<Item = (Bound<&'a N>, Bound<&'a N>)>>(iter: T) -> Self {
+        let mut bounds = [(Unbounded, Unbounded); D];
 
-        assert!(range.box_contains(&point!{ x: 1, y: 1 }));
-        assert!(range.box_contains(&Point::origin()));
+        for (idx, pair) in iter.into_iter().take(D).enumerate() {
+            bounds[idx] = pair;
+        }
 
-        assert!(!range.box_contains(&point!{ x: 1, y: -1 }));
-        assert!(!range.box_contains(&point!{ x: -1, y: 1 }));
-        assert!(!range.box_contains(&point!{ x: -1, y: -1 }));
-    }
-
-    #[test]
-    fn range_to_box_contains() {
-        let range = ..Point::origin();
-
-        assert!(range.box_contains(&point!{ x: -1, y: -1 }));
-
-        assert!(!range.box_contains(&Point::origin()));
-        assert!(!range.box_contains(&point!{ x: -1, y: 1 }));
-        assert!(!range.box_contains(&point!{ x: 1, y: -1 }));
-        assert!(!range.box_contains(&point!{ x: 1, y: 1 }));
-    }
-
-    #[test]
-    fn range_box_contains() {
-        let range = Point::origin()..point!{ x: 5, y: 5 };
-
-        assert!(range.box_contains(&point!{ x: 2, y: 2 }));
-        assert!(range.box_contains(&Point::origin()));
-
-        assert!(!range.box_contains(&point!{ x: 1, y: -1 }));
-        assert!(!range.box_contains(&point!{ x: -1, y: 1 }));
-        assert!(!range.box_contains(&point!{ x: -1, y: -1 }));
-
-        assert!(!range.box_contains(&point!{ x: 1, y: 5 }));
-        assert!(!range.box_contains(&point!{ x: 5, y: 1 }));
-        assert!(!range.box_contains(&point!{ x: 5, y: 5 }));
-    }
-
-    #[test]
-    fn range_inclusive_box_contains() {
-        let range = Point::origin()..=point!{ x: 5, y: 5 };
-
-        assert!(range.box_contains(&point!{ x: 2, y: 2 }));
-        assert!(range.box_contains(&Point::origin()));
-        assert!(range.box_contains(&point!{ x: 5, y: 5 }));
-
-        assert!(!range.box_contains(&point!{ x: 1, y: -1 }));
-        assert!(!range.box_contains(&point!{ x: -1, y: 1 }));
-        assert!(!range.box_contains(&point!{ x: -1, y: -1 }));
-
-        assert!(!range.box_contains(&point!{ x: 1, y: 6 }));
-        assert!(!range.box_contains(&point!{ x: 6, y: 1 }));
-        assert!(!range.box_contains(&point!{ x: 6, y: 6 }));
-    }
-
-    #[test]
-    fn range_to_inclusive_box_contains() {
-        let range = ..=point!{ x: 5, y: 5 };
-
-        assert!(range.box_contains(&point!{ x: -1, y: -1 }));
-        assert!(range.box_contains(&point!{ x: 5, y: 5 }));
-
-        assert!(!range.box_contains(&point!{ x: 1, y: 6 }));
-        assert!(!range.box_contains(&point!{ x: 6, y: 1 }));
-        assert!(!range.box_contains(&point!{ x: 6, y: 6 }));
+        BBox { bounds }
     }
 }
