@@ -5,8 +5,6 @@ use std::slice::{Iter, IterMut, SliceIndex};
 use num_traits::{Num, Signed, Zero};
 use crate::{forward_ref_binop, forward_ref_op_assign, owned_binop, owned_op_assign, owned_unop};
 
-use crate::traits::{Dimension, BoxableVector};
-
 /// `Vector<N, D>` utility structure for D dimension compute
 ///
 /// ## Usage
@@ -36,10 +34,6 @@ impl<N: Num, const D: usize> Vector<N, D> {
 }
 
 // Utils
-impl<N: Num, const D: usize> BoxableVector<N> for Vector<N, D> {}
-
-impl<N: Num, const D: usize> Dimension<D> for Vector<N, D> {}
-
 impl<N: Copy + Num, const D: usize> Default for Vector<N, D> {
     #[inline]
     fn default() -> Self {

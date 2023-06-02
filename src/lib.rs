@@ -1,3 +1,4 @@
+pub mod bbox;
 pub mod force;
 pub mod matrix;
 pub mod point;
