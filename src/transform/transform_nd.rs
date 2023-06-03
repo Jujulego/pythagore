@@ -1,10 +1,10 @@
 use std::hash::{Hash, Hasher};
 use std::iter::Sum;
 use std::ops::{Mul, MulAssign};
-use num_traits::Num;
+use num_traits::{Float, Num};
 use crate::{Force, Matrix, owned_binop, owned_op_assign, Point, SquareMatrix};
 use crate::traits::Dimension;
-use crate::transform::errors::InvalidLastColumnError;
+use crate::transform::errors::InvalidTransformMatrixError;
 
 /// `Transform<N, D>` structure for D dimension transformations
 #[derive(Clone, Copy, Debug, Eq)]
@@ -40,6 +40,58 @@ impl<N: Copy + Num, const D: usize> Transform<N, D> {
     }
 }
 
+impl<N: Copy + Float> Transform<N, 3> {
+    pub fn rotate(theta: &N) -> Self {
+        let mut result = Transform::identity();
+        let (sin, cos) = theta.sin_cos();
+
+        result.matrix[(0, 0)] = cos;
+        result.matrix[(0, 1)] = -sin;
+        result.matrix[(1, 0)] = sin;
+        result.matrix[(1, 1)] = cos;
+
+        result
+    }
+}
+
+impl<N: Copy + Float> Transform<N, 4> {
+    pub fn rotate_x(theta: &N) -> Self {
+        let mut result = Transform::identity();
+        let (sin, cos) = theta.sin_cos();
+
+        result.matrix[(1, 1)] = cos;
+        result.matrix[(1, 2)] = -sin;
+        result.matrix[(2, 1)] = sin;
+        result.matrix[(2, 2)] = cos;
+
+        result
+    }
+
+    pub fn rotate_y(theta: &N) -> Self {
+        let mut result = Transform::identity();
+        let (sin, cos) = theta.sin_cos();
+
+        result.matrix[(0, 0)] = cos;
+        result.matrix[(0, 2)] = sin;
+        result.matrix[(2, 0)] = -sin;
+        result.matrix[(2, 2)] = cos;
+
+        result
+    }
+
+    pub fn rotate_z(theta: &N) -> Self {
+        let mut result = Transform::identity();
+        let (sin, cos) = theta.sin_cos();
+
+        result.matrix[(0, 0)] = cos;
+        result.matrix[(0, 1)] = -sin;
+        result.matrix[(1, 0)] = sin;
+        result.matrix[(1, 1)] = cos;
+
+        result
+    }
+}
+
 // Utils
 impl<N: Copy + Num, const D: usize> Default for Transform<N, D> {
     #[inline]
@@ -68,7 +120,7 @@ impl<N: Num, const D: usize> AsRef<SquareMatrix<N, D>> for Transform<N, D> {
 }
 
 impl<N: Num, const D: usize> TryFrom<SquareMatrix<N, D>> for Transform<N, D> {
-    type Error = InvalidLastColumnError;
+    type Error = InvalidTransformMatrixError;
 
     fn try_from(matrix: SquareMatrix<N, D>) -> Result<Self, Self::Error> {
         let valid = matrix.column_iter(D - 1)
@@ -78,7 +130,7 @@ impl<N: Num, const D: usize> TryFrom<SquareMatrix<N, D>> for Transform<N, D> {
         if valid {
             Ok(Transform { matrix })
         } else {
-            Err(InvalidLastColumnError {})
+            Err(InvalidTransformMatrixError {})
         }
     }
 }
