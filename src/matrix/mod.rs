@@ -1,6 +1,6 @@
-mod macros;
 pub mod matrix_lc;
 pub mod square_matrix;
+mod macros;
 
-pub use crate::matrix::matrix_lc::*;
-pub use crate::matrix::square_matrix::*;
+pub use matrix_lc::Matrix;
+pub use square_matrix::SquareMatrix;

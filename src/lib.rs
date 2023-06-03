@@ -5,7 +5,7 @@ pub mod vector;
 pub mod traits;
 mod macros;
 
-pub use crate::matrix::*;
-pub use crate::point::*;
-pub use crate::vector::*;
-pub use crate::force::*;
+pub use crate::force::{Force, Force2D, Force3D};
+pub use crate::matrix::{Matrix, SquareMatrix};
+pub use crate::point::{Point, Point2D, Point3D};
+pub use crate::vector::Vector;
