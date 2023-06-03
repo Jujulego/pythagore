@@ -41,7 +41,7 @@ impl<N: Copy + Num, const D: usize> Transform<N, D> {
 }
 
 impl<N: Copy + Float> Transform<N, 3> {
-    pub fn rotate(theta: &N) -> Self {
+    pub fn rotate(theta: N) -> Self {
         let mut result = Transform::identity();
         let (sin, cos) = theta.sin_cos();
 
@@ -199,6 +199,7 @@ owned_binop!(Mul, Transform<N, D>, mul, Transform<N, D>, <N: Copy + Num + Sum, c
 // Tests
 #[cfg(test)]
 mod tests {
+    use std::f64::consts::PI;
     use crate::{force, matrix, point};
     use super::*;
 
@@ -244,6 +245,19 @@ mod tests {
 
         assert_eq!(force![1, 1, 1] * matrix, force![1, 1, 1]);
         assert_eq!(point![1, 1, 1] * matrix, point![2, 3, 4]);
+    }
+
+    #[test]
+    fn transform_2d_rotate() {
+        let matrix = Transform::rotate(PI / 2.0);
+
+        let res = force![1.0, 0.0] * matrix; // ~eq force![0.0, -1.0]
+        assert!(res[0].abs() < 1e-10);
+        assert!((res[1] + 1.0).abs() < 1e-10);
+
+        let res = point![1.0, 0.0] * matrix; // ~eq point![0.0, -1.0]
+        assert!(res[0].abs() < 1e-10);
+        assert!((res[1] + 1.0).abs() < 1e-10);
     }
 
     #[test]
