@@ -55,7 +55,7 @@ impl<N: Copy + Float> Transform<N, 3> {
 }
 
 impl<N: Copy + Float> Transform<N, 4> {
-    pub fn rotate_x(theta: &N) -> Self {
+    pub fn rotate_x(theta: N) -> Self {
         let mut result = Transform::identity();
         let (sin, cos) = theta.sin_cos();
 
@@ -67,7 +67,7 @@ impl<N: Copy + Float> Transform<N, 4> {
         result
     }
 
-    pub fn rotate_y(theta: &N) -> Self {
+    pub fn rotate_y(theta: N) -> Self {
         let mut result = Transform::identity();
         let (sin, cos) = theta.sin_cos();
 
@@ -79,7 +79,7 @@ impl<N: Copy + Float> Transform<N, 4> {
         result
     }
 
-    pub fn rotate_z(theta: &N) -> Self {
+    pub fn rotate_z(theta: N) -> Self {
         let mut result = Transform::identity();
         let (sin, cos) = theta.sin_cos();
 
@@ -251,13 +251,58 @@ mod tests {
     fn transform_2d_rotate() {
         let matrix = Transform::rotate(PI / 2.0);
 
-        let res = force![1.0, 0.0] * matrix; // ~eq force![0.0, -1.0]
-        assert!(res[0].abs() < 1e-10);
-        assert!((res[1] + 1.0).abs() < 1e-10);
+        let res = force![1.0, 2.0] * matrix; // ~eq force![2.0, -1.0]
+        assert!((res.dx() - 2.0).abs() < 1e-10, "res.dx() -> {} should be near 2.0", res.dx());
+        assert!((res.dy() + 1.0).abs() < 1e-10, "res.dy() -> {} should be near -1.0", res.dy());
 
-        let res = point![1.0, 0.0] * matrix; // ~eq point![0.0, -1.0]
-        assert!(res[0].abs() < 1e-10);
-        assert!((res[1] + 1.0).abs() < 1e-10);
+        let res = point![1.0, 2.0] * matrix; // ~eq point![2.0, -1.0]
+        assert!((res.x() - 2.0).abs() < 1e-10, "res.x() -> {} should be near 2.0", res.x());
+        assert!((res.y() + 1.0).abs() < 1e-10, "res.y() -> {} should be near -1.0", res.y());
+    }
+
+    #[test]
+    fn transform_3d_rotate_x() {
+        let matrix = Transform::rotate_x(PI / 2.0);
+
+        let res = force![1.0, 2.0, 3.0] * matrix; // ~eq force![1.0, 3.0, -2.0]
+        assert_eq!(res.dx(), &1.0);
+        assert!((res.dy() - 3.0).abs() < 1e-10, "res.dy() -> {} should be near 3.0", res.dy());
+        assert!((res.dz() + 2.0).abs() < 1e-10, "res.dz() -> {} should be near -2.0", res.dz());
+
+        let res = point![1.0, 2.0, 3.0] * matrix; // ~eq point![1.0, 3.0, -2.0]
+        assert_eq!(res.x(), &1.0);
+        assert!((res.y() - 3.0).abs() < 1e-10, "res.y() -> {} should be near 3.0", res.y());
+        assert!((res.z() + 2.0).abs() < 1e-10, "res.z() -> {} should be near -2.0", res.z());
+    }
+
+    #[test]
+    fn transform_3d_rotate_y() {
+        let matrix = Transform::rotate_y(PI / 2.0);
+
+        let res = force![1.0, 2.0, 3.0] * matrix; // ~eq force![-3.0, 2.0, 1.0]
+        assert!((res.dx() + 3.0).abs() < 1e-10, "res.dx() -> {} should be near -3.0", res.dx());
+        assert_eq!(res.dy(), &2.0);
+        assert!((res.dz() - 1.0).abs() < 1e-10, "res.dz() -> {} should be near 1.0", res.dz());
+
+        let res = point![1.0, 2.0, 3.0] * matrix; // ~eq point![-3.0, 2.0, 1.0]
+        assert!((res.x() + 3.0).abs() < 1e-10, "res.x() -> {} should be near -3.0", res.x());
+        assert_eq!(res.y(), &2.0);
+        assert!((res.z() - 1.0).abs() < 1e-10, "res.z() -> {} should be near 1.0", res.z());
+    }
+
+    #[test]
+    fn transform_3d_rotate_z() {
+        let matrix = Transform::rotate_z(PI / 2.0);
+
+        let res = force![1.0, 2.0, 3.0] * matrix; // ~eq force![2.0, -1.0, 3.0]
+        assert!((res.dx() - 2.0).abs() < 1e-10, "res.dx() -> {} should be near 2.0", res.dx());
+        assert!((res.dy() + 1.0).abs() < 1e-10, "res.dy() -> {} should be near -1.0", res.dy());
+        assert_eq!(res.dz(), &3.0);
+
+        let res = point![1.0, 2.0, 3.0] * matrix; // ~eq point![0.0, -1.0]
+        assert!((res.x() - 2.0).abs() < 1e-10, "res.x() -> {} should be near 2.0", res.x());
+        assert!((res.y() + 1.0).abs() < 1e-10, "res.y() -> {} should be near -1.0", res.y());
+        assert_eq!(res.z(), &3.0);
     }
 
     #[test]
