@@ -167,7 +167,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Build
-        run: wasm-pack build -s jujulego
+        run: wasm-pack build -s jujulego --weak-refs
         working-directory: wasm
 
       - name: Publish
