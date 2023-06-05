@@ -1,7 +1,7 @@
 use std::iter::Sum;
 use std::ops::MulAssign;
 use num_traits::{Num, One, Zero};
-use crate::{Matrix, owned_op_assign};
+use crate::{Matrix, owned_op_assign, Vector};
 use crate::traits::Dimension;
 
 // Type
@@ -38,6 +38,14 @@ impl<N: Copy + Num + Sum, const D: usize> MulAssign<&SquareMatrix<N, D>> for Squ
 }
 
 owned_op_assign!(MulAssign, SquareMatrix<N, D>, mul_assign, SquareMatrix<N, D>, <N: Copy + Num + Sum, const D: usize>);
+
+impl<N: Copy + Num + Sum, const D: usize> MulAssign<&SquareMatrix<N, D>> for Vector<N, D> {
+    fn mul_assign(&mut self, rhs: &SquareMatrix<N, D>) {
+        *self = *self * rhs
+    }
+}
+
+owned_op_assign!(MulAssign, Vector<N, D>, mul_assign, SquareMatrix<N, D>, <N: Copy + Num + Sum, const D: usize>);
 
 // Tests
 #[cfg(test)]
