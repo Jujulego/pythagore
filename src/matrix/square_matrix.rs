@@ -2,7 +2,6 @@ use std::iter::Sum;
 use std::ops::MulAssign;
 use num_traits::{Num, One, Zero};
 use crate::{Matrix, owned_op_assign, Vector};
-use crate::traits::Dimension;
 
 // Type
 pub type SquareMatrix<N, const D: usize> = Matrix<N, D, D>;
@@ -21,8 +20,6 @@ impl<N: Copy + Num, const D: usize> SquareMatrix<N, D> {
 }
 
 // Utils
-impl<N: Copy + Num, const D: usize> Dimension<D> for SquareMatrix<N, D> {}
-
 impl<N: Copy + Num + Sum, const D: usize> One for SquareMatrix<N, D> {
     #[inline]
     fn one() -> Self {
