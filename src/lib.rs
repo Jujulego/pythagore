@@ -7,6 +7,7 @@ pub mod traits;
 pub mod transform;
 mod macros;
 
+pub use bbox::{BBox, BBoxBounded};
 pub use force::{Force, Force2D, Force3D};
 pub use matrix::{Matrix, SquareMatrix};
 pub use point::{Point, Point2D, Point3D};
