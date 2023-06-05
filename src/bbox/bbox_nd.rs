@@ -5,12 +5,12 @@ use crate::Point;
 use crate::traits::BBoxBounded;
 
 #[derive(Clone, Copy, Debug, Eq)]
-pub struct BBox<'a, N: Num, const D: usize> {
-    bounds: [(Bound<&'a N>, Bound<&'a N>); D],
+pub struct BBox<'n, N: Num, const D: usize> {
+    bounds: [(Bound<&'n N>, Bound<&'n N>); D],
 }
 
 // Utils
-fn range_is_empty<'a, N: PartialOrd>(range: &'a (Bound<&'a N>, Bound<&'a N>)) -> bool {
+fn range_is_empty<'n, N: PartialOrd>(range: &'n (Bound<&'n N>, Bound<&'n N>)) -> bool {
     match range {
         (Included(l), Included(r)) => l > r,
         (Included(l), Excluded(r)) |
@@ -21,8 +21,8 @@ fn range_is_empty<'a, N: PartialOrd>(range: &'a (Bound<&'a N>, Bound<&'a N>)) ->
     }
 }
 
-fn select_bound<'a, N, F>(lhs: &Bound<&'a N>, rhs: &Bound<&'a N>, selector: F) -> Bound<&'a N>
-where F: FnOnce(&'a N, &'a N) -> bool
+fn select_bound<'n, N, F>(lhs: &Bound<&'n N>, rhs: &Bound<&'n N>, selector: F) -> Bound<&'n N>
+where F: FnOnce(&'n N, &'n N) -> bool
 {
     match (lhs, rhs) {
         (Included(l), Included(r)) |
@@ -61,22 +61,22 @@ impl<N: Num + PartialOrd, const D: usize> BBox<'_, N, D> {
 }
 
 // Utils
-impl<'a, N: Num, const D: usize> BBoxBounded<N, D> for BBox<'a, N, D>  {
-    fn bbox(&self) -> BBox<'a, N, D> {
+impl<'n, N: Num, const D: usize> BBoxBounded<N, D> for BBox<'n, N, D>  {
+    fn bbox(&self) -> BBox<'n, N, D> {
         BBox {
             bounds: self.bounds
         }
     }
 }
 
-impl<'a, N: Num, const D: usize> From<[(Bound<&'a N>, Bound<&'a N>); D]> for BBox<'a, N, D> {
-    fn from(bounds: [(Bound<&'a N>, Bound<&'a N>); D]) -> Self {
+impl<'n, N: Num, const D: usize> From<[(Bound<&'n N>, Bound<&'n N>); D]> for BBox<'n, N, D> {
+    fn from(bounds: [(Bound<&'n N>, Bound<&'n N>); D]) -> Self {
         BBox { bounds }
     }
 }
 
-impl<'a, N: Num, const D: usize> FromIterator<(Bound<&'a N>, Bound<&'a N>)> for BBox<'a, N, D> {
-    fn from_iter<T: IntoIterator<Item = (Bound<&'a N>, Bound<&'a N>)>>(iter: T) -> Self {
+impl<'n, N: Num, const D: usize> FromIterator<(Bound<&'n N>, Bound<&'n N>)> for BBox<'n, N, D> {
+    fn from_iter<T: IntoIterator<Item = (Bound<&'n N>, Bound<&'n N>)>>(iter: T) -> Self {
         let mut bounds = [(Unbounded, Unbounded); D];
 
         for (idx, pair) in iter.into_iter().take(D).enumerate() {
@@ -88,7 +88,7 @@ impl<'a, N: Num, const D: usize> FromIterator<(Bound<&'a N>, Bound<&'a N>)> for 
 }
 
 // Operators
-impl<'a, N: Num, const D: usize> PartialEq for BBox<'a, N, D> {
+impl<'n, N: Num, const D: usize> PartialEq for BBox<'n, N, D> {
     fn eq(&self, other: &Self) -> bool {
         self.bounds == other.bounds
     }

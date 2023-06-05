@@ -23,13 +23,34 @@ pub struct Vector<N: Num, const D: usize> {
 // Methods
 impl<N: Num, const D: usize> Vector<N, D> {
     /// Returns iterator on vector elements
+    #[inline]
     pub fn iter(&self) -> Iter<N> {
         self.elements.iter()
     }
 
     /// Returns mutable iterator on vector elements
+    #[inline]
     pub fn iter_mut(&mut self) -> IterMut<N> {
         self.elements.iter_mut()
+    }
+}
+
+impl<N: Copy + Num, const D: usize> Vector<N, D> {
+    /// Builds a unit vector, where the 1 is at `one` position
+    ///
+    /// ## Example
+    /// ```
+    /// use pythagore::{Vector, vector};
+    ///
+    /// let v = Vector::unit(2);
+    ///
+    /// assert_eq!(v, vector![0, 0, 1, 0]);
+    /// ```
+    pub fn unit(one: usize) -> Self {
+        let mut v = Vector::zero();
+        v[one] = N::one();
+
+        v
     }
 }
 
