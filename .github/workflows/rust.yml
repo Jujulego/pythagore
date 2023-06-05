@@ -71,6 +71,7 @@ jobs:
 
   publish:
     if: ${{ github.event_name == 'push' }}
+    name: Publish to crates.io
 
     runs-on: ubuntu-latest
     environment: crates.io
@@ -114,7 +115,7 @@ jobs:
 
       - name: Publish
         if: ${{ steps.status.outputs.publish }}
-        run: cargo publish -v
+        run: cargo publish -v -p pythagore
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
 
@@ -153,5 +154,5 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           files: codecov.json
-          flags: unittests
+          flags: unit
           fail_ci_if_error: true
