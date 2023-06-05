@@ -34,6 +34,16 @@ where F: FnOnce(&'n N, &'n N) -> bool
     }
 }
 
+fn include_value<'n, N: PartialEq, F>(bound: &Bound<&'n N>, x: &'n N, selector: F) -> Bound<&'n N>
+where F: FnOnce(&'n N, &'n N) -> bool
+{
+    match bound {
+        Unbounded => Unbounded,
+        Excluded(b) => if selector(*b, x) { *bound } else { Included(x) },
+        Included(b) => if *b == x || selector(*b, x) { *bound } else { Included(x) }
+    }
+}
+
 // Methods
 impl<N: Num + PartialOrd, const D: usize> BBox<'_, N, D> {
     /// Returns true if bbox is empty
@@ -55,6 +65,19 @@ impl<N: Num + PartialOrd, const D: usize> BBox<'_, N, D> {
             .map(|(l, r)| (
                 select_bound(&l.0, &r.0, |a, b| a >= b),
                 select_bound(&l.1, &r.1, |a, b| a <= b),
+            ))
+            .collect()
+    }
+}
+
+impl<'n, N: Num + PartialOrd, const D: usize> BBox<'n, N, D> {
+    /// Returns a new bbox including the given point
+    pub fn include(&self, pt: &'n Point<N, D>) -> BBox<'n, N, D> {
+        self.bounds.iter()
+            .zip(pt.iter())
+            .map(|(bounds, x)| (
+                include_value(&bounds.0, x, |a, b| a < b),
+                include_value(&bounds.1, x, |a, b| a > b),
             ))
             .collect()
     }
@@ -100,6 +123,7 @@ mod tests {
     use std::ops::Bound::{Excluded, Included, Unbounded};
     use crate::bbox::bbox_nd::BBox;
     use crate::point;
+    use crate::traits::BBoxBounded;
 
     #[test]
     fn bbox_is_empty() {
@@ -197,5 +221,16 @@ mod tests {
         let b: BBox<u32, 1> = [(Unbounded, Unbounded)].into();
 
         assert_eq!(a.intersection(&b), a);
+    }
+
+    #[test]
+    fn bbox_include() {
+        let range = point![2]..point![6];
+
+        assert_eq!(range.bbox().include(&point![0]), (point![0]..point![6]).bbox());
+        assert_eq!(range.bbox().include(&point![4]), (point![2]..point![6]).bbox());
+        assert_eq!(range.bbox().include(&point![6]), (point![2]..=point![6]).bbox());
+        assert_eq!(range.bbox().include(&point![8]), (point![2]..=point![8]).bbox());
+        assert_eq!((..).bbox().include(&point![8]), (..).bbox());
     }
 }
