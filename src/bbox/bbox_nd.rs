@@ -1,9 +1,11 @@
+use std::hash::{Hash, Hasher};
 use std::ops::{Bound, RangeBounds};
 use std::ops::Bound::*;
 use num_traits::Num;
 use crate::Point;
 use crate::traits::BBoxBounded;
 
+/// `BBox<N, D>` structure for D dimension bounding boxes
 #[derive(Clone, Copy, Debug, Eq)]
 pub struct BBox<'n, N: Num, const D: usize> {
     bounds: [(Bound<&'n N>, Bound<&'n N>); D],
@@ -89,6 +91,20 @@ impl<'n, N: Num, const D: usize> BBoxBounded<N, D> for BBox<'n, N, D>  {
         BBox {
             bounds: self.bounds
         }
+    }
+}
+
+impl<'n, N: Num, const D: usize> Default for BBox<'_, N, D> {
+    fn default() -> Self {
+        BBox {
+            bounds: [(Unbounded, Unbounded); D],
+        }
+    }
+}
+
+impl<N: Num + Hash, const D: usize> Hash for BBox<'_, N, D> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.bounds.hash(state);
     }
 }
 
