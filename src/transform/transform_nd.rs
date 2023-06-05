@@ -3,7 +3,6 @@ use std::iter::Sum;
 use std::ops::{Mul, MulAssign};
 use num_traits::{Float, Num};
 use crate::{Force, Matrix, owned_binop, owned_op_assign, Point, SquareMatrix};
-use crate::traits::Dimension;
 use crate::transform::errors::InvalidTransformMatrixError;
 
 /// `Transform<N, D>` structure for D dimension transformations
@@ -97,13 +96,6 @@ impl<N: Copy + Num, const D: usize> Default for Transform<N, D> {
     #[inline]
     fn default() -> Self {
         Transform::identity()
-    }
-}
-
-impl<N: Num, const D: usize> Dimension<D> for Transform<N, D> {
-    #[inline]
-    fn dimension() -> usize {
-        D - 1
     }
 }
 

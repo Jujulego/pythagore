@@ -6,7 +6,6 @@ use num_traits::{Float, Num, Signed, Zero};
 
 use crate::{owned_binop, owned_op_assign, owned_unop, Vector};
 use crate::force::errors::ForceMustEndWithZeroError;
-use crate::traits::Dimension;
 
 /// `Force<N, D>` structure for D dimension forces
 #[derive(Clone, Copy, Debug, Eq)]
@@ -112,14 +111,6 @@ impl<N: Copy + Signed + Sum, const D: usize> Force<N, D> {
 }
 
 // Utils
-impl<N: Num, const D: usize> Dimension<D> for Force<N, D> {
-    /// Returns force's dimension
-    #[inline]
-    fn dimension() -> usize {
-        D - 1
-    }
-}
-
 impl<N: Copy + Num, const D: usize> Default for Force<N, D> {
     #[inline]
     fn default() -> Self {
