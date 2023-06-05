@@ -1,23 +1,10 @@
 use std::ops::Bound::*;
 use std::ops::{Bound, Range, RangeBounds, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive};
 use num_traits::Num;
+
 use crate::bbox::bbox_nd::BBox;
 use crate::Point;
-
-/// Implemented by range types to define bounding box using range syntax
-///
-/// ## Example
-/// ```
-/// use pythagore::{BBoxBounded, point, Point};
-///
-/// let bbox = Point::origin()..point!{ x: 5, y: 5 };
-///
-/// assert!(bbox.bbox().contains(&point!{ x: 2, y: 2 }));
-/// ```
-pub trait BBoxBounded<N: Num, const D: usize> {
-    /// Returns bound for the d element
-    fn bbox(&self) -> BBox<'_, N, D>;
-}
+use crate::traits::BBoxBounded;
 
 // Implementations
 impl<N: Num, const D: usize> BBoxBounded<N, D> for RangeFull {
