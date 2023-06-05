@@ -5,7 +5,7 @@ use num_traits::{Num, Zero};
 
 use crate::{owned_binop, owned_op_assign, reverse_owned_binop, Vector, Force};
 use crate::point::errors::PointMustEndWithOneError;
-use crate::traits::{Dimension, BoxableVector};
+use crate::traits::Dimension;
 
 /// `Point<N, D>` structure for D dimension points
 #[derive(Clone, Copy, Debug, Eq)]
@@ -50,8 +50,6 @@ impl<N: Copy + Num, const D: usize> Point<N, D> {
 }
 
 // Utils
-impl<N: Num, const D: usize> BoxableVector<N> for Point<N, D> {}
-
 impl<N: Copy + Num, const D: usize> Default for Point<N, D> {
     #[inline]
     fn default() -> Self {
