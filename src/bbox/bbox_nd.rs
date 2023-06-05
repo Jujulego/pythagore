@@ -2,6 +2,7 @@ use std::ops::{Bound, RangeBounds};
 use std::ops::Bound::*;
 use num_traits::Num;
 use crate::Point;
+use crate::traits::BBoxBounded;
 
 #[derive(Clone, Copy, Debug, Eq)]
 pub struct BBox<'a, N: Num, const D: usize> {
@@ -60,6 +61,14 @@ impl<N: Num + PartialOrd, const D: usize> BBox<'_, N, D> {
 }
 
 // Utils
+impl<'a, N: Num, const D: usize> BBoxBounded<N, D> for BBox<'a, N, D>  {
+    fn bbox(&self) -> BBox<'a, N, D> {
+        BBox {
+            bounds: self.bounds
+        }
+    }
+}
+
 impl<'a, N: Num, const D: usize> From<[(Bound<&'a N>, Bound<&'a N>); D]> for BBox<'a, N, D> {
     fn from(bounds: [(Bound<&'a N>, Bound<&'a N>); D]) -> Self {
         BBox { bounds }
