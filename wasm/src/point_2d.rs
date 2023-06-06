@@ -1,5 +1,6 @@
 use wasm_bindgen::prelude::wasm_bindgen;
 use pythagore::{self as py, point};
+use crate::force_2d::Force2D;
 
 #[wasm_bindgen]
 pub struct Point2D {
@@ -17,6 +18,22 @@ impl Point2D {
     /// Creates a new origin point (same as `new Point2D(0, 0)`)
     pub fn origin() -> Point2D {
         Point2D { point: py::Point2D::origin() }
+    }
+
+    pub fn eq(&self, other: &Point2D) -> bool {
+        self.point == other.point
+    }
+
+    pub fn add_force(&self, force: &Force2D) -> Point2D {
+        (self.point + force.as_ref()).into()
+    }
+
+    pub fn sub(&self, other: &Point2D) -> Force2D {
+        (self.point - other.point).into()
+    }
+
+    pub fn sub_force(&self, force: &Force2D) -> Point2D {
+        (self.point - force.as_ref()).into()
     }
 
     // Properties

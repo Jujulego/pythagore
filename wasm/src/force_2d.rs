@@ -19,6 +19,30 @@ impl Force2D {
         Force2D { force: py::Force2D::null() }
     }
 
+    pub fn eq(&self, other: &Force2D) -> bool {
+        self.force == other.force
+    }
+
+    pub fn add(&self, other: &Force2D) -> Force2D {
+        (self.force + other.force).into()
+    }
+
+    pub fn sub(&self, other: &Force2D) -> Force2D {
+        (self.force - other.force).into()
+    }
+
+    pub fn dot(&self, other: &Force2D) -> f64 {
+        self.force * other.force
+    }
+
+    pub fn dot_scalar(&self, scalar: f64) -> Force2D {
+        (self.force * scalar).into()
+    }
+
+    pub fn div_scalar(&self, scalar: f64) -> Force2D {
+        (self.force / scalar).into()
+    }
+
     // Properties
     #[wasm_bindgen(getter)]
     pub fn dx(&self) -> f64 {
