@@ -203,6 +203,7 @@ jobs:
 
       - name: Publish
         run: npm publish --access public --tolerate-republish
+        working-directory: wasm/pkg
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
