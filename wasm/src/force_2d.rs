@@ -63,6 +63,26 @@ impl Force2D {
     pub fn set_dy(&mut self, y: f64) {
         *self.force.dy_mut() = y;
     }
+
+    #[wasm_bindgen(getter)]
+    pub fn norm(&self) -> f64 {
+        self.force.norm()
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn manhattan_norm(&self) -> f64 {
+        self.force.manhattan_norm()
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn square_norm(&self) -> f64 {
+        self.force.square_norm()
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn unit(&self) -> Force2D {
+        self.force.unit().into()
+    }
 }
 
 // Utils
