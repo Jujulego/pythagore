@@ -92,7 +92,8 @@ jobs:
           source <(cargo llvm-cov show-env --export-prefix)
           cargo llvm-cov clean --workspace
           wasm-pack test --firefox --headless
-          cargo llvm-cov report --workspace --codecov --output-path coverage/codecov-wasm.json
+          cargo llvm-cov report --workspace --codecov --output-path ../coverage/codecov-wasm.json
+        working-directory: wasm
 
       - name: Upload coverage
         uses: actions/upload-artifact@v3
