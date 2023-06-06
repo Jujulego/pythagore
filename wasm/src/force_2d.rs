@@ -2,6 +2,7 @@ use wasm_bindgen::prelude::wasm_bindgen;
 use pythagore::{self as py, force};
 
 #[wasm_bindgen]
+#[derive(Debug, PartialEq)]
 pub struct Force2D {
     force: py::Force2D<f64>,
 }
