@@ -40,3 +40,22 @@ impl Point2D {
         *self.point.y_mut() = y;
     }
 }
+
+// Utils
+impl AsRef<py::Point2D<f64>> for Point2D {
+    fn as_ref(&self) -> &py::Point2D<f64> {
+        &self.point
+    }
+}
+
+impl AsMut<py::Point2D<f64>> for Point2D {
+    fn as_mut(&mut self) -> &mut py::Point2D<f64> {
+        &mut self.point
+    }
+}
+
+impl From<py::Point2D<f64>> for Point2D {
+    fn from(point: py::Point2D<f64>) -> Self {
+        Point2D { point }
+    }
+}

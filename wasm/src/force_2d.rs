@@ -40,3 +40,22 @@ impl Force2D {
         *self.force.dy_mut() = y;
     }
 }
+
+// Utils
+impl AsRef<py::Force2D<f64>> for Force2D {
+    fn as_ref(&self) -> &py::Force2D<f64> {
+        &self.force
+    }
+}
+
+impl AsMut<py::Force2D<f64>> for Force2D {
+    fn as_mut(&mut self) -> &mut py::Force2D<f64> {
+        &mut self.force
+    }
+}
+
+impl From<py::Force2D<f64>> for Force2D {
+    fn from(force: py::Force2D<f64>) -> Self {
+        Force2D { force }
+    }
+}
