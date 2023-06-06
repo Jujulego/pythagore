@@ -1,0 +1,11 @@
+component_management:
+  individual_components:
+    - component_id: module_rust
+      name: rust
+      paths:
+        - lib/**
+
+    - component_id: module_wasm
+      name: rust wasm
+      paths:
+        - wasm/**
