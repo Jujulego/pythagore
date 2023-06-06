@@ -88,18 +88,8 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Run tests
-        run: |
-          source <(cargo llvm-cov show-env --export-prefix)
-          cargo llvm-cov clean --workspace
-          wasm-pack test --firefox --headless
-          cargo llvm-cov report --workspace --codecov --output-path ../coverage/codecov-wasm.json
+        run: wasm-pack test --firefox --headless
         working-directory: wasm
-
-      - name: Upload coverage
-        uses: actions/upload-artifact@v3
-        with:
-          name: codecov-wasm
-          path: coverage/codecov-wasm.json
 
   publish-crates:
     if: ${{ github.event_name == 'push' }}
@@ -211,7 +201,7 @@ jobs:
   codecov:
     if: ${{ !startsWith(github.head_ref, 'renovate/') }}
     runs-on: ubuntu-latest
-    needs: [unit-tests, wasm-tests]
+    needs: [unit-tests]
 
     steps:
       - uses: actions/checkout@v3
@@ -227,17 +217,4 @@ jobs:
           directory: coverage
           files: codecov-unit.json
           flags: unit
-          fail_ci_if_error: true
-
-      - name: Download wasm coverage
-        uses: actions/download-artifact@v3
-        with:
-          name: codecov-wasm
-
-      - name: Upload wasm coverage to Codecov
-        uses: codecov/codecov-action@v3
-        with:
-          directory: coverage
-          files: codecov-wasm.json
-          flags: wasm
           fail_ci_if_error: true
