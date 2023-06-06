@@ -58,7 +58,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Run tests
-        run: cargo llvm-cov --all-features --workspace --codecov --output-path coverage/codecov-unit.json
+        run: cargo llvm-cov --all-features --workspace --codecov --output-path codecov-unit.json
 
       - name: Test docs
         run: cargo test --doc
@@ -67,7 +67,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: codecov-unit
-          path: coverage/codecov-unit.json
+          path: codecov-unit.json
 
   wasm-tests:
     runs-on: ubuntu-latest
@@ -210,12 +210,10 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: codecov-unit
-          path: coverage
 
       - name: Upload unit coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
-          directory: coverage
           files: codecov-unit.json
           flags: unit
           fail_ci_if_error: true
