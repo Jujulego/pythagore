@@ -1,1 +1,1 @@
-mod point;
+mod point_2d;
