@@ -6,6 +6,6 @@ component_management:
         - lib/**
 
     - component_id: module_wasm
-      name: rust wasm
+      name: wasm
       paths:
         - wasm/**
