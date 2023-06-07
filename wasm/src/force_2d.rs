@@ -2,7 +2,7 @@ use wasm_bindgen::prelude::wasm_bindgen;
 use pythagore::{self as py, force};
 
 #[wasm_bindgen]
-#[derive(Debug, PartialEq)]
+#[derive(Copy, Clone, Debug)]
 pub struct Force2D {
     force: py::Force2D<f64>,
 }
@@ -20,7 +20,7 @@ impl Force2D {
         Force2D { force: py::Force2D::null() }
     }
 
-    pub fn eq(&self, other: &Force2D) -> bool {
+    pub fn equals(&self, other: &Force2D) -> bool {
         self.force == other.force
     }
 
@@ -83,6 +83,12 @@ impl Force2D {
     #[wasm_bindgen(getter)]
     pub fn unit(&self) -> Force2D {
         self.force.unit().into()
+    }
+}
+
+impl PartialEq for Force2D {
+    fn eq(&self, other: &Force2D) -> bool {
+        self.force == other.force
     }
 }
 

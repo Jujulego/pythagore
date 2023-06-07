@@ -20,7 +20,7 @@ impl Point2D {
         Point2D { point: py::Point2D::origin() }
     }
 
-    pub fn eq(&self, other: &Point2D) -> bool {
+    pub fn equals(&self, other: &Point2D) -> bool {
         self.point == other.point
     }
 
@@ -55,6 +55,12 @@ impl Point2D {
     #[wasm_bindgen(setter)]
     pub fn set_y(&mut self, y: f64) {
         *self.point.y_mut() = y;
+    }
+}
+
+impl PartialEq for Point2D {
+    fn eq(&self, other: &Point2D) -> bool {
+        self.point == other.point
     }
 }
 
