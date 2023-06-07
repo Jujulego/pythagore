@@ -1,3 +1,4 @@
 /target
 /Cargo.lock
-/codecov.json
+
+codecov-*.json

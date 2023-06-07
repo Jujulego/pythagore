@@ -1,0 +1,26 @@
+coverage:
+  status:
+    project: off
+    patch: off
+
+component_management:
+  default_rules:
+    statuses:
+      - type: project
+        target: auto
+
+  individual_components:
+    - component_id: module_rust
+      name: rust
+      paths:
+        - lib/**
+      statuses:
+        - type: project
+          target: auto
+        - type: patch
+          target: 80%
+
+    - component_id: module_wasm
+      name: wasm
+      paths:
+        - wasm/**
