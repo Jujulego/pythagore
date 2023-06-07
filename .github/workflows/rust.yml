@@ -165,7 +165,7 @@ jobs:
 
     runs-on: ubuntu-latest
     environment: npm
-    needs: [lint, unit-tests, wasm-tests]
+    needs: [lint, wasm-tests]
 
     permissions:
       contents: write
@@ -192,11 +192,41 @@ jobs:
         run: wasm-pack build -s jujulego --weak-refs
         working-directory: wasm
 
+      - name: Read version
+        id: status
+        run: |
+          VERSION=$(cat wasm/pkg/package.json | jq -r '.version')
+          TAG="v$VERSION-wasm"
+          
+          echo "::group::Load tags"
+          
+          git fetch --tags
+          
+          echo "::endgroup::"
+          
+          if [[ $(git tag -l $TAG) == $TAG ]]; then
+            echo "::notice::Version $VERSION already published"
+          else
+            echo "publish=true" >> $GITHUB_OUTPUT
+          fi
+          
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
       - name: Publish
         run: npm publish --access public --tolerate-republish
         working-directory: wasm/pkg
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Tag ${{ steps.status.outputs.version }}
+        if: ${{ steps.status.outputs.publish }}
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          
+          git tag ${{ steps.status.outputs.tag }}
+          git push --tags
 
   codecov:
     if: ${{ !startsWith(github.head_ref, 'renovate/') }}
