@@ -87,8 +87,9 @@ impl Force2D {
 }
 
 impl PartialEq for Force2D {
+    #[inline]
     fn eq(&self, other: &Force2D) -> bool {
-        self.force == other.force
+        self.equals(other)
     }
 }
 

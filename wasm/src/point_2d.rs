@@ -3,6 +3,7 @@ use pythagore::{self as py, point};
 use crate::force_2d::Force2D;
 
 #[wasm_bindgen]
+#[derive(Copy, Clone, Debug)]
 pub struct Point2D {
     point: py::Point2D<f64>,
 }
@@ -59,8 +60,9 @@ impl Point2D {
 }
 
 impl PartialEq for Point2D {
+    #[inline]
     fn eq(&self, other: &Point2D) -> bool {
-        self.point == other.point
+        self.equals(other)
     }
 }
 
