@@ -1,0 +1,11 @@
+{
+  "name": "pythagore",
+  "private": true,
+  "repository": "git@github.com:Jujulego/pythagore.git",
+  "author": "Julien Capellari <julien.capellari@gmail.com>",
+  "license": "MIT",
+  "workspaces": [
+    "wasm/pkg"
+  ],
+  "packageManager": "yarn@3.6.0"
+}
