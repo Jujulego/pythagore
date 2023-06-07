@@ -1,4 +1,4 @@
-name: Validate codecov config
+name: Codecov config
 
 on:
   push:
