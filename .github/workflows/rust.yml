@@ -150,11 +150,11 @@ jobs:
 
       - name: Build
         run: wasm-pack build -s jujulego --weak-refs
-        working-directory: wasm
+        working-directory: pythagore-wasm
 
       - name: Publish
         run: yarn npm publish --access public --tolerate-republish
-        working-directory: wasm/pkg
+        working-directory: pythagore-wasm/pkg
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 

@@ -13,7 +13,7 @@ component_management:
     - component_id: module_rust
       name: rust
       paths:
-        - lib/**
+        - pythagore/**
       statuses:
         - type: project
           target: auto
@@ -21,6 +21,6 @@ component_management:
           target: 80%
 
     - component_id: module_wasm
-      name: wasm
+      name: pythagore-wasm
       paths:
-        - wasm/**
+        - pythagore-wasm/**
