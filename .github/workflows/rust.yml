@@ -89,7 +89,6 @@ jobs:
       - name: SemVer Checks
         uses: obi1kenobi/cargo-semver-checks-action@v2
         with:
-          exclude: pythagore-wasm
           rust-toolchain: manual
 
       - name: Publish

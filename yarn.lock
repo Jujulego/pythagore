@@ -4,9 +4,9 @@
 __metadata:
   version: 6
 
-"@jujulego/pythagore-wasm@workspace:wasm/pkg":
+"@jujulego/pythagore-wasm@workspace:pythagore-wasm/pkg":
   version: 0.0.0-use.local
-  resolution: "@jujulego/pythagore-wasm@workspace:wasm/pkg"
+  resolution: "@jujulego/pythagore-wasm@workspace:pythagore-wasm/pkg"
   languageName: unknown
   linkType: soft
 
