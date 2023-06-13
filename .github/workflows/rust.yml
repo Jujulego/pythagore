@@ -117,7 +117,7 @@ jobs:
 
       - name: Run tests
         run: wasm-pack test --firefox --headless
-        working-directory: wasm
+        working-directory: pythagore-wasm
 
   publish-npm:
     if: ${{ github.event_name == 'push' }}
