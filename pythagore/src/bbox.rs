@@ -16,7 +16,7 @@ pub struct BBox<'n, N: Scalar, const D: usize> {
 }
 
 // Methods
-impl<N: Scalar + PartialOrd, const D: usize> BBox<'_, N, D> {
+impl<'n, N: Scalar + PartialOrd, const D: usize> BBox<'n, N, D> {
     /// Returns true if bbox is empty
     pub fn is_empty(&self) -> bool {
         self.bounds.iter().any(range_is_empty)
@@ -39,9 +39,7 @@ impl<N: Scalar + PartialOrd, const D: usize> BBox<'_, N, D> {
             ))
             .collect()
     }
-}
 
-impl<'n, N: Scalar + PartialOrd, const D: usize> BBox<'n, N, D> {
     /// Returns a new bbox including the given point
     pub fn include(&self, pt: &'n Point<N, D>) -> BBox<'n, N, D> {
         self.bounds.iter()
@@ -55,15 +53,15 @@ impl<'n, N: Scalar + PartialOrd, const D: usize> BBox<'n, N, D> {
 }
 
 // Utils
-impl<'n, N: Scalar, const D: usize> BBoxBounded<N, D> for BBox<'n, N, D>  {
-    fn bbox(&self) -> BBox<'n, N, D> {
+impl<N: Scalar, const D: usize> BBoxBounded<N, D> for BBox<'_, N, D>  {
+    fn bbox(&self) -> BBox<'_, N, D> {
         BBox {
             bounds: self.bounds
         }
     }
 }
 
-impl<'n, N: Scalar, const D: usize> Default for BBox<'_, N, D> {
+impl<N: Scalar, const D: usize> Default for BBox<'_, N, D> {
     fn default() -> Self {
         BBox {
             bounds: [(Unbounded, Unbounded); D],
