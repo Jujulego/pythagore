@@ -1,2 +1,2 @@
 [workspace]
-members = ["pythagore", "pythagore-wasm"]
+members = ["pythagore"]

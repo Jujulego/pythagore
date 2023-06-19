@@ -6,12 +6,12 @@ use crate::BBox;
 ///
 /// ## Example
 /// ```
-/// use pythagore::{point, Point};
+/// use nalgebra::{point, Point};
 /// use pythagore::traits::BBoxBounded;
 ///
-/// let range = Point::origin()..point!{ x: 5, y: 5 };
+/// let range = Point::origin()..point![5, 5];
 ///
-/// assert!(range.bbox().contains(&point!{ x: 2, y: 2 }));
+/// assert!(range.bbox().contains(&point![2, 2]));
 /// ```
 pub trait BBoxBounded<N: Scalar, const D: usize> {
     fn bbox(&self) -> BBox<'_, N, D>;

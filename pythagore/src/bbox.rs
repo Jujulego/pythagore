@@ -1,48 +1,18 @@
+mod range;
+mod utils;
+
 use std::hash::{Hash, Hasher};
 use std::ops::{Bound, RangeBounds};
 use std::ops::Bound::*;
 use na::{Point, Scalar};
+
+use crate::bbox::utils::*;
 use crate::traits::BBoxBounded;
 
 /// `BBox<N, D>` structure for D dimension bounding boxes
 #[derive(Clone, Copy, Debug, Eq)]
 pub struct BBox<'n, N: Scalar, const D: usize> {
     bounds: [(Bound<&'n N>, Bound<&'n N>); D],
-}
-
-// Utils
-fn range_is_empty<'n, N: PartialOrd>(range: &'n (Bound<&'n N>, Bound<&'n N>)) -> bool {
-    match range {
-        (Included(l), Included(r)) => l > r,
-        (Included(l), Excluded(r)) |
-        (Excluded(l), Included(r)) |
-        (Excluded(l), Excluded(r)) => l >= r,
-        (Unbounded, _) => false,
-        (_, Unbounded) => false,
-    }
-}
-
-fn select_bound<'n, N, F>(lhs: &Bound<&'n N>, rhs: &Bound<&'n N>, selector: F) -> Bound<&'n N>
-where F: FnOnce(&'n N, &'n N) -> bool
-{
-    match (lhs, rhs) {
-        (Included(l), Included(r)) |
-        (Included(l), Excluded(r)) |
-        (Excluded(l), Included(r)) |
-        (Excluded(l), Excluded(r)) => if selector(*l, *r) { *lhs } else { *rhs }
-        (Unbounded, _) => *rhs,
-        (_, Unbounded) => *lhs,
-    }
-}
-
-fn include_value<'n, N: PartialEq, F>(bound: &Bound<&'n N>, x: &'n N, selector: F) -> Bound<&'n N>
-where F: FnOnce(&'n N, &'n N) -> bool
-{
-    match bound {
-        Unbounded => Unbounded,
-        Excluded(b) => if selector(*b, x) { *bound } else { Included(x) },
-        Included(b) => if *b == x || selector(*b, x) { *bound } else { Included(x) }
-    }
 }
 
 // Methods
@@ -107,6 +77,7 @@ impl<N: Scalar + Hash, const D: usize> Hash for BBox<'_, N, D> {
     }
 }
 
+// Conversions
 impl<'n, N: Scalar, const D: usize> From<[(Bound<&'n N>, Bound<&'n N>); D]> for BBox<'n, N, D> {
     fn from(bounds: [(Bound<&'n N>, Bound<&'n N>); D]) -> Self {
         BBox { bounds }
@@ -136,8 +107,8 @@ impl<'n, N: Scalar, const D: usize> PartialEq for BBox<'n, N, D> {
 #[cfg(test)]
 mod tests {
     use std::ops::Bound::{Excluded, Included, Unbounded};
-    use crate::bbox::bbox_nd::BBox;
     use na::point;
+    use super::*;
     use crate::traits::BBoxBounded;
 
     #[test]

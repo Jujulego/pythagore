@@ -1,8 +1,8 @@
-use std::ops::Bound::*;
-use std::ops::{Bound, Range, RangeBounds, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive};
-
+use std::ops::Bound::{self, *};
+use std::ops::{Range, RangeBounds, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive};
 use na::{Point, Scalar};
-use crate::bbox::bbox_nd::BBox;
+
+use super::BBox;
 use crate::traits::BBoxBounded;
 
 // Implementations
