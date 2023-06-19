@@ -1,4 +1,4 @@
-use num_traits::Num;
+use na::Scalar;
 use crate::BBox;
 
 /// Defines object bounded by a bbox
@@ -13,6 +13,6 @@ use crate::BBox;
 ///
 /// assert!(range.bbox().contains(&point!{ x: 2, y: 2 }));
 /// ```
-pub trait BBoxBounded<N: Num, const D: usize> {
+pub trait BBoxBounded<N: Scalar, const D: usize> {
     fn bbox(&self) -> BBox<'_, N, D>;
 }
