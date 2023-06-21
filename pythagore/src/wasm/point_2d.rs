@@ -1,5 +1,6 @@
 use na::{point, Point2};
 use wasm_bindgen::prelude::wasm_bindgen;
+use crate::wasm::vector_2d::Vector2D;
 
 /// 2D point defined in js
 #[wasm_bindgen]
@@ -23,6 +24,21 @@ impl Point2D {
     // Methods
     pub fn equals(&self, other: &Point2D) -> bool {
         self.0 == other.0
+    }
+
+    #[cfg(feature = "wasm-vector")]
+    pub fn add_vector(&self, vector: &Vector2D) -> Point2D {
+        Point2D(self.0 + vector.as_ref())
+    }
+
+    #[cfg(feature = "wasm-vector")]
+    pub fn sub(&self, other: &Point2D) -> Vector2D {
+        Vector2D::from(self.0 - other.0)
+    }
+
+    #[cfg(feature = "wasm-vector")]
+    pub fn sub_vector(&self, vector: &Vector2D) -> Point2D {
+        Point2D(self.0 - vector.as_ref())
     }
 
     // Properties
