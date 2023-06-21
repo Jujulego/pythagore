@@ -11,6 +11,7 @@ description = "Mathematics tools for simple geometry"
 [features]
 wasm = ["dep:wasm-bindgen"]
 wasm-point = ["wasm"]
+wasm-vector = ["wasm"]
 
 [dependencies]
 nalgebra = "0.32.2"
