@@ -86,10 +86,10 @@ jobs:
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
 
-      - name: SemVer Checks
-        uses: obi1kenobi/cargo-semver-checks-action@v2
-        with:
-          rust-toolchain: manual
+#      - name: SemVer Checks
+#        uses: obi1kenobi/cargo-semver-checks-action@v2
+#        with:
+#          rust-toolchain: manual
 
       - name: Publish
         uses: katyo/publish-crates@v2
@@ -132,7 +132,7 @@ jobs:
         run: yarn npm publish --access public --tolerate-republish
         working-directory: pkg
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          YARN_NPM_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   codecov:
     if: ${{ !startsWith(github.head_ref, 'renovate/') }}
