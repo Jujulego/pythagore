@@ -1,2 +1,21 @@
-[workspace]
-members = ["pythagore", "pythagore-wasm"]
+[package]
+name = "pythagore"
+version = "0.3.0"
+edition = "2021"
+license-file = "LICENSE"
+repository = "https://github.com/Jujulego/pythagore"
+categories = ["mathematics", "wasm"]
+keywords = ["maths", "geometry", "wasm"]
+description = "Mathematics tools for simple geometry"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+wasm = ["dep:wasm-bindgen"]
+wasm-point = ["wasm"]
+wasm-vector = ["wasm"]
+
+[dependencies]
+nalgebra = "0.32.2"
+wasm-bindgen = { version = "0.2.87", optional = true }

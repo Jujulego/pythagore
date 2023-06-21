@@ -89,7 +89,6 @@ jobs:
       - name: SemVer Checks
         uses: obi1kenobi/cargo-semver-checks-action@v2
         with:
-          exclude: pythagore-wasm
           rust-toolchain: manual
 
       - name: Publish
@@ -97,35 +96,13 @@ jobs:
         with:
           registry-token: ${{ secrets.CARGO_REGISTRY_TOKEN }}
 
-  wasm-tests:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Setup Rust
-        run: rustup toolchain install stable --profile minimal
-
-      - name: Install cargo-llvm-cov
-        uses: taiki-e/install-action@cargo-llvm-cov
-
-      - name: Install wasm-pack
-        uses: taiki-e/install-action@wasm-pack
-
-      - name: Rust Cache
-        uses: Swatinem/rust-cache@v2
-
-      - name: Run tests
-        run: wasm-pack test --firefox --headless
-        working-directory: pythagore-wasm
-
   publish-npm:
     if: ${{ github.event_name == 'push' }}
     name: Publish to npm
 
     runs-on: ubuntu-latest
     environment: npm
-    needs: [lint, wasm-tests]
+    needs: [lint, unit-tests]
 
     permissions:
       contents: write
@@ -149,12 +126,11 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Build
-        run: wasm-pack build -s jujulego --weak-refs
-        working-directory: pythagore-wasm
+        run: wasm-pack build --all-features --scope jujulego --weak-refs
 
       - name: Publish
         run: yarn npm publish --access public --tolerate-republish
-        working-directory: pythagore-wasm/pkg
+        working-directory: pkg
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 

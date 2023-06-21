@@ -1,53 +1,22 @@
+mod range;
+mod utils;
+
 use std::hash::{Hash, Hasher};
 use std::ops::{Bound, RangeBounds};
 use std::ops::Bound::*;
-use num_traits::Num;
-use crate::Point;
+use na::{Point, Scalar};
+
+use crate::bbox::utils::*;
 use crate::traits::BBoxBounded;
 
 /// `BBox<N, D>` structure for D dimension bounding boxes
 #[derive(Clone, Copy, Debug, Eq)]
-pub struct BBox<'n, N: Num, const D: usize> {
+pub struct BBox<'n, N: Scalar, const D: usize> {
     bounds: [(Bound<&'n N>, Bound<&'n N>); D],
 }
 
-// Utils
-fn range_is_empty<'n, N: PartialOrd>(range: &'n (Bound<&'n N>, Bound<&'n N>)) -> bool {
-    match range {
-        (Included(l), Included(r)) => l > r,
-        (Included(l), Excluded(r)) |
-        (Excluded(l), Included(r)) |
-        (Excluded(l), Excluded(r)) => l >= r,
-        (Unbounded, _) => false,
-        (_, Unbounded) => false,
-    }
-}
-
-fn select_bound<'n, N, F>(lhs: &Bound<&'n N>, rhs: &Bound<&'n N>, selector: F) -> Bound<&'n N>
-where F: FnOnce(&'n N, &'n N) -> bool
-{
-    match (lhs, rhs) {
-        (Included(l), Included(r)) |
-        (Included(l), Excluded(r)) |
-        (Excluded(l), Included(r)) |
-        (Excluded(l), Excluded(r)) => if selector(*l, *r) { *lhs } else { *rhs }
-        (Unbounded, _) => *rhs,
-        (_, Unbounded) => *lhs,
-    }
-}
-
-fn include_value<'n, N: PartialEq, F>(bound: &Bound<&'n N>, x: &'n N, selector: F) -> Bound<&'n N>
-where F: FnOnce(&'n N, &'n N) -> bool
-{
-    match bound {
-        Unbounded => Unbounded,
-        Excluded(b) => if selector(*b, x) { *bound } else { Included(x) },
-        Included(b) => if *b == x || selector(*b, x) { *bound } else { Included(x) }
-    }
-}
-
 // Methods
-impl<N: Num + PartialOrd, const D: usize> BBox<'_, N, D> {
+impl<'n, N: Scalar + PartialOrd, const D: usize> BBox<'n, N, D> {
     /// Returns true if bbox is empty
     pub fn is_empty(&self) -> bool {
         self.bounds.iter().any(range_is_empty)
@@ -70,9 +39,7 @@ impl<N: Num + PartialOrd, const D: usize> BBox<'_, N, D> {
             ))
             .collect()
     }
-}
 
-impl<'n, N: Num + PartialOrd, const D: usize> BBox<'n, N, D> {
     /// Returns a new bbox including the given point
     pub fn include(&self, pt: &'n Point<N, D>) -> BBox<'n, N, D> {
         self.bounds.iter()
@@ -86,15 +53,15 @@ impl<'n, N: Num + PartialOrd, const D: usize> BBox<'n, N, D> {
 }
 
 // Utils
-impl<'n, N: Num, const D: usize> BBoxBounded<N, D> for BBox<'n, N, D>  {
-    fn bbox(&self) -> BBox<'n, N, D> {
+impl<N: Scalar, const D: usize> BBoxBounded<N, D> for BBox<'_, N, D>  {
+    fn bbox(&self) -> BBox<'_, N, D> {
         BBox {
             bounds: self.bounds
         }
     }
 }
 
-impl<'n, N: Num, const D: usize> Default for BBox<'_, N, D> {
+impl<N: Scalar, const D: usize> Default for BBox<'_, N, D> {
     fn default() -> Self {
         BBox {
             bounds: [(Unbounded, Unbounded); D],
@@ -102,19 +69,20 @@ impl<'n, N: Num, const D: usize> Default for BBox<'_, N, D> {
     }
 }
 
-impl<N: Num + Hash, const D: usize> Hash for BBox<'_, N, D> {
+impl<N: Scalar + Hash, const D: usize> Hash for BBox<'_, N, D> {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.bounds.hash(state);
     }
 }
 
-impl<'n, N: Num, const D: usize> From<[(Bound<&'n N>, Bound<&'n N>); D]> for BBox<'n, N, D> {
+// Conversions
+impl<'n, N: Scalar, const D: usize> From<[(Bound<&'n N>, Bound<&'n N>); D]> for BBox<'n, N, D> {
     fn from(bounds: [(Bound<&'n N>, Bound<&'n N>); D]) -> Self {
         BBox { bounds }
     }
 }
 
-impl<'n, N: Num, const D: usize> FromIterator<(Bound<&'n N>, Bound<&'n N>)> for BBox<'n, N, D> {
+impl<'n, N: Scalar, const D: usize> FromIterator<(Bound<&'n N>, Bound<&'n N>)> for BBox<'n, N, D> {
     fn from_iter<T: IntoIterator<Item = (Bound<&'n N>, Bound<&'n N>)>>(iter: T) -> Self {
         let mut bounds = [(Unbounded, Unbounded); D];
 
@@ -127,7 +95,7 @@ impl<'n, N: Num, const D: usize> FromIterator<(Bound<&'n N>, Bound<&'n N>)> for 
 }
 
 // Operators
-impl<'n, N: Num, const D: usize> PartialEq for BBox<'n, N, D> {
+impl<'n, N: Scalar, const D: usize> PartialEq for BBox<'n, N, D> {
     fn eq(&self, other: &Self) -> bool {
         self.bounds == other.bounds
     }
@@ -137,8 +105,8 @@ impl<'n, N: Num, const D: usize> PartialEq for BBox<'n, N, D> {
 #[cfg(test)]
 mod tests {
     use std::ops::Bound::{Excluded, Included, Unbounded};
-    use crate::bbox::bbox_nd::BBox;
-    use crate::point;
+    use na::point;
+    use super::*;
     use crate::traits::BBoxBounded;
 
     #[test]
@@ -165,10 +133,9 @@ mod tests {
 
     #[test]
     fn bbox_contains() {
-        let a: BBox<i32, 3> = [
+        let a: BBox<i32, 2> = [
             (Included(&0), Included(&5)),
             (Included(&0), Included(&5)),
-            (Unbounded, Unbounded),
         ].into();
 
         assert!(a.contains(&point![2, 2]));

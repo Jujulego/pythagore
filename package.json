@@ -5,7 +5,7 @@
   "author": "Julien Capellari <julien.capellari@gmail.com>",
   "license": "MIT",
   "workspaces": [
-    "pythagore-wasm/pkg"
+    "pkg"
   ],
   "packageManager": "yarn@3.6.0"
 }
