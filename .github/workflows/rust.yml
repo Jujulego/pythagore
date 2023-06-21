@@ -77,6 +77,9 @@ jobs:
     environment: crates.io
     needs: [lint, unit-tests]
 
+    permissions:
+      contents: write
+
     steps:
       - uses: actions/checkout@v3
 
