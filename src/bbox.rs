@@ -1,22 +1,22 @@
 mod range;
 mod utils;
 
-use std::hash::{Hash, Hasher};
-use std::ops::{Bound, RangeBounds};
-use std::ops::Bound::*;
 use na::{Point, Scalar};
+use std::hash::{Hash, Hasher};
+use std::ops::RangeBounds;
+use std::ops::Bound::{self as Bound, *};
 
 use crate::bbox::utils::*;
 use crate::traits::BBoxBounded;
 
 /// `BBox<N, D>` structure for D dimension bounding boxes
 #[derive(Clone, Copy, Debug, Eq)]
-pub struct BBox<'n, N: Scalar, const D: usize> {
-    bounds: [(Bound<&'n N>, Bound<&'n N>); D],
+pub struct BBox<N: Scalar, const D: usize> {
+    bounds: [(Bound<N>, Bound<N>); D],
 }
 
 // Methods
-impl<'n, N: Scalar + PartialOrd, const D: usize> BBox<'n, N, D> {
+impl<N: Copy + Scalar + PartialOrd, const D: usize> BBox<N, D> {
     /// Returns true if bbox is empty
     pub fn is_empty(&self) -> bool {
         self.bounds.iter().any(range_is_empty)
@@ -34,34 +34,32 @@ impl<'n, N: Scalar + PartialOrd, const D: usize> BBox<'n, N, D> {
         self.bounds.iter()
             .zip(other.bounds.iter())
             .map(|(l, r)| (
-                select_bound(&l.0, &r.0, |a, b| a >= b),
-                select_bound(&l.1, &r.1, |a, b| a <= b),
+                select_bound(l.0, r.0, |a, b| a >= b),
+                select_bound(l.1, r.1, |a, b| a <= b),
             ))
             .collect()
     }
 
     /// Returns a new bbox including the given point
-    pub fn include(&self, pt: &'n Point<N, D>) -> BBox<'n, N, D> {
+    pub fn include(&self, pt: &Point<N, D>) -> BBox<N, D> {
         self.bounds.iter()
             .zip(pt.iter())
             .map(|(bounds, x)| (
-                include_value(&bounds.0, x, |a, b| a < b),
-                include_value(&bounds.1, x, |a, b| a > b),
+                include_value(bounds.0, x, |a, b| a < b),
+                include_value(bounds.1, x, |a, b| a > b),
             ))
             .collect()
     }
 }
 
 // Utils
-impl<N: Scalar, const D: usize> BBoxBounded<N, D> for BBox<'_, N, D>  {
-    fn bbox(&self) -> BBox<'_, N, D> {
-        BBox {
-            bounds: self.bounds
-        }
+impl<N: Copy + Scalar, const D: usize> BBoxBounded<N, D> for BBox<N, D>  {
+    fn bbox(&self) -> BBox<N, D> {
+        *self
     }
 }
 
-impl<N: Scalar, const D: usize> Default for BBox<'_, N, D> {
+impl<N: Copy + Scalar, const D: usize> Default for BBox<N, D> {
     fn default() -> Self {
         BBox {
             bounds: [(Unbounded, Unbounded); D],
@@ -69,21 +67,21 @@ impl<N: Scalar, const D: usize> Default for BBox<'_, N, D> {
     }
 }
 
-impl<N: Scalar + Hash, const D: usize> Hash for BBox<'_, N, D> {
+impl<N: Scalar + Hash, const D: usize> Hash for BBox<N, D> {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.bounds.hash(state);
     }
 }
 
 // Conversions
-impl<'n, N: Scalar, const D: usize> From<[(Bound<&'n N>, Bound<&'n N>); D]> for BBox<'n, N, D> {
-    fn from(bounds: [(Bound<&'n N>, Bound<&'n N>); D]) -> Self {
+impl<N: Scalar, const D: usize> From<[(Bound<N>, Bound<N>); D]> for BBox<N, D> {
+    fn from(bounds: [(Bound<N>, Bound<N>); D]) -> Self {
         BBox { bounds }
     }
 }
 
-impl<'n, N: Scalar, const D: usize> FromIterator<(Bound<&'n N>, Bound<&'n N>)> for BBox<'n, N, D> {
-    fn from_iter<T: IntoIterator<Item = (Bound<&'n N>, Bound<&'n N>)>>(iter: T) -> Self {
+impl<N: Copy + Scalar, const D: usize> FromIterator<(Bound<N>, Bound<N>)> for BBox<N, D> {
+    fn from_iter<T: IntoIterator<Item = (Bound<N>, Bound<N>)>>(iter: T) -> Self {
         let mut bounds = [(Unbounded, Unbounded); D];
 
         for (idx, pair) in iter.into_iter().take(D).enumerate() {
@@ -95,7 +93,7 @@ impl<'n, N: Scalar, const D: usize> FromIterator<(Bound<&'n N>, Bound<&'n N>)> f
 }
 
 // Operators
-impl<'n, N: Scalar, const D: usize> PartialEq for BBox<'n, N, D> {
+impl<N: Scalar, const D: usize> PartialEq for BBox<N, D> {
     fn eq(&self, other: &Self) -> bool {
         self.bounds == other.bounds
     }
@@ -112,9 +110,9 @@ mod tests {
     #[test]
     fn bbox_is_empty() {
         let a: BBox<u32, 3> = [
-            (Included(&0), Included(&5)),
-            (Included(&0), Included(&5)),
-            (Included(&7), Included(&5)),
+            (Included(0), Included(5)),
+            (Included(0), Included(5)),
+            (Included(7), Included(5)),
         ].into();
 
         assert!(a.is_empty());
@@ -123,9 +121,9 @@ mod tests {
     #[test]
     fn bbox_is_not_empty() {
         let a: BBox<u32, 3> = [
-            (Included(&0), Included(&5)),
-            (Included(&0), Included(&5)),
-            (Included(&0), Included(&5)),
+            (Included(0), Included(5)),
+            (Included(0), Included(5)),
+            (Included(0), Included(5)),
         ].into();
 
         assert!(!a.is_empty());
@@ -134,8 +132,8 @@ mod tests {
     #[test]
     fn bbox_contains() {
         let a: BBox<i32, 2> = [
-            (Included(&0), Included(&5)),
-            (Included(&0), Included(&5)),
+            (Included(0), Included(5)),
+            (Included(0), Included(5)),
         ].into();
 
         assert!(a.contains(&point![2, 2]));
@@ -152,47 +150,47 @@ mod tests {
 
     #[test]
     fn bbox_intersection_overlaps() {
-        let a: BBox<u32, 1> = [(Included(&0), Included(&5))].into();
-        let b: BBox<u32, 1> = [(Included(&2), Included(&7))].into();
+        let a: BBox<u32, 1> = [(Included(0), Included(5))].into();
+        let b: BBox<u32, 1> = [(Included(2), Included(7))].into();
 
-        assert_eq!(a.intersection(&b), [(Included(&2), Included(&5))].into());
+        assert_eq!(a.intersection(&b), [(Included(2), Included(5))].into());
     }
 
     #[test]
     fn bbox_intersection_contains() {
-        let a: BBox<u32, 1> = [(Included(&0), Included(&7))].into();
-        let b: BBox<u32, 1> = [(Included(&2), Included(&5))].into();
+        let a: BBox<u32, 1> = [(Included(0), Included(7))].into();
+        let b: BBox<u32, 1> = [(Included(2), Included(5))].into();
 
         assert_eq!(a.intersection(&b), b);
     }
 
     #[test]
     fn bbox_intersection_no_intersection() {
-        let a: BBox<u32, 1> = [(Included(&0), Included(&2))].into();
-        let b: BBox<u32, 1> = [(Included(&5), Included(&7))].into();
+        let a: BBox<u32, 1> = [(Included(0), Included(2))].into();
+        let b: BBox<u32, 1> = [(Included(5), Included(7))].into();
 
-        assert_eq!(a.intersection(&b), [(Included(&5), Included(&2))].into());
+        assert_eq!(a.intersection(&b), [(Included(5), Included(2))].into());
     }
 
     #[test]
     fn bbox_intersection_some_included_some_excluded() {
-        let a: BBox<u32, 1> = [(Included(&0), Included(&5))].into();
-        let b: BBox<u32, 1> = [(Excluded(&2), Excluded(&7))].into();
+        let a: BBox<u32, 1> = [(Included(0), Included(5))].into();
+        let b: BBox<u32, 1> = [(Excluded(2), Excluded(7))].into();
 
-        assert_eq!(a.intersection(&b), [(Excluded(&2), Included(&5))].into());
+        assert_eq!(a.intersection(&b), [(Excluded(2), Included(5))].into());
     }
 
     #[test]
     fn bbox_intersection_some_unbounded() {
-        let a: BBox<u32, 1> = [(Included(&0), Unbounded)].into();
-        let b: BBox<u32, 1> = [(Unbounded, Excluded(&7))].into();
+        let a: BBox<u32, 1> = [(Included(0), Unbounded)].into();
+        let b: BBox<u32, 1> = [(Unbounded, Excluded(7))].into();
 
-        assert_eq!(a.intersection(&b), [(Included(&0), Excluded(&7))].into());
+        assert_eq!(a.intersection(&b), [(Included(0), Excluded(7))].into());
     }
 
     #[test]
     fn bbox_intersection_one_fully_unbounded() {
-        let a: BBox<u32, 1> = [(Included(&0), Included(&5))].into();
+        let a: BBox<u32, 1> = [(Included(0), Included(5))].into();
         let b: BBox<u32, 1> = [(Unbounded, Unbounded)].into();
 
         assert_eq!(a.intersection(&b), a);

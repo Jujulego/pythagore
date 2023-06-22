@@ -14,5 +14,5 @@ use crate::BBox;
 /// assert!(range.bbox().contains(&point![2, 2]));
 /// ```
 pub trait BBoxBounded<N: Scalar, const D: usize> {
-    fn bbox(&self) -> BBox<'_, N, D>;
+    fn bbox(&self) -> BBox<N, D>;
 }
