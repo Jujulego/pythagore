@@ -9,7 +9,7 @@ keywords = ["maths", "geometry", "wasm"]
 description = "Mathematics tools for simple geometry"
 
 [lib]
-crate-type = ["cdylib", "rlib"]
+crate-type = ["lib", "cdylib"]
 
 [features]
 wasm = ["dep:wasm-bindgen"]
