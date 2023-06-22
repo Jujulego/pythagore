@@ -1,10 +1,10 @@
 mod range;
 mod utils;
 
-use std::hash::{Hash, Hasher};
-use std::ops::{Bound, RangeBounds};
-use std::ops::Bound::*;
 use na::{Point, Scalar};
+use std::hash::{Hash, Hasher};
+use std::ops::RangeBounds;
+use std::ops::Bound::{self as Bound, *};
 
 use crate::bbox::utils::*;
 use crate::traits::BBoxBounded;
@@ -34,8 +34,8 @@ impl<N: Copy + Scalar + PartialOrd, const D: usize> BBox<N, D> {
         self.bounds.iter()
             .zip(other.bounds.iter())
             .map(|(l, r)| (
-                *select_bound(&l.0, &r.0, |a, b| a >= b),
-                *select_bound(&l.1, &r.1, |a, b| a <= b),
+                select_bound(l.0, r.0, |a, b| a >= b),
+                select_bound(l.1, r.1, |a, b| a <= b),
             ))
             .collect()
     }
@@ -45,8 +45,8 @@ impl<N: Copy + Scalar + PartialOrd, const D: usize> BBox<N, D> {
         self.bounds.iter()
             .zip(pt.iter())
             .map(|(bounds, x)| (
-                include_value(&bounds.0, x, |a, b| a < b),
-                include_value(&bounds.1, x, |a, b| a > b),
+                include_value(bounds.0, x, |a, b| a < b),
+                include_value(bounds.1, x, |a, b| a > b),
             ))
             .collect()
     }
