@@ -14,43 +14,61 @@ impl<N: Copy + Scalar, const D: usize> BBoxBounded<N, D> for RangeFull {
 
 impl<N: Copy + Scalar, const D: usize> BBoxBounded<N, D> for RangeFrom<Point<N, D>> {
     fn bbox(&self) -> BBox<N, D> {
-        self.start.iter()
-            .map(|&start| (Included(start), Unbounded))
-            .collect()
+        let mut bounds = [(Unbounded, Unbounded); D];
+
+        for dim in 0..D {
+            bounds[dim] = (Included(self.start[dim]), Unbounded);
+        }
+
+        BBox::from(bounds)
     }
 }
 
 impl<N: Copy + Scalar, const D: usize> BBoxBounded<N, D> for RangeTo<Point<N, D>> {
     fn bbox(&self) -> BBox<N, D> {
-        self.end.iter()
-            .map(|&end| (Unbounded, Excluded(end)))
-            .collect()
+        let mut bounds = [(Unbounded, Unbounded); D];
+
+        for dim in 0..D {
+            bounds[dim] = (Unbounded, Excluded(self.end[dim]));
+        }
+
+        BBox::from(bounds)
     }
 }
 
 impl<N: Copy + Scalar, const D: usize> BBoxBounded<N, D> for Range<Point<N, D>> {
     fn bbox(&self) -> BBox<N, D> {
-        self.start.iter()
-            .zip(self.end.iter())
-            .map(|(&start, &end)| (Included(start), Excluded(end)))
-            .collect()
+        let mut bounds = [(Unbounded, Unbounded); D];
+
+        for dim in 0..D {
+            bounds[dim] = (Included(self.start[dim]), Excluded(self.end[dim]));
+        }
+
+        BBox::from(bounds)
     }
 }
 
 impl<N: Copy + Scalar, const D: usize> BBoxBounded<N, D> for RangeInclusive<Point<N, D>> {
     fn bbox(&self) -> BBox<N, D> {
-        self.start().iter()
-            .zip(self.end().iter())
-            .map(|(&start, &end)| (Included(start), Included(end)))
-            .collect()
+        let mut bounds = [(Unbounded, Unbounded); D];
+
+        for dim in 0..D {
+            bounds[dim] = (Included(self.start()[dim]), Included(self.end()[dim]));
+        }
+
+        BBox::from(bounds)
     }
 }
 
 impl<N: Copy + Scalar, const D: usize> BBoxBounded<N, D> for RangeToInclusive<Point<N, D>> {
     fn bbox(&self) -> BBox<N, D> {
-        self.end.iter()
-            .map(|&end| (Unbounded, Included(end)))
-            .collect()
+        let mut bounds = [(Unbounded, Unbounded); D];
+
+        for dim in 0..D {
+            bounds[dim] = (Unbounded, Included(self.end[dim]));
+        }
+
+        BBox::from(bounds)
     }
 }
 
