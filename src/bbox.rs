@@ -28,10 +28,10 @@ impl<N: Copy + Scalar + Ord, const D: usize> BBox<N, D> {
     }
 
     /// Builds a bbox from two points
-    /// Roughly the same as `(from..to).bbox()`
-    pub fn from_points(from: &Point<N, D>, to: &Point<N, D>) -> BBox<N, D> {
-        from.iter()
-            .zip(to.iter())
+    /// Roughly the same as `(start..end).bbox()`
+    pub fn from_points(start: &Point<N, D>, end: &Point<N, D>) -> BBox<N, D> {
+        start.iter()
+            .zip(end.iter())
             .map(|(&a, &b)| (Included(min(a, b)), Excluded(max(a, b))))
             .collect()
     }
@@ -47,10 +47,10 @@ impl<N: Copy + Scalar + Ord, const D: usize> BBox<N, D> {
     }
 
     /// Builds a bbox from two points
-    /// Roughly the same as `(from..to).bbox()`
-    pub fn from_points_including(from: &Point<N, D>, to: &Point<N, D>) -> BBox<N, D> {
-        from.iter()
-            .zip(to.iter())
+    /// Roughly the same as `(start..end).bbox()`
+    pub fn from_points_including(start: &Point<N, D>, end: &Point<N, D>) -> BBox<N, D> {
+        start.iter()
+            .zip(end.iter())
             .map(|(&a, &b)| (Included(min(a, b)), Included(max(a, b))))
             .collect()
     }
