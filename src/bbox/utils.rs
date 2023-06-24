@@ -60,6 +60,6 @@ where
 pub fn value_of_bound<N>(bound: &Bound<N>) -> Option<&N> {
     match bound {
         Included(x) | Excluded(x) => Some(x),
-        Unbounded => None
+        Unbounded => None,
     }
 }
