@@ -33,11 +33,9 @@ impl<N: Copy + Scalar + PartialOrd, const D: usize> BBox<N, D> {
     pub fn intersection(&self, other: &Self) -> Self {
         let mut result = BBox::default();
 
-        for dim in 0..D {
-            result.bounds[dim] = (
-                select_bound(self.bounds[dim].0, other.bounds[dim].0, |a, b| a >= b),
-                select_bound(self.bounds[dim].1, other.bounds[dim].1, |a, b| a <= b),
-            );
+        for (dim, pair) in result.bounds.iter_mut().enumerate() {
+            pair.0 = select_bound(self.bounds[dim].0, other.bounds[dim].0, |a, b| a >= b);
+            pair.1 = select_bound(self.bounds[dim].1, other.bounds[dim].1, |a, b| a <= b);
         }
 
         result
@@ -47,11 +45,9 @@ impl<N: Copy + Scalar + PartialOrd, const D: usize> BBox<N, D> {
     pub fn include(&self, pt: &Point<N, D>) -> BBox<N, D> {
         let mut result = BBox::default();
 
-        for dim in 0..D {
-            result.bounds[dim] = (
-                include_value(self.bounds[dim].0, &pt[dim], |a, b| a < b),
-                include_value(self.bounds[dim].1, &pt[dim], |a, b| a > b),
-            );
+        for (dim, pair) in result.bounds.iter_mut().enumerate() {
+            pair.0 = include_value(self.bounds[dim].0, &pt[dim], |a, b| a < b);
+            pair.1 = include_value(self.bounds[dim].1, &pt[dim], |a, b| a > b);
         }
 
         result
