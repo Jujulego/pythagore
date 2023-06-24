@@ -34,8 +34,8 @@ impl<N: Copy + Scalar + PartialOrd, const D: usize> BBox<N, D> {
         let mut result = BBox::default();
 
         for (dim, pair) in result.bounds.iter_mut().enumerate() {
-            pair.0 = select_bound(self.bounds[dim].0, other.bounds[dim].0, |a, b| a >= b);
-            pair.1 = select_bound(self.bounds[dim].1, other.bounds[dim].1, |a, b| a <= b);
+            pair.0 = *select_bound(&self.bounds[dim].0, &other.bounds[dim].0, |a, b| a >= b);
+            pair.1 = *select_bound(&self.bounds[dim].1, &other.bounds[dim].1, |a, b| a <= b);
         }
 
         result
@@ -46,8 +46,8 @@ impl<N: Copy + Scalar + PartialOrd, const D: usize> BBox<N, D> {
         let mut result = BBox::default();
 
         for (dim, pair) in result.bounds.iter_mut().enumerate() {
-            pair.0 = include_value(self.bounds[dim].0, &pt[dim], |a, b| a < b);
-            pair.1 = include_value(self.bounds[dim].1, &pt[dim], |a, b| a > b);
+            pair.0 = include_value(&self.bounds[dim].0, &pt[dim], |a, b| a < b);
+            pair.1 = include_value(&self.bounds[dim].1, &pt[dim], |a, b| a > b);
         }
 
         result
