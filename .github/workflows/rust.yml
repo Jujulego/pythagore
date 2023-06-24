@@ -89,11 +89,11 @@ jobs:
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
 
-#      - name: SemVer Checks
-#        uses: obi1kenobi/cargo-semver-checks-action@v2
-#        with:
-#          feature-group: all-features
-#          rust-toolchain: manual
+      - name: SemVer Checks
+        uses: obi1kenobi/cargo-semver-checks-action@v2
+        with:
+          feature-group: all-features
+          rust-toolchain: manual
 
       - name: Read version
         id: status
