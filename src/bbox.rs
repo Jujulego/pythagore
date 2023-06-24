@@ -1,22 +1,66 @@
 mod range;
 mod utils;
 
-use na::{Point, Scalar};
+use na::{max, min, ClosedAdd, Point, SVector, Scalar};
 use std::hash::{Hash, Hasher};
-use std::ops::RangeBounds;
 use std::ops::Bound::{self as Bound, *};
+use std::ops::RangeBounds;
 
 use crate::bbox::utils::*;
 use crate::traits::BBoxBounded;
 
-/// `BBox<N, D>` structure for D dimension bounding boxes
+/// `BBox<N, D>` structure for D dimension axe aligned bounding boxes
 #[derive(Clone, Copy, Debug, Eq)]
 pub struct BBox<N: Scalar, const D: usize> {
     bounds: [(Bound<N>, Bound<N>); D],
 }
 
 // Methods
-impl<N: Copy + Scalar + PartialOrd, const D: usize> BBox<N, D> {
+impl<N: Copy + Scalar + Ord, const D: usize> BBox<N, D> {
+    /// Builds a bbox from a point and a size
+    /// Roughly the same as `(anchor..anchor + size).bbox()`
+    pub fn from_anchor_size(anchor: &Point<N, D>, size: &SVector<N, D>) -> BBox<N, D>
+    where
+        N: ClosedAdd,
+    {
+        BBox::from_points(anchor, &(anchor + size))
+    }
+
+    /// Builds a bbox from two points
+    /// Roughly the same as `(start..end).bbox()`
+    pub fn from_points(start: &Point<N, D>, end: &Point<N, D>) -> BBox<N, D> {
+        let mut result = BBox::default();
+
+        for (dim, pair) in result.bounds.iter_mut().enumerate() {
+            pair.0 = Included(min(start[dim], end[dim]));
+            pair.1 = Excluded(max(start[dim], end[dim]));
+        }
+
+        result
+    }
+
+    /// Builds an including bbox from a point and a size
+    /// Roughly the same as `(anchor..=anchor + size).bbox()`
+    pub fn from_anchor_size_including(anchor: &Point<N, D>, size: &SVector<N, D>) -> BBox<N, D>
+    where
+        N: ClosedAdd,
+    {
+        BBox::from_points_including(anchor, &(anchor + size))
+    }
+
+    /// Builds a bbox from two points
+    /// Roughly the same as `(start..end).bbox()`
+    pub fn from_points_including(start: &Point<N, D>, end: &Point<N, D>) -> BBox<N, D> {
+        let mut result = BBox::default();
+
+        for (dim, pair) in result.bounds.iter_mut().enumerate() {
+            pair.0 = Included(min(start[dim], end[dim]));
+            pair.1 = Included(max(start[dim], end[dim]));
+        }
+
+        result
+    }
+
     /// Returns true if bbox is empty
     pub fn is_empty(&self) -> bool {
         self.bounds.iter().any(range_is_empty)
@@ -24,7 +68,8 @@ impl<N: Copy + Scalar + PartialOrd, const D: usize> BBox<N, D> {
 
     /// Returns true if bbox contains given point
     pub fn contains(&self, pt: &Point<N, D>) -> bool {
-        self.bounds.iter()
+        self.bounds
+            .iter()
             .zip(pt.iter())
             .all(|(bounds, x)| bounds.contains(x))
     }
@@ -55,7 +100,7 @@ impl<N: Copy + Scalar + PartialOrd, const D: usize> BBox<N, D> {
 }
 
 // Utils
-impl<N: Copy + Scalar, const D: usize> BBoxBounded<N, D> for BBox<N, D>  {
+impl<N: Copy + Scalar, const D: usize> BBoxBounded<N, D> for BBox<N, D> {
     fn bbox(&self) -> BBox<N, D> {
         *self
     }
@@ -92,10 +137,67 @@ impl<N: Scalar, const D: usize> PartialEq for BBox<N, D> {
 // Tests
 #[cfg(test)]
 mod tests {
+    use na::{point, vector};
     use std::ops::Bound::{Excluded, Included, Unbounded};
-    use na::point;
+
     use super::*;
     use crate::traits::BBoxBounded;
+
+    #[test]
+    fn bbox_from_anchor_size() {
+        assert_eq!(
+            BBox::from_anchor_size(&point![1, 1], &vector![2, 3]),
+            (point![1, 1]..point![3, 4]).bbox()
+        );
+
+        // With messy coords
+        assert_eq!(
+            BBox::from_anchor_size(&point![1, 4], &vector![2, -3]),
+            (point![1, 1]..point![3, 4]).bbox()
+        );
+    }
+
+    #[test]
+    fn bbox_from_points() {
+        assert_eq!(
+            BBox::from_points(&point![1, 1], &point![2, 3]),
+            (point![1, 1]..point![2, 3]).bbox()
+        );
+
+        // With messy coords
+        assert_eq!(
+            BBox::from_points(&point![1, 3], &point![2, 1]),
+            (point![1, 1]..point![2, 3]).bbox()
+        );
+    }
+
+    #[test]
+    fn bbox_from_anchor_size_including() {
+        assert_eq!(
+            BBox::from_anchor_size_including(&point![1, 1], &vector![2, 3]),
+            (point![1, 1]..=point![3, 4]).bbox()
+        );
+
+        // With messy coords
+        assert_eq!(
+            BBox::from_anchor_size_including(&point![1, 4], &vector![2, -3]),
+            (point![1, 1]..=point![3, 4]).bbox()
+        );
+    }
+
+    #[test]
+    fn bbox_from_points_including() {
+        assert_eq!(
+            BBox::from_points_including(&point![1, 1], &point![2, 3]),
+            (point![1, 1]..=point![2, 3]).bbox()
+        );
+
+        // With messy coords
+        assert_eq!(
+            BBox::from_points_including(&point![1, 3], &point![2, 1]),
+            (point![1, 1]..=point![2, 3]).bbox()
+        );
+    }
 
     #[test]
     fn bbox_is_empty() {
@@ -103,7 +205,8 @@ mod tests {
             (Included(0), Included(5)),
             (Included(0), Included(5)),
             (Included(7), Included(5)),
-        ].into();
+        ]
+        .into();
 
         assert!(a.is_empty());
     }
@@ -114,17 +217,15 @@ mod tests {
             (Included(0), Included(5)),
             (Included(0), Included(5)),
             (Included(0), Included(5)),
-        ].into();
+        ]
+        .into();
 
         assert!(!a.is_empty());
     }
 
     #[test]
     fn bbox_contains() {
-        let a: BBox<i32, 2> = [
-            (Included(0), Included(5)),
-            (Included(0), Included(5)),
-        ].into();
+        let a: BBox<i32, 2> = [(Included(0), Included(5)), (Included(0), Included(5))].into();
 
         assert!(a.contains(&point![2, 2]));
 
@@ -198,10 +299,22 @@ mod tests {
     fn bbox_include() {
         let range = point![2]..point![6];
 
-        assert_eq!(range.bbox().include(&point![0]), (point![0]..point![6]).bbox());
-        assert_eq!(range.bbox().include(&point![4]), (point![2]..point![6]).bbox());
-        assert_eq!(range.bbox().include(&point![6]), (point![2]..=point![6]).bbox());
-        assert_eq!(range.bbox().include(&point![8]), (point![2]..=point![8]).bbox());
+        assert_eq!(
+            range.bbox().include(&point![0]),
+            (point![0]..point![6]).bbox()
+        );
+        assert_eq!(
+            range.bbox().include(&point![4]),
+            (point![2]..point![6]).bbox()
+        );
+        assert_eq!(
+            range.bbox().include(&point![6]),
+            (point![2]..=point![6]).bbox()
+        );
+        assert_eq!(
+            range.bbox().include(&point![8]),
+            (point![2]..=point![8]).bbox()
+        );
         assert_eq!((..).bbox().include(&point![8]), (..).bbox());
     }
 }

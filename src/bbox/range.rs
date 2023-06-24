@@ -1,6 +1,8 @@
-use std::ops::Bound::{self, *};
-use std::ops::{Range, RangeBounds, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive};
 use na::{Point, Scalar};
+use std::ops::Bound::{self, *};
+use std::ops::{
+    Range, RangeBounds, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive,
+};
 
 use super::BBox;
 use crate::traits::BBoxBounded;
@@ -74,7 +76,9 @@ impl<N: Copy + Scalar, const D: usize> BBoxBounded<N, D> for RangeToInclusive<Po
     }
 }
 
-impl<N: Copy + Scalar, const D: usize> BBoxBounded<N, D> for (Bound<Point<N, D>>, Bound<Point<N, D>>) {
+impl<N: Copy + Scalar, const D: usize> BBoxBounded<N, D>
+    for (Bound<Point<N, D>>, Bound<Point<N, D>>)
+{
     fn bbox(&self) -> BBox<N, D> {
         let mut bounds = [(Unbounded, Unbounded); D];
 
@@ -99,8 +103,8 @@ impl<N: Copy + Scalar, const D: usize> BBoxBounded<N, D> for (Bound<Point<N, D>>
 // Tests
 #[cfg(test)]
 mod tests {
-    use na::{point, Point};
     use super::*;
+    use na::{point, Point};
 
     #[test]
     fn range_full_box_contains() {
