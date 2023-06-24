@@ -6,4 +6,4 @@ pub mod traits;
 #[cfg(feature = "wasm")]
 pub mod wasm;
 
-pub use bbox::{BBox};
+pub use bbox::BBox;

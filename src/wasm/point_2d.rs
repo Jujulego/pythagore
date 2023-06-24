@@ -1,6 +1,6 @@
+use crate::wasm::vector_2d::Vector2D;
 use na::{point, Point2};
 use wasm_bindgen::prelude::wasm_bindgen;
-use crate::wasm::vector_2d::Vector2D;
 
 /// 2D point defined in js
 #[wasm_bindgen]
@@ -89,4 +89,3 @@ impl PartialEq for Point2D {
         self.equals(other)
     }
 }
-
