@@ -115,9 +115,8 @@ impl<N: Scalar, const D: usize> BBox<N, D> {
     where N: Copy + LowerBounded + Zero {
         let mut pt = Point::default();
 
-        for dim in 0..D {
-            pt[dim] = *value_of_bound(&self.bounds[dim].0)
-                .unwrap_or(&N::min_value());
+        for (dim, pair) in self.bounds.iter().enumerate() {
+            pt[dim] = *value_of_bound(&pair.0).unwrap_or(&N::min_value());
         }
 
         pt
@@ -128,9 +127,8 @@ impl<N: Scalar, const D: usize> BBox<N, D> {
     where N: Copy + UpperBounded + Zero {
         let mut pt = Point::default();
 
-        for dim in 0..D {
-            pt[dim] = *value_of_bound(&self.bounds[dim].1)
-                .unwrap_or(&N::max_value());
+        for (dim, pair) in self.bounds.iter().enumerate() {
+            pt[dim] = *value_of_bound(&pair.1).unwrap_or(&N::max_value());
         }
 
         pt
@@ -143,7 +141,7 @@ impl<N: Scalar, const D: usize> BBox<N, D> {
     }
 
     /// Return end point of bbox
-    pub fn size_point(&self) -> SVector<N, D>
+    pub fn size(&self) -> SVector<N, D>
     where N: Bounded + ClosedSub + Copy + Zero {
         self.end_point() - self.start_point()
     }
@@ -153,7 +151,7 @@ impl<N: Bounded + Copy + Scalar> BBox<N, 2> {
     /// Returns north west point
     pub fn nw(&self) -> Point<N, 2> {
         point![
-            *value_of_bound(&self.bounds[0].0).unwrap_or(&N::min_value()),
+            *value_of_bound(&self.bounds[0].1).unwrap_or(&N::min_value()),
             *value_of_bound(&self.bounds[1].0).unwrap_or(&N::min_value())
         ]
     }
@@ -161,14 +159,14 @@ impl<N: Bounded + Copy + Scalar> BBox<N, 2> {
     /// Returns north east point
     pub fn ne(&self) -> Point<N, 2> {
         point![
-            *value_of_bound(&self.bounds[0].0).unwrap_or(&N::min_value()),
+            *value_of_bound(&self.bounds[0].1).unwrap_or(&N::min_value()),
             *value_of_bound(&self.bounds[1].1).unwrap_or(&N::max_value())
         ]
     }
     /// Returns south west point
     pub fn sw(&self) -> Point<N, 2> {
         point![
-            *value_of_bound(&self.bounds[0].1).unwrap_or(&N::max_value()),
+            *value_of_bound(&self.bounds[0].0).unwrap_or(&N::max_value()),
             *value_of_bound(&self.bounds[1].0).unwrap_or(&N::min_value())
         ]
     }
@@ -176,7 +174,7 @@ impl<N: Bounded + Copy + Scalar> BBox<N, 2> {
     /// Returns south east point
     pub fn se(&self) -> Point<N, 2> {
         point![
-            *value_of_bound(&self.bounds[0].1).unwrap_or(&N::max_value()),
+            *value_of_bound(&self.bounds[0].0).unwrap_or(&N::max_value()),
             *value_of_bound(&self.bounds[1].1).unwrap_or(&N::max_value())
         ]
     }
@@ -399,5 +397,55 @@ mod tests {
             (point![2]..=point![8]).bbox()
         );
         assert_eq!((..).bbox().include(&point![8]), (..).bbox());
+    }
+
+    #[test]
+    fn bbox_start_point() {
+        assert_eq!((..).bbox().start_point(), point![i32::MIN, i32::MIN]);
+        assert_eq!((point![0, 0]..).bbox().start_point(), point![0, 0]);
+        assert_eq!((point![0, 0]..point![5, 5]).bbox().start_point(), point![0, 0]);
+        assert_eq!((point![0, 0]..=point![5, 5]).bbox().start_point(), point![0, 0]);
+        assert_eq!((..point![5, 5]).bbox().start_point(), point![i32::MIN, i32::MIN]);
+        assert_eq!((..=point![5, 5]).bbox().start_point(), point![i32::MIN, i32::MIN]);
+    }
+
+    #[test]
+    fn bbox_end_point() {
+        assert_eq!((..).bbox().end_point(), point![i32::MAX, i32::MAX]);
+        assert_eq!((point![0, 0]..).bbox().end_point(), point![i32::MAX, i32::MAX]);
+        assert_eq!((point![0, 0]..point![5, 5]).bbox().end_point(), point![5, 5]);
+        assert_eq!((point![0, 0]..=point![5, 5]).bbox().end_point(), point![5, 5]);
+        assert_eq!((..point![5, 5]).bbox().end_point(), point![5, 5]);
+        assert_eq!((..=point![5, 5]).bbox().end_point(), point![5, 5]);
+    }
+
+    #[test]
+    fn bbox_center_point() {
+        assert_eq!((point![0.0, 0.0]..point![6.0, 6.0]).bbox().center_point(), point![3.0, 3.0]);
+    }
+
+    #[test]
+    fn bbox_size() {
+        assert_eq!((point![0.0, 0.0]..point![6.0, 6.0]).bbox().size(), vector![6.0, 6.0]);
+    }
+
+    #[test]
+    fn bbox_nw() {
+        assert_eq!((point![0.0, 0.0]..point![6.0, 6.0]).bbox().nw(), point![6.0, 0.0]);
+    }
+
+    #[test]
+    fn bbox_ne() {
+        assert_eq!((point![0.0, 0.0]..point![6.0, 6.0]).bbox().ne(), point![6.0, 6.0]);
+    }
+
+    #[test]
+    fn bbox_sw() {
+        assert_eq!((point![0.0, 0.0]..point![6.0, 6.0]).bbox().sw(), point![0.0, 0.0]);
+    }
+
+    #[test]
+    fn bbox_se() {
+        assert_eq!((point![0.0, 0.0]..point![6.0, 6.0]).bbox().se(), point![0.0, 6.0]);
     }
 }
