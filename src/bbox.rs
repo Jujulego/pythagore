@@ -31,24 +31,26 @@ impl<N: Copy + Scalar + PartialOrd, const D: usize> BBox<N, D> {
 
     /// Returns intersection between bbox
     pub fn intersection(&self, other: &Self) -> Self {
-        self.bounds.iter()
-            .zip(other.bounds.iter())
-            .map(|(l, r)| (
-                select_bound(l.0, r.0, |a, b| a >= b),
-                select_bound(l.1, r.1, |a, b| a <= b),
-            ))
-            .collect()
+        let mut result = BBox::default();
+
+        for (dim, pair) in result.bounds.iter_mut().enumerate() {
+            pair.0 = *select_bound(&self.bounds[dim].0, &other.bounds[dim].0, |a, b| a >= b);
+            pair.1 = *select_bound(&self.bounds[dim].1, &other.bounds[dim].1, |a, b| a <= b);
+        }
+
+        result
     }
 
     /// Returns a new bbox including the given point
     pub fn include(&self, pt: &Point<N, D>) -> BBox<N, D> {
-        self.bounds.iter()
-            .zip(pt.iter())
-            .map(|(bounds, x)| (
-                include_value(bounds.0, x, |a, b| a < b),
-                include_value(bounds.1, x, |a, b| a > b),
-            ))
-            .collect()
+        let mut result = BBox::default();
+
+        for (dim, pair) in result.bounds.iter_mut().enumerate() {
+            pair.0 = include_value(&self.bounds[dim].0, &pt[dim], |a, b| a < b);
+            pair.1 = include_value(&self.bounds[dim].1, &pt[dim], |a, b| a > b);
+        }
+
+        result
     }
 }
 
@@ -76,18 +78,6 @@ impl<N: Scalar + Hash, const D: usize> Hash for BBox<N, D> {
 // Conversions
 impl<N: Scalar, const D: usize> From<[(Bound<N>, Bound<N>); D]> for BBox<N, D> {
     fn from(bounds: [(Bound<N>, Bound<N>); D]) -> Self {
-        BBox { bounds }
-    }
-}
-
-impl<N: Copy + Scalar, const D: usize> FromIterator<(Bound<N>, Bound<N>)> for BBox<N, D> {
-    fn from_iter<T: IntoIterator<Item = (Bound<N>, Bound<N>)>>(iter: T) -> Self {
-        let mut bounds = [(Unbounded, Unbounded); D];
-
-        for (idx, pair) in iter.into_iter().take(D).enumerate() {
-            bounds[idx] = pair;
-        }
-
         BBox { bounds }
     }
 }

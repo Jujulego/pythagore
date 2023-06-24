@@ -13,7 +13,7 @@ pub fn range_is_empty<N: PartialOrd>(range: &(Bound<N>, Bound<N>)) -> bool {
 }
 
 /// Select a bound according to predicate
-pub fn select_bound<N, F>(lhs: Bound<N>, rhs: Bound<N>, predicate: F) -> Bound<N>
+pub fn select_bound<'a, N, F>(lhs: &'a Bound<N>, rhs: &'a Bound<N>, predicate: F) -> &'a Bound<N>
 where F: FnOnce(&N, &N) -> bool {
     match (&lhs, &rhs) {
         (Included(l), Included(r)) |
@@ -26,11 +26,11 @@ where F: FnOnce(&N, &N) -> bool {
 }
 
 /// Return a new bound, based on value selected using predicate (either value in bound or given one)
-pub fn include_value<N: Copy + PartialEq, F>(bound: Bound<N>, x: &N, predicate: F) -> Bound<N>
+pub fn include_value<N: Copy + PartialEq, F>(bound: &Bound<N>, x: &N, predicate: F) -> Bound<N>
 where F: FnOnce(&N, &N) -> bool {
     match bound {
         Unbounded => Unbounded,
-        Excluded(b) => if predicate(&b, x) { bound } else { Included(*x) },
-        Included(b) => if &b == x || predicate(&b, x) { bound } else { Included(*x) }
+        Excluded(b) => if predicate(b, x) { *bound } else { Included(*x) },
+        Included(b) => if b == x || predicate(b, x) { *bound } else { Included(*x) }
     }
 }
