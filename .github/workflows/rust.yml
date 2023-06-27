@@ -90,10 +90,9 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: SemVer Checks
-        uses: obi1kenobi/cargo-semver-checks-action@v2
-        with:
-          feature-group: all-features
-          rust-toolchain: manual
+        run: |
+          cargo install semver-checks --locked
+          cargo semver-checks check-release --all-features
 
       - name: Read version
         id: status
