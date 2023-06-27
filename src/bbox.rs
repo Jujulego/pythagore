@@ -6,7 +6,7 @@ use num_traits::bounds::{LowerBounded, UpperBounded};
 use num_traits::{Bounded, Zero};
 use std::hash::{Hash, Hasher};
 use std::ops::Bound::{self as Bound, *};
-use std::ops::RangeBounds;
+use std::ops::{Index, RangeBounds};
 
 use crate::bbox::utils::*;
 use crate::traits::BBoxBounded;
@@ -228,6 +228,14 @@ impl<N: Scalar, const D: usize> From<[(Bound<N>, Bound<N>); D]> for BBox<N, D> {
 impl<N: Scalar, const D: usize> PartialEq for BBox<N, D> {
     fn eq(&self, other: &Self) -> bool {
         self.bounds == other.bounds
+    }
+}
+
+impl<N: Scalar, const D: usize> Index<usize> for BBox<N, D> {
+    type Output = (Bound<N>, Bound<N>);
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.bounds[index]
     }
 }
 
