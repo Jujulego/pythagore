@@ -89,9 +89,9 @@ jobs:
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
 
-      - name: SemVer Checks
+      - name: Run semver-checks
         run: |
-          cargo install semver-checks --locked
+          cargo install cargo-semver-checks --locked
           cargo semver-checks check-release --all-features
 
       - name: Read version
