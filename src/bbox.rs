@@ -9,7 +9,7 @@ use std::ops::Bound::{self as Bound, *};
 use std::ops::{Index, RangeBounds};
 
 use crate::bbox::utils::*;
-use crate::traits::BBoxBounded;
+use crate::traits::{BBoxBounded, IsRangeEmpty};
 
 /// `BBox<N, D>` structure for D dimension axe aligned bounding boxes
 #[derive(Clone, Copy, Debug, Eq)]
@@ -67,14 +67,6 @@ impl<N: Scalar, const D: usize> BBox<N, D> {
         }
 
         result
-    }
-
-    /// Returns true if bbox is empty
-    pub fn is_empty(&self) -> bool
-    where
-        N: PartialOrd,
-    {
-        self.bounds.iter().any(range_is_empty)
     }
 
     /// Returns true if bbox contains given point
@@ -217,6 +209,12 @@ impl<N: Scalar + Hash, const D: usize> Hash for BBox<N, D> {
     }
 }
 
+impl<N: Scalar + PartialOrd, const D: usize> IsRangeEmpty for BBox<N, D> {
+    fn is_range_empty(&self) -> bool {
+        self.bounds.iter().any(|r| r.is_range_empty())
+    }
+}
+
 // Conversions
 impl<N: Scalar, const D: usize> From<[(Bound<N>, Bound<N>); D]> for BBox<N, D> {
     fn from(bounds: [(Bound<N>, Bound<N>); D]) -> Self {
@@ -312,7 +310,7 @@ mod tests {
         ]
         .into();
 
-        assert!(a.is_empty());
+        assert!(a.is_range_empty());
     }
 
     #[test]
@@ -324,7 +322,7 @@ mod tests {
         ]
         .into();
 
-        assert!(!a.is_empty());
+        assert!(!a.is_range_empty());
     }
 
     #[test]

@@ -1,17 +1,5 @@
 use std::ops::Bound::{self, *};
 
-/// Returns `true` if given range is empty
-pub fn range_is_empty<N: PartialOrd>(range: &(Bound<N>, Bound<N>)) -> bool {
-    match range {
-        (Included(l), Included(r)) => l > r,
-        (Included(l), Excluded(r)) | (Excluded(l), Included(r)) | (Excluded(l), Excluded(r)) => {
-            l >= r
-        }
-        (Unbounded, _) => false,
-        (_, Unbounded) => false,
-    }
-}
-
 /// Select a bound according to predicate
 pub fn select_bound<'a, N, F>(lhs: &'a Bound<N>, rhs: &'a Bound<N>, predicate: F) -> &'a Bound<N>
 where
