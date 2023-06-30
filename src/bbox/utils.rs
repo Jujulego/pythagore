@@ -1,4 +1,5 @@
 use std::ops::Bound::{self, *};
+use na::Point;
 
 /// Select a bound according to predicate
 pub fn select_bound<'a, N, F>(lhs: &'a Bound<N>, rhs: &'a Bound<N>, predicate: F) -> &'a Bound<N>

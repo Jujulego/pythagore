@@ -5,98 +5,64 @@ use std::ops::{
 };
 
 use super::BBox;
-use crate::traits::BBoxBounded;
+use crate::traits::{BBoxBounded, BoundingBox};
 
 // Implementations
-impl<N: Copy + Scalar, const D: usize> BBoxBounded<N, D> for RangeFull {
-    fn bbox(&self) -> BBox<N, D> {
-        BBox::from([(Unbounded, Unbounded); D])
+impl<N: Scalar, const D: usize> BoundingBox<N, D> for RangeFull {
+    fn get_range(&self, _dim: usize) -> (Bound<&N>, Bound<&N>) {
+        (Unbounded, Unbounded)
+    }
+
+    /// Always true
+    fn holds(&self, _: &Point<N, D>) -> bool {
+        true
     }
 }
 
-impl<N: Copy + Scalar, const D: usize> BBoxBounded<N, D> for RangeFrom<Point<N, D>> {
-    fn bbox(&self) -> BBox<N, D> {
-        let mut bounds = [(Unbounded, Unbounded); D];
-
-        for (dim, pair) in bounds.iter_mut().enumerate() {
-            pair.0 = Included(self.start[dim]);
-        }
-
-        BBox::from(bounds)
+impl<N: Scalar, const D: usize> BoundingBox<N, D> for RangeFrom<Point<N, D>> {
+    fn get_range(&self, d: usize) -> (Bound<&N>, Bound<&N>) {
+        (Included(&self.start[d]), Unbounded)
     }
 }
 
-impl<N: Copy + Scalar, const D: usize> BBoxBounded<N, D> for RangeTo<Point<N, D>> {
-    fn bbox(&self) -> BBox<N, D> {
-        let mut bounds = [(Unbounded, Unbounded); D];
-
-        for (dim, pair) in bounds.iter_mut().enumerate() {
-            pair.1 = Excluded(self.end[dim]);
-        }
-
-        BBox::from(bounds)
+impl<N: Scalar, const D: usize> BoundingBox<N, D> for RangeTo<Point<N, D>> {
+    fn get_range(&self, d: usize) -> (Bound<&N>, Bound<&N>) {
+        (Unbounded, Excluded(&self.end[d]))
     }
 }
 
-impl<N: Copy + Scalar, const D: usize> BBoxBounded<N, D> for Range<Point<N, D>> {
-    fn bbox(&self) -> BBox<N, D> {
-        let mut bounds = [(Unbounded, Unbounded); D];
-
-        for (dim, pair) in bounds.iter_mut().enumerate() {
-            pair.0 = Included(self.start[dim]);
-            pair.1 = Excluded(self.end[dim]);
-        }
-
-        BBox::from(bounds)
+impl<N: Scalar, const D: usize> BoundingBox<N, D> for RangeToInclusive<Point<N, D>> {
+    fn get_range(&self, d: usize) -> (Bound<&N>, Bound<&N>) {
+        (Unbounded, Included(&self.end[d]))
     }
 }
 
-impl<N: Copy + Scalar, const D: usize> BBoxBounded<N, D> for RangeInclusive<Point<N, D>> {
-    fn bbox(&self) -> BBox<N, D> {
-        let mut bounds = [(Unbounded, Unbounded); D];
-
-        for (dim, pair) in bounds.iter_mut().enumerate() {
-            pair.0 = Included(self.start()[dim]);
-            pair.1 = Included(self.end()[dim]);
-        }
-
-        BBox::from(bounds)
+impl<N: Scalar, const D: usize> BoundingBox<N, D> for Range<Point<N, D>> {
+    fn get_range(&self, d: usize) -> (Bound<&N>, Bound<&N>) {
+        (Included(&self.start[d]), Excluded(&self.end[d]))
     }
 }
 
-impl<N: Copy + Scalar, const D: usize> BBoxBounded<N, D> for RangeToInclusive<Point<N, D>> {
-    fn bbox(&self) -> BBox<N, D> {
-        let mut bounds = [(Unbounded, Unbounded); D];
-
-        for (dim, pair) in bounds.iter_mut().enumerate() {
-            pair.1 = Included(self.end[dim]);
-        }
-
-        BBox::from(bounds)
+impl<N: Scalar, const D: usize> BoundingBox<N, D> for RangeInclusive<Point<N, D>> {
+    fn get_range(&self, d: usize) -> (Bound<&N>, Bound<&N>) {
+        (Included(&self.start()[d]), Included(&self.end()[d]))
     }
 }
 
-impl<N: Copy + Scalar, const D: usize> BBoxBounded<N, D>
-    for (Bound<Point<N, D>>, Bound<Point<N, D>>)
-{
-    fn bbox(&self) -> BBox<N, D> {
-        let mut bounds = [(Unbounded, Unbounded); D];
-
-        for (dim, pair) in bounds.iter_mut().enumerate() {
-            pair.0 = match self.start_bound() {
-                Included(pt) => Included(pt[dim]),
-                Excluded(pt) => Excluded(pt[dim]),
+impl<N: Scalar, const D: usize> BoundingBox<N, D> for (Bound<Point<N, D>>, Bound<Point<N, D>>) {
+    fn get_range(&self, d: usize) -> (Bound<&N>, Bound<&N>) {
+        (
+            match self.start_bound() {
+                Included(pt) => Included(&pt[d]),
+                Excluded(pt) => Excluded(&pt[d]),
                 Unbounded => Unbounded,
-            };
-
-            pair.1 = match self.end_bound() {
-                Included(pt) => Included(pt[dim]),
-                Excluded(pt) => Excluded(pt[dim]),
+            },
+            match self.end_bound() {
+                Included(pt) => Included(&pt[d]),
+                Excluded(pt) => Excluded(&pt[d]),
                 Unbounded => Unbounded,
-            };
-        }
-
-        BBox::from(bounds)
+            }
+        )
     }
 }
 
@@ -108,75 +74,75 @@ mod tests {
 
     #[test]
     fn range_full_box_contains() {
-        assert!((..).bbox().contains(&point![1, 1]));
+        assert!((..).holds(&point![1, 1]));
     }
 
     #[test]
     fn range_from_box_contains() {
         let range = Point::origin()..;
 
-        assert!(range.bbox().contains(&point![1, 1]));
-        assert!(range.bbox().contains(&Point::origin()));
+        assert!(range.holds(&point![1, 1]));
+        assert!(range.holds(&Point::origin()));
 
-        assert!(!range.bbox().contains(&point![1, -1]));
-        assert!(!range.bbox().contains(&point![-1, 1]));
-        assert!(!range.bbox().contains(&point![-1, -1]));
+        assert!(!range.holds(&point![1, -1]));
+        assert!(!range.holds(&point![-1, 1]));
+        assert!(!range.holds(&point![-1, -1]));
     }
 
     #[test]
     fn range_to_box_contains() {
         let range = ..Point::origin();
 
-        assert!(range.bbox().contains(&point![-1, -1]));
+        assert!(range.holds(&point![-1, -1]));
 
-        assert!(!range.bbox().contains(&Point::origin()));
-        assert!(!range.bbox().contains(&point![-1, 1]));
-        assert!(!range.bbox().contains(&point![1, -1]));
-        assert!(!range.bbox().contains(&point![1, 1]));
+        assert!(!range.holds(&Point::origin()));
+        assert!(!range.holds(&point![-1, 1]));
+        assert!(!range.holds(&point![1, -1]));
+        assert!(!range.holds(&point![1, 1]));
     }
 
     #[test]
     fn range_box_contains() {
         let range = Point::origin()..point![5, 5];
 
-        assert!(range.bbox().contains(&point![2, 2]));
-        assert!(range.bbox().contains(&Point::origin()));
+        assert!(range.holds(&point![2, 2]));
+        assert!(range.holds(&Point::origin()));
 
-        assert!(!range.bbox().contains(&point![1, -1]));
-        assert!(!range.bbox().contains(&point![-1, 1]));
-        assert!(!range.bbox().contains(&point![-1, -1]));
+        assert!(!range.holds(&point![1, -1]));
+        assert!(!range.holds(&point![-1, 1]));
+        assert!(!range.holds(&point![-1, -1]));
 
-        assert!(!range.bbox().contains(&point![1, 5]));
-        assert!(!range.bbox().contains(&point![5, 1]));
-        assert!(!range.bbox().contains(&point![5, 5]));
+        assert!(!range.holds(&point![1, 5]));
+        assert!(!range.holds(&point![5, 1]));
+        assert!(!range.holds(&point![5, 5]));
     }
 
     #[test]
     fn range_inclusive_box_contains() {
         let range = Point::origin()..=point![5, 5];
 
-        assert!(range.bbox().contains(&point![2, 2]));
-        assert!(range.bbox().contains(&Point::origin()));
-        assert!(range.bbox().contains(&point![5, 5]));
+        assert!(range.holds(&point![2, 2]));
+        assert!(range.holds(&Point::origin()));
+        assert!(range.holds(&point![5, 5]));
 
-        assert!(!range.bbox().contains(&point![1, -1]));
-        assert!(!range.bbox().contains(&point![-1, 1]));
-        assert!(!range.bbox().contains(&point![-1, -1]));
+        assert!(!range.holds(&point![1, -1]));
+        assert!(!range.holds(&point![-1, 1]));
+        assert!(!range.holds(&point![-1, -1]));
 
-        assert!(!range.bbox().contains(&point![1, 6]));
-        assert!(!range.bbox().contains(&point![6, 1]));
-        assert!(!range.bbox().contains(&point![6, 6]));
+        assert!(!range.holds(&point![1, 6]));
+        assert!(!range.holds(&point![6, 1]));
+        assert!(!range.holds(&point![6, 6]));
     }
 
     #[test]
     fn range_to_inclusive_box_contains() {
         let range = ..=point![5, 5];
 
-        assert!(range.bbox().contains(&point![-1, -1]));
-        assert!(range.bbox().contains(&point![5, 5]));
+        assert!(range.holds(&point![-1, -1]));
+        assert!(range.holds(&point![5, 5]));
 
-        assert!(!range.bbox().contains(&point![1, 6]));
-        assert!(!range.bbox().contains(&point![6, 1]));
-        assert!(!range.bbox().contains(&point![6, 6]));
+        assert!(!range.holds(&point![1, 6]));
+        assert!(!range.holds(&point![6, 1]));
+        assert!(!range.holds(&point![6, 6]));
     }
 }
