@@ -55,9 +55,9 @@ impl<N: PartialOrd> IsRangeEmpty for (Bound<N>, Bound<N>) {
     fn is_range_empty(&self) -> bool {
         match self {
             (Included(l), Included(r)) => l > r,
-            (Included(l), Excluded(r)) |
-            (Excluded(l), Included(r)) |
-            (Excluded(l), Excluded(r)) => l >= r,
+            (Included(l), Excluded(r))
+            | (Excluded(l), Included(r))
+            | (Excluded(l), Excluded(r)) => l >= r,
             _ => false,
         }
     }

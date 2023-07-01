@@ -89,11 +89,6 @@ jobs:
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
 
-      - name: Run semver-checks
-        run: |
-          cargo install cargo-semver-checks --locked
-          cargo semver-checks check-release --all-features
-
       - name: Read version
         id: status
         run: |
@@ -114,6 +109,12 @@ jobs:
           
           echo "tag=$TAG" >> $GITHUB_OUTPUT
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Run semver-checks
+        if: ${{ steps.status.outputs.publish }}
+        run: |
+          cargo install cargo-semver-checks --locked
+          cargo semver-checks check-release --all-features
 
       - name: Publish
         if: ${{ steps.status.outputs.publish }}

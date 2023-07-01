@@ -1,26 +1,9 @@
 coverage:
   status:
-    project: off
-    patch: off
-
-component_management:
-  default_rules:
-    statuses:
-      - type: project
+    project:
+      default:
         target: auto
 
-  individual_components:
-    - component_id: module_rust
-      name: rust
-      paths:
-        - pythagore/**
-      statuses:
-        - type: project
-          target: auto
-        - type: patch
-          target: 80%
-
-    - component_id: module_wasm
-      name: pythagore-wasm
-      paths:
-        - pythagore-wasm/**
+    patch:
+      default:
+        target: 80%

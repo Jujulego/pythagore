@@ -1,51 +1,29 @@
 use std::ops::Bound::{self, *};
 
 /// Select a bound according to predicate
-pub fn select_bound<'a, N, F>(lhs: &'a Bound<N>, rhs: &'a Bound<N>, predicate: F) -> &'a Bound<N>
+pub fn select_bound<N, F>(lhs: Bound<&N>, rhs: Bound<&N>, predicate: F) -> Bound<N>
 where
+    N: Copy,
     F: FnOnce(&N, &N) -> bool,
 {
-    match (&lhs, &rhs) {
+    match (lhs, rhs) {
         (Included(l), Included(r))
         | (Included(l), Excluded(r))
         | (Excluded(l), Included(r))
         | (Excluded(l), Excluded(r)) => {
             if predicate(l, r) {
-                lhs
+                lhs.cloned()
             } else {
-                rhs
+                rhs.cloned()
             }
         }
-        (Unbounded, _) => rhs,
-        (_, Unbounded) => lhs,
+        (_, Unbounded) => lhs.cloned(),
+        (Unbounded, _) => rhs.cloned(),
     }
 }
 
-/// Return a new bound, based on value selected using predicate (either value in bound or given one)
-pub fn include_value<N: Copy + PartialEq, F>(bound: &Bound<N>, x: &N, predicate: F) -> Bound<N>
-where
-    F: FnOnce(&N, &N) -> bool,
-{
-    match bound {
-        Unbounded => Unbounded,
-        Excluded(b) => {
-            if predicate(b, x) {
-                *bound
-            } else {
-                Included(*x)
-            }
-        }
-        Included(b) => {
-            if b == x || predicate(b, x) {
-                *bound
-            } else {
-                Included(*x)
-            }
-        }
-    }
-}
-
-pub fn value_of_bound<N>(bound: &Bound<N>) -> Option<&N> {
+/// Extracts value from bound (if any)
+pub fn value_of_bound<N>(bound: Bound<&N>) -> Option<&N> {
     match bound {
         Included(x) | Excluded(x) => Some(x),
         Unbounded => None,
