@@ -5,9 +5,8 @@ use std::ops::{
 };
 use num_traits::bounds::{LowerBounded, UpperBounded};
 use num_traits::{Bounded, Zero};
-
+use crate::bbox::BoundingBox;
 use super::BBox;
-use crate::traits::BoundingBox;
 
 // Implementations
 impl<N: Scalar, const D: usize> BoundingBox<N, D> for RangeFull {

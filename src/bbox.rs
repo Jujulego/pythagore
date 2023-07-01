@@ -1,3 +1,4 @@
+mod bounding_box;
 mod range;
 mod utils;
 
@@ -6,8 +7,8 @@ use std::hash::{Hash, Hasher};
 use std::ops::Bound::{self as Bound, *};
 use std::ops::{Index, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive};
 
-use crate::bbox::utils::*;
-use crate::traits::{BoundingBox, IsRangeEmpty};
+pub use crate::bbox::bounding_box::BoundingBox;
+use crate::traits::IsRangeEmpty;
 
 /// `BBox<N, D>` structure for D dimension axe aligned bounding boxes
 #[derive(Clone, Copy, Debug, Eq)]
@@ -79,21 +80,6 @@ impl<N: Scalar, const D: usize> BBox<N, D> {
         for (dim, pair) in result.ranges.iter_mut().enumerate() {
             pair.0 = Included(min(start[dim], end[dim]));
             pair.1 = Included(max(start[dim], end[dim]));
-        }
-
-        result
-    }
-
-    /// Returns a new bbox including the given point
-    pub fn include(&self, pt: &Point<N, D>) -> BBox<N, D>
-    where
-        N: Copy + PartialOrd,
-    {
-        let mut result = BBox::default();
-
-        for (dim, pair) in result.ranges.iter_mut().enumerate() {
-            pair.0 = include_value(&self.ranges[dim].0, &pt[dim], |a, b| a < b);
-            pair.1 = include_value(&self.ranges[dim].1, &pt[dim], |a, b| a > b);
         }
 
         result
@@ -379,29 +365,6 @@ mod tests {
         let b: BBox<u32, 1> = [(Unbounded, Unbounded)].into();
 
         assert_eq!(a.intersection(&b), a);
-    }
-
-    #[test]
-    fn bbox_include() {
-        let range = BBox::from(point![2]..point![6]);
-
-        assert_eq!(
-            range.include(&point![0]),
-            BBox::from(point![0]..point![6])
-        );
-        assert_eq!(
-            range.include(&point![4]),
-            BBox::from(point![2]..point![6])
-        );
-        assert_eq!(
-            range.include(&point![6]),
-            BBox::from(point![2]..=point![6])
-        );
-        assert_eq!(
-            range.include(&point![8]),
-            BBox::from(point![2]..=point![8])
-        );
-        assert_eq!(BBox::from(..).include(&point![8]), BBox::from(..));
     }
 
     #[test]

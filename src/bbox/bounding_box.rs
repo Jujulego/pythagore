@@ -1,9 +1,11 @@
-use std::ops::{RangeBounds};
+use std::ops::RangeBounds;
 use std::ops::Bound::{self, *};
 use na::{center, ClosedSub, Point, Scalar, SimdComplexField, SVector};
 use num_traits::bounds::{LowerBounded, UpperBounded};
 use num_traits::{Bounded, Zero};
+
 use crate::BBox;
+use crate::bbox::utils;
 
 /// Aligned Axis Bounding Box
 pub trait BoundingBox<N: Scalar, const D: usize>: Sized {
@@ -32,8 +34,8 @@ pub trait BoundingBox<N: Scalar, const D: usize>: Sized {
             let rng = self.get_range(dim);
             let oth = other.get_range(dim);
 
-            pair.0 = select_bound(rng.0, oth.0, |a, b| a >= b);
-            pair.1 = select_bound(rng.1, oth.1, |a, b| a <= b);
+            pair.0 = utils::select_bound(rng.0, oth.0, |a, b| a >= b);
+            pair.1 = utils::select_bound(rng.1, oth.1, |a, b| a <= b);
         }
 
         BBox::from(ranges)
@@ -55,7 +57,7 @@ pub trait BoundingBox<N: Scalar, const D: usize>: Sized {
         let mut point = Point::default();
 
         for dim in 0..D {
-            point[dim] = *value_of_bound(self.get_range(dim).0).unwrap_or(&N::min_value())
+            point[dim] = *utils::value_of_bound(self.get_range(dim).0).unwrap_or(&N::min_value())
         }
 
         point
@@ -77,7 +79,7 @@ pub trait BoundingBox<N: Scalar, const D: usize>: Sized {
         let mut point = Point::default();
 
         for dim in 0..D {
-            point[dim] = *value_of_bound(self.get_range(dim).1).unwrap_or(&N::max_value())
+            point[dim] = *utils::value_of_bound(self.get_range(dim).1).unwrap_or(&N::max_value())
         }
 
         point
@@ -113,29 +115,5 @@ pub trait BoundingBox<N: Scalar, const D: usize>: Sized {
         N: Copy + Bounded + ClosedSub + Zero
     {
         self.end_point() - self.start_point()
-    }
-}
-
-/// Select a bound according to predicate
-fn select_bound<N, F>(lhs: Bound<&N>, rhs: Bound<&N>, predicate: F) -> Bound<N>
-where
-    N: Copy,
-    F: FnOnce(&N, &N) -> bool
-{
-    match (lhs, rhs) {
-        (Included(l), Included(r)) |
-        (Included(l), Excluded(r)) |
-        (Excluded(l), Included(r)) |
-        (Excluded(l), Excluded(r)) => if predicate(l, r) { lhs.cloned() } else { rhs.cloned() }
-        (_, Unbounded) => lhs.cloned(),
-        (Unbounded, _) => rhs.cloned(),
-    }
-}
-
-/// Extracts value from bound (if any)
-pub fn value_of_bound<N>(bound: Bound<&N>) -> Option<&N> {
-    match bound {
-        Included(x) | Excluded(x) => Some(x),
-        Unbounded => None,
     }
 }
