@@ -54,6 +54,10 @@ impl<N: Scalar, const D: usize> BoundingBox<N, D> for RangeFrom<Point<N, D>> {
         (Included(&self.start[d]), Unbounded)
     }
 
+    fn holds(&self, pt: &Point<N, D>) -> bool where N: PartialOrd {
+        self.contains(pt)
+    }
+
     fn start_point(&self) -> Point<N, D>
     where
         N: Copy + LowerBounded + Zero,
@@ -72,6 +76,10 @@ impl<N: Scalar, const D: usize> BoundingBox<N, D> for RangeFrom<Point<N, D>> {
 impl<N: Scalar, const D: usize> BoundingBox<N, D> for RangeTo<Point<N, D>> {
     fn get_range(&self, d: usize) -> (Bound<&N>, Bound<&N>) {
         (Unbounded, Excluded(&self.end[d]))
+    }
+
+    fn holds(&self, pt: &Point<N, D>) -> bool where N: PartialOrd {
+        self.contains(pt)
     }
 
     fn start_point(&self) -> Point<N, D>
@@ -94,6 +102,10 @@ impl<N: Scalar, const D: usize> BoundingBox<N, D> for RangeToInclusive<Point<N, 
         (Unbounded, Included(&self.end[d]))
     }
 
+    fn holds(&self, pt: &Point<N, D>) -> bool where N: PartialOrd {
+        self.contains(pt)
+    }
+
     fn start_point(&self) -> Point<N, D>
     where
         N: Copy + LowerBounded + Zero,
@@ -114,6 +126,10 @@ impl<N: Scalar, const D: usize> BoundingBox<N, D> for Range<Point<N, D>> {
         (Included(&self.start[d]), Excluded(&self.end[d]))
     }
 
+    fn holds(&self, pt: &Point<N, D>) -> bool where N: PartialOrd {
+        self.contains(pt)
+    }
+
     fn start_point(&self) -> Point<N, D>
     where
         N: Copy + LowerBounded + Zero,
@@ -132,6 +148,10 @@ impl<N: Scalar, const D: usize> BoundingBox<N, D> for Range<Point<N, D>> {
 impl<N: Scalar, const D: usize> BoundingBox<N, D> for RangeInclusive<Point<N, D>> {
     fn get_range(&self, d: usize) -> (Bound<&N>, Bound<&N>) {
         (Included(&self.start()[d]), Included(&self.end()[d]))
+    }
+
+    fn holds(&self, pt: &Point<N, D>) -> bool where N: PartialOrd {
+        self.contains(pt)
     }
 
     fn start_point(&self) -> Point<N, D>
@@ -163,6 +183,10 @@ impl<N: Scalar, const D: usize> BoundingBox<N, D> for (Bound<Point<N, D>>, Bound
                 Unbounded => Unbounded,
             },
         )
+    }
+
+    fn holds(&self, pt: &Point<N, D>) -> bool where N: PartialOrd {
+        self.contains(pt)
     }
 }
 
