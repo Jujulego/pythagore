@@ -4,6 +4,12 @@
 __metadata:
   version: 6
 
+"@jujulego/pythagore@workspace:pkg":
+  version: 0.0.0-use.local
+  resolution: "@jujulego/pythagore@workspace:pkg"
+  languageName: unknown
+  linkType: soft
+
 "pythagore@workspace:.":
   version: 0.0.0-use.local
   resolution: "pythagore@workspace:."
