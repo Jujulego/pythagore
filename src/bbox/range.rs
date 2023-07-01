@@ -1,7 +1,6 @@
 use super::BBox;
 use crate::bbox::BoundingBox;
-use na::{Point, Scalar, SimdComplexField};
-use num_traits::bounds::{LowerBounded, UpperBounded};
+use na::{Point, Scalar};
 use num_traits::{Bounded, Zero};
 use std::ops::Bound::{self, *};
 use std::ops::{
@@ -10,8 +9,12 @@ use std::ops::{
 
 // Implementations
 impl<N: Scalar, const D: usize> BoundingBox<N, D> for RangeFull {
-    fn get_range(&self, _dim: usize) -> (Bound<&N>, Bound<&N>) {
-        (Unbounded, Unbounded)
+    fn get_start(&self, _d: usize) -> Bound<N> {
+        Unbounded
+    }
+
+    fn get_end(&self, _d: usize) -> Bound<N> {
+        Unbounded
     }
 
     /// Always true
@@ -22,60 +25,65 @@ impl<N: Scalar, const D: usize> BoundingBox<N, D> for RangeFull {
     /// Returns the other
     fn intersection(&self, other: &Self) -> BBox<N, D>
     where
-        N: Copy + PartialOrd,
+        N: Copy,
     {
         BBox::from_bounding_box(other)
     }
 
     fn start_point(&self) -> Point<N, D>
     where
-        N: Copy + LowerBounded + Zero,
+        N: Bounded,
     {
-        Point::from([N::min_value(); D])
+        Point::min_value()
     }
 
     fn end_point(&self) -> Point<N, D>
     where
-        N: Copy + UpperBounded + Zero,
+        N: Bounded,
     {
-        Point::from([N::max_value(); D])
+        Point::max_value()
     }
 
     fn center_point(&self) -> Point<N, D>
     where
-        N: Copy + Bounded + SimdComplexField + Zero,
+        N: Zero,
     {
         Point::origin()
     }
 }
 
-impl<N: Scalar, const D: usize> BoundingBox<N, D> for RangeFrom<Point<N, D>> {
-    fn get_range(&self, d: usize) -> (Bound<&N>, Bound<&N>) {
-        (Included(&self.start[d]), Unbounded)
+impl<N: Copy + Scalar, const D: usize> BoundingBox<N, D> for RangeFrom<Point<N, D>> {
+    fn get_start(&self, d: usize) -> Bound<N> {
+        Included(self.start[d])
+    }
+
+    fn get_end(&self, _d: usize) -> Bound<N> {
+        Unbounded
     }
 
     fn holds(&self, pt: &Point<N, D>) -> bool where N: PartialOrd {
         self.contains(pt)
     }
 
-    fn start_point(&self) -> Point<N, D>
-    where
-        N: Copy + LowerBounded + Zero,
-    {
+    fn start_point(&self) -> Point<N, D> {
         self.start
     }
 
     fn end_point(&self) -> Point<N, D>
     where
-        N: Copy + UpperBounded + Zero,
+        N: Bounded,
     {
-        Point::from([N::max_value(); D])
+        Point::max_value()
     }
 }
 
-impl<N: Scalar, const D: usize> BoundingBox<N, D> for RangeTo<Point<N, D>> {
-    fn get_range(&self, d: usize) -> (Bound<&N>, Bound<&N>) {
-        (Unbounded, Excluded(&self.end[d]))
+impl<N: Copy + Scalar, const D: usize> BoundingBox<N, D> for RangeTo<Point<N, D>> {
+    fn get_start(&self, _d: usize) -> Bound<N> {
+        Unbounded
+    }
+
+    fn get_end(&self, d: usize) -> Bound<N> {
+        Excluded(self.end[d])
     }
 
     fn holds(&self, pt: &Point<N, D>) -> bool where N: PartialOrd {
@@ -84,22 +92,23 @@ impl<N: Scalar, const D: usize> BoundingBox<N, D> for RangeTo<Point<N, D>> {
 
     fn start_point(&self) -> Point<N, D>
     where
-        N: Copy + LowerBounded + Zero,
+        N: Bounded,
     {
-        Point::from([N::min_value(); D])
+        Point::min_value()
     }
 
-    fn end_point(&self) -> Point<N, D>
-    where
-        N: Copy + UpperBounded + Zero,
-    {
+    fn end_point(&self) -> Point<N, D> {
         self.end
     }
 }
 
-impl<N: Scalar, const D: usize> BoundingBox<N, D> for RangeToInclusive<Point<N, D>> {
-    fn get_range(&self, d: usize) -> (Bound<&N>, Bound<&N>) {
-        (Unbounded, Included(&self.end[d]))
+impl<N: Copy + Scalar, const D: usize> BoundingBox<N, D> for RangeToInclusive<Point<N, D>> {
+    fn get_start(&self, _d: usize) -> Bound<N> {
+        Unbounded
+    }
+
+    fn get_end(&self, d: usize) -> Bound<N> {
+        Included(self.end[d])
     }
 
     fn holds(&self, pt: &Point<N, D>) -> bool where N: PartialOrd {
@@ -108,85 +117,99 @@ impl<N: Scalar, const D: usize> BoundingBox<N, D> for RangeToInclusive<Point<N, 
 
     fn start_point(&self) -> Point<N, D>
     where
-        N: Copy + LowerBounded + Zero,
+        N: Bounded,
     {
-        Point::from([N::min_value(); D])
+        Point::min_value()
     }
 
-    fn end_point(&self) -> Point<N, D>
-    where
-        N: Copy + UpperBounded + Zero,
-    {
+    fn end_point(&self) -> Point<N, D> {
         self.end
     }
 }
 
-impl<N: Scalar, const D: usize> BoundingBox<N, D> for Range<Point<N, D>> {
-    fn get_range(&self, d: usize) -> (Bound<&N>, Bound<&N>) {
-        (Included(&self.start[d]), Excluded(&self.end[d]))
+impl<N: Copy + Scalar, const D: usize> BoundingBox<N, D> for Range<Point<N, D>> {
+    fn get_start(&self, d: usize) -> Bound<N> {
+        Included(self.start[d])
+    }
+
+    fn get_end(&self, d: usize) -> Bound<N> {
+        Excluded(self.end[d])
     }
 
     fn holds(&self, pt: &Point<N, D>) -> bool where N: PartialOrd {
         self.contains(pt)
     }
 
-    fn start_point(&self) -> Point<N, D>
-    where
-        N: Copy + LowerBounded + Zero,
-    {
+    fn start_point(&self) -> Point<N, D> {
         self.start
     }
 
-    fn end_point(&self) -> Point<N, D>
-    where
-        N: Copy + UpperBounded + Zero,
-    {
+    fn end_point(&self) -> Point<N, D> {
         self.end
     }
 }
 
-impl<N: Scalar, const D: usize> BoundingBox<N, D> for RangeInclusive<Point<N, D>> {
-    fn get_range(&self, d: usize) -> (Bound<&N>, Bound<&N>) {
-        (Included(&self.start()[d]), Included(&self.end()[d]))
+impl<N: Copy + Scalar, const D: usize> BoundingBox<N, D> for RangeInclusive<Point<N, D>> {
+    fn get_start(&self, d: usize) -> Bound<N> {
+        Included(self.start()[d])
+    }
+
+    fn get_end(&self, d: usize) -> Bound<N> {
+        Included(self.end()[d])
     }
 
     fn holds(&self, pt: &Point<N, D>) -> bool where N: PartialOrd {
         self.contains(pt)
     }
 
-    fn start_point(&self) -> Point<N, D>
-    where
-        N: Copy + LowerBounded + Zero,
-    {
+    fn start_point(&self) -> Point<N, D> {
         *self.start()
     }
 
-    fn end_point(&self) -> Point<N, D>
-    where
-        N: Copy + UpperBounded + Zero,
-    {
+    fn end_point(&self) -> Point<N, D> {
         *self.end()
     }
 }
 
-impl<N: Scalar, const D: usize> BoundingBox<N, D> for (Bound<Point<N, D>>, Bound<Point<N, D>>) {
-    fn get_range(&self, d: usize) -> (Bound<&N>, Bound<&N>) {
-        (
-            match self.start_bound() {
-                Included(pt) => Included(&pt[d]),
-                Excluded(pt) => Excluded(&pt[d]),
-                Unbounded => Unbounded,
-            },
-            match self.end_bound() {
-                Included(pt) => Included(&pt[d]),
-                Excluded(pt) => Excluded(&pt[d]),
-                Unbounded => Unbounded,
-            },
-        )
+impl<N: Copy + Scalar, const D: usize> BoundingBox<N, D> for (Bound<Point<N, D>>, Bound<Point<N, D>>) {
+    fn get_start(&self, d: usize) -> Bound<N> {
+        match self.start_bound() {
+            Included(pt) => Included(pt[d]),
+            Excluded(pt) => Excluded(pt[d]),
+            Unbounded => Unbounded,
+        }
+    }
+
+    fn get_end(&self, d: usize) -> Bound<N> {
+        match self.end_bound() {
+            Included(pt) => Included(pt[d]),
+            Excluded(pt) => Excluded(pt[d]),
+            Unbounded => Unbounded,
+        }
     }
 
     fn holds(&self, pt: &Point<N, D>) -> bool where N: PartialOrd {
         self.contains(pt)
+    }
+
+    fn start_point(&self) -> Point<N, D>
+    where
+        N: Bounded,
+    {
+        match self.start_bound() {
+            Included(pt) | Excluded(pt) => *pt,
+            Unbounded => Point::min_value(),
+        }
+    }
+
+    fn end_point(&self) -> Point<N, D>
+    where
+        N: Bounded,
+    {
+        match self.start_bound() {
+            Included(pt) | Excluded(pt) => *pt,
+            Unbounded => Point::max_value(),
+        }
     }
 }
 

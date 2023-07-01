@@ -1,26 +1,32 @@
 use na::{center, ClosedSub, Point, SVector, Scalar, SimdComplexField};
-use num_traits::bounds::{LowerBounded, UpperBounded};
-use num_traits::{Bounded, Zero};
+use num_traits::Bounded;
 use std::ops::Bound::{self, *};
 use std::ops::RangeBounds;
 
-use crate::bbox::utils;
+use crate::bbox::utils::select_bound;
 use crate::BBox;
 
 /// Aligned Axis Bounding Box
 pub trait BoundingBox<N: Scalar, const D: usize>: Sized {
+    /// Returns start bound for given dimension
+    fn get_start(&self, d: usize) -> Bound<N>;
+
+    /// Returns start bound for given dimension
+    fn get_end(&self, d: usize) -> Bound<N>;
+
     /// Returns range at given dimension
-    fn get_range(&self, d: usize) -> (Bound<&N>, Bound<&N>);
+    fn get_range(&self, d: usize) -> (Bound<N>, Bound<N>) {
+        (self.get_start(d), self.get_end(d))
+    }
 
     /// Test if given point is in the bbox
     fn holds(&self, pt: &Point<N, D>) -> bool
     where
         N: PartialOrd,
     {
-        (0..D)
-            .map(|d| self.get_range(d))
-            .zip(pt.iter())
-            .all(|(range, x)| range.contains(x))
+        pt.iter()
+            .enumerate()
+            .all(|(d, x)| self.get_range(d).contains(x))
     }
 
     /// Computes a bbox equal to the intersection of given bboxes
@@ -30,12 +36,9 @@ pub trait BoundingBox<N: Scalar, const D: usize>: Sized {
     {
         let mut ranges = [(Unbounded, Unbounded); D];
 
-        for (dim, pair) in ranges.iter_mut().enumerate() {
-            let rng = self.get_range(dim);
-            let oth = other.get_range(dim);
-
-            pair.0 = utils::select_bound(rng.0, oth.0, |a, b| a >= b);
-            pair.1 = utils::select_bound(rng.1, oth.1, |a, b| a <= b);
+        for (d, pair) in ranges.iter_mut().enumerate() {
+            pair.0 = select_bound(self.get_start(d), other.get_start(d), |a, b| a >= b);
+            pair.1 = select_bound(self.get_end(d), other.get_end(d), |a, b| a <= b);
         }
 
         BBox::from(ranges)
@@ -52,12 +55,14 @@ pub trait BoundingBox<N: Scalar, const D: usize>: Sized {
     /// ```
     fn start_point(&self) -> Point<N, D>
     where
-        N: Copy + LowerBounded + Zero,
+        N: Bounded,
     {
-        let mut point = Point::default();
+        let mut point = Point::min_value();
 
         for dim in 0..D {
-            point[dim] = *utils::value_of_bound(self.get_range(dim).0).unwrap_or(&N::min_value())
+            if let Included(v) | Excluded(v) = self.get_start(dim) {
+                point[dim] = v;
+            }
         }
 
         point
@@ -74,12 +79,14 @@ pub trait BoundingBox<N: Scalar, const D: usize>: Sized {
     /// ```
     fn end_point(&self) -> Point<N, D>
     where
-        N: Copy + UpperBounded + Zero,
+        N: Bounded,
     {
-        let mut point = Point::default();
+        let mut point = Point::max_value();
 
         for dim in 0..D {
-            point[dim] = *utils::value_of_bound(self.get_range(dim).1).unwrap_or(&N::max_value())
+            if let Included(v) | Excluded(v) = self.get_end(dim) {
+                point[dim] = v;
+            }
         }
 
         point
@@ -96,7 +103,7 @@ pub trait BoundingBox<N: Scalar, const D: usize>: Sized {
     /// ```
     fn center_point(&self) -> Point<N, D>
     where
-        N: Copy + Bounded + SimdComplexField + Zero,
+        N: Bounded + SimdComplexField,
     {
         center(&self.start_point(), &self.end_point())
     }
@@ -112,7 +119,7 @@ pub trait BoundingBox<N: Scalar, const D: usize>: Sized {
     /// ```
     fn size(&self) -> SVector<N, D>
     where
-        N: Copy + Bounded + ClosedSub + Zero,
+        N: Bounded + ClosedSub,
     {
         self.end_point() - self.start_point()
     }
