@@ -155,7 +155,7 @@ impl<N: Copy + Scalar, const D: usize> BoundingBox<N, D> for RangeInclusive<Poin
     }
 
     fn get_end(&self, d: usize) -> Bound<N> {
-        Excluded(self.end()[d])
+        Included(self.end()[d])
     }
 
     fn holds(&self, pt: &Point<N, D>) -> bool where N: PartialOrd {
