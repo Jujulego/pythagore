@@ -123,7 +123,7 @@ impl<N: Scalar, const D: usize> From<[(Bound<N>, Bound<N>); D]> for BBox<N, D> {
 impl<N: Copy + Scalar, const D: usize> From<RangeFull> for BBox<N, D> {
     fn from(_: RangeFull) -> Self {
         BBox {
-            ranges: [(Unbounded, Unbounded); D]
+            ranges: [(Unbounded, Unbounded); D],
         }
     }
 }
@@ -193,11 +193,10 @@ impl<N: Copy + Scalar, const D: usize> From<RangeInclusive<Point<N, D>>> for BBo
 // Operators
 impl<N: Scalar, B: BoundingBox<N, D>, const D: usize> PartialEq<B> for BBox<N, D> {
     fn eq(&self, other: &B) -> bool {
-        self.ranges.iter().enumerate()
-            .all(|(d, range)| {
-                let oth = other.get_range(d);
-                range.0.as_ref() == oth.0 && range.1.as_ref() == oth.1
-            })
+        self.ranges.iter().enumerate().all(|(d, range)| {
+            let oth = other.get_range(d);
+            range.0.as_ref() == oth.0 && range.1.as_ref() == oth.1
+        })
     }
 }
 
@@ -253,7 +252,7 @@ mod tests {
         // With messy coords
         assert_eq!(
             BBox::from_anchor_size_including(&point![1, 4], &vector![2, -3]),
-           point![1, 1]..=point![3, 4]
+            point![1, 1]..=point![3, 4]
         );
     }
 

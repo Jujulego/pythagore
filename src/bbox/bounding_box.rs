@@ -1,11 +1,11 @@
-use std::ops::RangeBounds;
-use std::ops::Bound::{self, *};
-use na::{center, ClosedSub, Point, Scalar, SimdComplexField, SVector};
+use na::{center, ClosedSub, Point, SVector, Scalar, SimdComplexField};
 use num_traits::bounds::{LowerBounded, UpperBounded};
 use num_traits::{Bounded, Zero};
+use std::ops::Bound::{self, *};
+use std::ops::RangeBounds;
 
-use crate::BBox;
 use crate::bbox::utils;
+use crate::BBox;
 
 /// Aligned Axis Bounding Box
 pub trait BoundingBox<N: Scalar, const D: usize>: Sized {
@@ -15,7 +15,7 @@ pub trait BoundingBox<N: Scalar, const D: usize>: Sized {
     /// Test if given point is in the bbox
     fn holds(&self, pt: &Point<N, D>) -> bool
     where
-        N: PartialOrd
+        N: PartialOrd,
     {
         (0..D)
             .map(|d| self.get_range(d))
@@ -26,7 +26,7 @@ pub trait BoundingBox<N: Scalar, const D: usize>: Sized {
     /// Computes a bbox equal to the intersection of given bboxes
     fn intersection(&self, other: &Self) -> BBox<N, D>
     where
-        N: Copy + PartialOrd
+        N: Copy + PartialOrd,
     {
         let mut ranges = [(Unbounded, Unbounded); D];
 
@@ -52,7 +52,7 @@ pub trait BoundingBox<N: Scalar, const D: usize>: Sized {
     /// ```
     fn start_point(&self) -> Point<N, D>
     where
-        N: Copy + LowerBounded + Zero
+        N: Copy + LowerBounded + Zero,
     {
         let mut point = Point::default();
 
@@ -74,7 +74,7 @@ pub trait BoundingBox<N: Scalar, const D: usize>: Sized {
     /// ```
     fn end_point(&self) -> Point<N, D>
     where
-        N: Copy + UpperBounded + Zero
+        N: Copy + UpperBounded + Zero,
     {
         let mut point = Point::default();
 
@@ -96,7 +96,7 @@ pub trait BoundingBox<N: Scalar, const D: usize>: Sized {
     /// ```
     fn center_point(&self) -> Point<N, D>
     where
-        N: Copy + Bounded + SimdComplexField + Zero
+        N: Copy + Bounded + SimdComplexField + Zero,
     {
         center(&self.start_point(), &self.end_point())
     }
@@ -112,7 +112,7 @@ pub trait BoundingBox<N: Scalar, const D: usize>: Sized {
     /// ```
     fn size(&self) -> SVector<N, D>
     where
-        N: Copy + Bounded + ClosedSub + Zero
+        N: Copy + Bounded + ClosedSub + Zero,
     {
         self.end_point() - self.start_point()
     }

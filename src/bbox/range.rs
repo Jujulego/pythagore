@@ -1,12 +1,12 @@
+use super::BBox;
+use crate::bbox::BoundingBox;
 use na::{Point, Scalar, SimdComplexField};
+use num_traits::bounds::{LowerBounded, UpperBounded};
+use num_traits::{Bounded, Zero};
 use std::ops::Bound::{self, *};
 use std::ops::{
     Range, RangeBounds, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive,
 };
-use num_traits::bounds::{LowerBounded, UpperBounded};
-use num_traits::{Bounded, Zero};
-use crate::bbox::BoundingBox;
-use super::BBox;
 
 // Implementations
 impl<N: Scalar, const D: usize> BoundingBox<N, D> for RangeFull {
@@ -20,27 +20,30 @@ impl<N: Scalar, const D: usize> BoundingBox<N, D> for RangeFull {
     }
 
     /// Returns the other
-    fn intersection(&self, other: &Self) -> BBox<N, D> where N: Copy + PartialOrd {
+    fn intersection(&self, other: &Self) -> BBox<N, D>
+    where
+        N: Copy + PartialOrd,
+    {
         BBox::from_bounding_box(other)
     }
 
     fn start_point(&self) -> Point<N, D>
     where
-        N: Copy + LowerBounded + Zero
+        N: Copy + LowerBounded + Zero,
     {
         Point::from([N::min_value(); D])
     }
 
     fn end_point(&self) -> Point<N, D>
     where
-        N: Copy + UpperBounded + Zero
+        N: Copy + UpperBounded + Zero,
     {
         Point::from([N::max_value(); D])
     }
 
     fn center_point(&self) -> Point<N, D>
     where
-        N: Copy + Bounded + SimdComplexField + Zero
+        N: Copy + Bounded + SimdComplexField + Zero,
     {
         Point::origin()
     }
@@ -53,14 +56,14 @@ impl<N: Scalar, const D: usize> BoundingBox<N, D> for RangeFrom<Point<N, D>> {
 
     fn start_point(&self) -> Point<N, D>
     where
-        N: Copy + LowerBounded + Zero
+        N: Copy + LowerBounded + Zero,
     {
         self.start
     }
 
     fn end_point(&self) -> Point<N, D>
     where
-        N: Copy + UpperBounded + Zero
+        N: Copy + UpperBounded + Zero,
     {
         Point::from([N::max_value(); D])
     }
@@ -73,18 +76,17 @@ impl<N: Scalar, const D: usize> BoundingBox<N, D> for RangeTo<Point<N, D>> {
 
     fn start_point(&self) -> Point<N, D>
     where
-        N: Copy + LowerBounded + Zero
+        N: Copy + LowerBounded + Zero,
     {
         Point::from([N::min_value(); D])
     }
 
     fn end_point(&self) -> Point<N, D>
     where
-        N: Copy + UpperBounded + Zero
+        N: Copy + UpperBounded + Zero,
     {
         self.end
     }
-
 }
 
 impl<N: Scalar, const D: usize> BoundingBox<N, D> for RangeToInclusive<Point<N, D>> {
@@ -94,18 +96,17 @@ impl<N: Scalar, const D: usize> BoundingBox<N, D> for RangeToInclusive<Point<N, 
 
     fn start_point(&self) -> Point<N, D>
     where
-        N: Copy + LowerBounded + Zero
+        N: Copy + LowerBounded + Zero,
     {
         Point::from([N::min_value(); D])
     }
 
     fn end_point(&self) -> Point<N, D>
     where
-        N: Copy + UpperBounded + Zero
+        N: Copy + UpperBounded + Zero,
     {
         self.end
     }
-
 }
 
 impl<N: Scalar, const D: usize> BoundingBox<N, D> for Range<Point<N, D>> {
@@ -115,18 +116,17 @@ impl<N: Scalar, const D: usize> BoundingBox<N, D> for Range<Point<N, D>> {
 
     fn start_point(&self) -> Point<N, D>
     where
-        N: Copy + LowerBounded + Zero
+        N: Copy + LowerBounded + Zero,
     {
         self.start
     }
 
     fn end_point(&self) -> Point<N, D>
     where
-        N: Copy + UpperBounded + Zero
+        N: Copy + UpperBounded + Zero,
     {
         self.end
     }
-
 }
 
 impl<N: Scalar, const D: usize> BoundingBox<N, D> for RangeInclusive<Point<N, D>> {
@@ -136,18 +136,17 @@ impl<N: Scalar, const D: usize> BoundingBox<N, D> for RangeInclusive<Point<N, D>
 
     fn start_point(&self) -> Point<N, D>
     where
-        N: Copy + LowerBounded + Zero
+        N: Copy + LowerBounded + Zero,
     {
         *self.start()
     }
 
     fn end_point(&self) -> Point<N, D>
     where
-        N: Copy + UpperBounded + Zero
+        N: Copy + UpperBounded + Zero,
     {
         *self.end()
     }
-
 }
 
 impl<N: Scalar, const D: usize> BoundingBox<N, D> for (Bound<Point<N, D>>, Bound<Point<N, D>>) {
@@ -162,7 +161,7 @@ impl<N: Scalar, const D: usize> BoundingBox<N, D> for (Bound<Point<N, D>>, Bound
                 Included(pt) => Included(&pt[d]),
                 Excluded(pt) => Excluded(&pt[d]),
                 Unbounded => Unbounded,
-            }
+            },
         )
     }
 }
