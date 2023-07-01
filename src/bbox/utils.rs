@@ -1,26 +1,4 @@
 use std::ops::Bound::{self, *};
-use na::Point;
-
-/// Select a bound according to predicate
-pub fn select_bound<'a, N, F>(lhs: &'a Bound<N>, rhs: &'a Bound<N>, predicate: F) -> &'a Bound<N>
-where
-    F: FnOnce(&N, &N) -> bool,
-{
-    match (&lhs, &rhs) {
-        (Included(l), Included(r))
-        | (Included(l), Excluded(r))
-        | (Excluded(l), Included(r))
-        | (Excluded(l), Excluded(r)) => {
-            if predicate(l, r) {
-                lhs
-            } else {
-                rhs
-            }
-        }
-        (Unbounded, _) => rhs,
-        (_, Unbounded) => lhs,
-    }
-}
 
 /// Return a new bound, based on value selected using predicate (either value in bound or given one)
 pub fn include_value<N: Copy + PartialEq, F>(bound: &Bound<N>, x: &N, predicate: F) -> Bound<N>
@@ -43,12 +21,5 @@ where
                 Included(*x)
             }
         }
-    }
-}
-
-pub fn value_of_bound<N>(bound: &Bound<N>) -> Option<&N> {
-    match bound {
-        Included(x) | Excluded(x) => Some(x),
-        Unbounded => None,
     }
 }

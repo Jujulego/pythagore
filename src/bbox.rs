@@ -1,24 +1,39 @@
 mod range;
 mod utils;
 
-use na::{center, max, min, point, ClosedAdd, ClosedSub, Point, SVector, Scalar, SimdComplexField};
-use num_traits::bounds::{LowerBounded, UpperBounded};
-use num_traits::{Bounded, Zero};
+use na::{max, min, ClosedAdd, Point, SVector, Scalar};
 use std::hash::{Hash, Hasher};
 use std::ops::Bound::{self as Bound, *};
-use std::ops::{Index, Range, RangeBounds, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive};
+use std::ops::{Index, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive};
 
 use crate::bbox::utils::*;
-use crate::traits::{BBoxBounded, IsRangeEmpty};
+use crate::traits::{BoundingBox, IsRangeEmpty};
 
 /// `BBox<N, D>` structure for D dimension axe aligned bounding boxes
 #[derive(Clone, Copy, Debug, Eq)]
 pub struct BBox<N: Scalar, const D: usize> {
-    bounds: [(Bound<N>, Bound<N>); D],
+    ranges: [(Bound<N>, Bound<N>); D],
 }
 
 // Methods
 impl<N: Scalar, const D: usize> BBox<N, D> {
+    /// Builds a new bbox from a BoundingBox object
+    pub fn from_bounding_box<B: BoundingBox<N, D>>(bbox: &B) -> BBox<N, D>
+    where
+        N: Copy,
+    {
+        let mut ranges = [(Unbounded, Unbounded); D];
+
+        for (dim, pair) in ranges.iter_mut().enumerate() {
+            let range = bbox.get_range(dim);
+
+            pair.0 = range.0.cloned();
+            pair.1 = range.1.cloned();
+        }
+
+        BBox { ranges }
+    }
+
     /// Builds a bbox from a point and a size
     /// Roughly the same as `(anchor..anchor + size).bbox()`
     pub fn from_anchor_size(anchor: &Point<N, D>, size: &SVector<N, D>) -> BBox<N, D>
@@ -36,9 +51,9 @@ impl<N: Scalar, const D: usize> BBox<N, D> {
     {
         let mut result = BBox::default();
 
-        for (dim, pair) in result.bounds.iter_mut().enumerate() {
-            pair.0 = Included(*min(&start[dim], &end[dim]));
-            pair.1 = Excluded(*max(&start[dim], &end[dim]));
+        for (dim, pair) in result.ranges.iter_mut().enumerate() {
+            pair.0 = Included(min(start[dim], end[dim]));
+            pair.1 = Excluded(max(start[dim], end[dim]));
         }
 
         result
@@ -61,35 +76,9 @@ impl<N: Scalar, const D: usize> BBox<N, D> {
     {
         let mut result = BBox::default();
 
-        for (dim, pair) in result.bounds.iter_mut().enumerate() {
-            pair.0 = Included(*min(&start[dim], &end[dim]));
-            pair.1 = Included(*max(&start[dim], &end[dim]));
-        }
-
-        result
-    }
-
-    /// Returns true if bbox contains given point
-    pub fn contains(&self, pt: &Point<N, D>) -> bool
-    where
-        N: PartialOrd,
-    {
-        self.bounds
-            .iter()
-            .zip(pt.iter())
-            .all(|(bounds, x)| bounds.contains(x))
-    }
-
-    /// Returns intersection between bbox
-    pub fn intersection(&self, other: &Self) -> Self
-    where
-        N: Copy + PartialOrd,
-    {
-        let mut result = BBox::default();
-
-        for (dim, pair) in result.bounds.iter_mut().enumerate() {
-            pair.0 = *select_bound(&self.bounds[dim].0, &other.bounds[dim].0, |a, b| a >= b);
-            pair.1 = *select_bound(&self.bounds[dim].1, &other.bounds[dim].1, |a, b| a <= b);
+        for (dim, pair) in result.ranges.iter_mut().enumerate() {
+            pair.0 = Included(min(start[dim], end[dim]));
+            pair.1 = Included(max(start[dim], end[dim]));
         }
 
         result
@@ -102,130 +91,53 @@ impl<N: Scalar, const D: usize> BBox<N, D> {
     {
         let mut result = BBox::default();
 
-        for (dim, pair) in result.bounds.iter_mut().enumerate() {
-            pair.0 = include_value(&self.bounds[dim].0, &pt[dim], |a, b| a < b);
-            pair.1 = include_value(&self.bounds[dim].1, &pt[dim], |a, b| a > b);
+        for (dim, pair) in result.ranges.iter_mut().enumerate() {
+            pair.0 = include_value(&self.ranges[dim].0, &pt[dim], |a, b| a < b);
+            pair.1 = include_value(&self.ranges[dim].1, &pt[dim], |a, b| a > b);
         }
 
         result
     }
-
-    /// Return start point of bbox
-    pub fn start_point(&self) -> Point<N, D>
-    where
-        N: Copy + LowerBounded + Zero,
-    {
-        let mut pt = Point::default();
-
-        for (dim, pair) in self.bounds.iter().enumerate() {
-            pt[dim] = *value_of_bound(&pair.0).unwrap_or(&N::min_value());
-        }
-
-        pt
-    }
-
-    /// Return end point of bbox
-    pub fn end_point(&self) -> Point<N, D>
-    where
-        N: Copy + UpperBounded + Zero,
-    {
-        let mut pt = Point::default();
-
-        for (dim, pair) in self.bounds.iter().enumerate() {
-            pt[dim] = *value_of_bound(&pair.1).unwrap_or(&N::max_value());
-        }
-
-        pt
-    }
-
-    /// Return end point of bbox
-    pub fn center_point(&self) -> Point<N, D>
-    where
-        N: Bounded + Copy + SimdComplexField + Zero,
-    {
-        center(&self.start_point(), &self.end_point())
-    }
-
-    /// Return end point of bbox
-    pub fn size(&self) -> SVector<N, D>
-    where
-        N: Bounded + ClosedSub + Copy + Zero,
-    {
-        self.end_point() - self.start_point()
-    }
-}
-
-impl<N: Bounded + Copy + Scalar> BBox<N, 2> {
-    /// Returns north west point
-    pub fn nw(&self) -> Point<N, 2> {
-        point![
-            *value_of_bound(&self.bounds[0].1).unwrap_or(&N::min_value()),
-            *value_of_bound(&self.bounds[1].0).unwrap_or(&N::min_value())
-        ]
-    }
-
-    /// Returns north east point
-    pub fn ne(&self) -> Point<N, 2> {
-        point![
-            *value_of_bound(&self.bounds[0].1).unwrap_or(&N::min_value()),
-            *value_of_bound(&self.bounds[1].1).unwrap_or(&N::max_value())
-        ]
-    }
-    /// Returns south west point
-    pub fn sw(&self) -> Point<N, 2> {
-        point![
-            *value_of_bound(&self.bounds[0].0).unwrap_or(&N::max_value()),
-            *value_of_bound(&self.bounds[1].0).unwrap_or(&N::min_value())
-        ]
-    }
-
-    /// Returns south east point
-    pub fn se(&self) -> Point<N, 2> {
-        point![
-            *value_of_bound(&self.bounds[0].0).unwrap_or(&N::max_value()),
-            *value_of_bound(&self.bounds[1].1).unwrap_or(&N::max_value())
-        ]
-    }
 }
 
 // Utils
-impl<N: Copy + Scalar, const D: usize> BBoxBounded<N, D> for BBox<N, D> {
-    fn bbox(&self) -> BBox<N, D> {
-        *self
+impl<N: Scalar, const D: usize> BoundingBox<N, D> for BBox<N, D> {
+    fn get_range(&self, d: usize) -> (Bound<&N>, Bound<&N>) {
+        (self.ranges[d].0.as_ref(), self.ranges[0].1.as_ref())
     }
 }
 
 impl<N: Copy + Scalar, const D: usize> Default for BBox<N, D> {
     fn default() -> Self {
         BBox {
-            bounds: [(Unbounded, Unbounded); D],
+            ranges: [(Unbounded, Unbounded); D],
         }
     }
 }
 
 impl<N: Scalar + Hash, const D: usize> Hash for BBox<N, D> {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        self.bounds.hash(state);
+        self.ranges.hash(state);
     }
 }
 
 impl<N: Scalar + PartialOrd, const D: usize> IsRangeEmpty for BBox<N, D> {
     fn is_range_empty(&self) -> bool {
-        self.bounds.iter().any(|r| r.is_range_empty())
+        self.ranges.iter().any(|r| r.is_range_empty())
     }
 }
 
 // Conversions
 impl<N: Scalar, const D: usize> From<[(Bound<N>, Bound<N>); D]> for BBox<N, D> {
     fn from(bounds: [(Bound<N>, Bound<N>); D]) -> Self {
-        BBox { bounds }
+        BBox { ranges: bounds }
     }
 }
 
 impl<N: Copy + Scalar, const D: usize> From<RangeFull> for BBox<N, D> {
     fn from(_: RangeFull) -> Self {
         BBox {
-            bounds: [(Unbounded, Unbounded); D]
+            ranges: [(Unbounded, Unbounded); D]
         }
     }
 }
@@ -238,7 +150,7 @@ impl<N: Copy + Scalar, const D: usize> From<RangeFrom<Point<N, D>>> for BBox<N, 
             pair.0 = Included(range.start[dim]);
         }
 
-        BBox { bounds }
+        BBox { ranges: bounds }
     }
 }
 
@@ -250,7 +162,7 @@ impl<N: Copy + Scalar, const D: usize> From<RangeTo<Point<N, D>>> for BBox<N, D>
             pair.1 = Excluded(range.end[dim]);
         }
 
-        BBox { bounds }
+        BBox { ranges: bounds }
     }
 }
 
@@ -262,7 +174,7 @@ impl<N: Copy + Scalar, const D: usize> From<RangeToInclusive<Point<N, D>>> for B
             pair.1 = Included(range.end[dim]);
         }
 
-        BBox { bounds }
+        BBox { ranges: bounds }
     }
 }
 
@@ -275,7 +187,7 @@ impl<N: Copy + Scalar, const D: usize> From<Range<Point<N, D>>> for BBox<N, D> {
             pair.1 = Excluded(range.end[dim]);
         }
 
-        BBox { bounds }
+        BBox { ranges: bounds }
     }
 }
 
@@ -288,14 +200,18 @@ impl<N: Copy + Scalar, const D: usize> From<RangeInclusive<Point<N, D>>> for BBo
             pair.1 = Included(range.end()[dim]);
         }
 
-        BBox { bounds }
+        BBox { ranges: bounds }
     }
 }
 
 // Operators
-impl<N: Scalar, const D: usize> PartialEq for BBox<N, D> {
-    fn eq(&self, other: &Self) -> bool {
-        self.bounds == other.bounds
+impl<N: Scalar, B: BoundingBox<N, D>, const D: usize> PartialEq<B> for BBox<N, D> {
+    fn eq(&self, other: &B) -> bool {
+        self.ranges.iter().enumerate()
+            .all(|(d, range)| {
+                let oth = other.get_range(d);
+                range.0.as_ref() == oth.0 && range.1.as_ref() == oth.1
+            })
     }
 }
 
@@ -303,7 +219,7 @@ impl<N: Scalar, const D: usize> Index<usize> for BBox<N, D> {
     type Output = (Bound<N>, Bound<N>);
 
     fn index(&self, index: usize) -> &Self::Output {
-        &self.bounds[index]
+        &self.ranges[index]
     }
 }
 
@@ -311,21 +227,19 @@ impl<N: Scalar, const D: usize> Index<usize> for BBox<N, D> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::traits::BBoxBounded;
     use na::{point, vector};
-    use std::ops::Bound::{Excluded, Included, Unbounded};
 
     #[test]
     fn bbox_from_anchor_size() {
         assert_eq!(
             BBox::from_anchor_size(&point![1, 1], &vector![2, 3]),
-            BBox::from(point![1, 1]..point![3, 4])
+            point![1, 1]..point![3, 4]
         );
 
         // With messy coords
         assert_eq!(
             BBox::from_anchor_size(&point![1, 4], &vector![2, -3]),
-            BBox::from(point![1, 1]..point![3, 4])
+            point![1, 1]..point![3, 4]
         );
     }
 
@@ -333,13 +247,13 @@ mod tests {
     fn bbox_from_points() {
         assert_eq!(
             BBox::from_points(&point![1, 1], &point![2, 3]),
-            BBox::from(point![1, 1]..point![2, 3])
+            point![1, 1]..point![2, 3]
         );
 
         // With messy coords
         assert_eq!(
             BBox::from_points(&point![1, 3], &point![2, 1]),
-            BBox::from(point![1, 1]..point![2, 3])
+            point![1, 1]..point![2, 3]
         );
     }
 
@@ -347,13 +261,13 @@ mod tests {
     fn bbox_from_anchor_size_including() {
         assert_eq!(
             BBox::from_anchor_size_including(&point![1, 1], &vector![2, 3]),
-            BBox::from(point![1, 1]..=point![3, 4])
+            point![1, 1]..=point![3, 4]
         );
 
         // With messy coords
         assert_eq!(
             BBox::from_anchor_size_including(&point![1, 4], &vector![2, -3]),
-            BBox::from(point![1, 1]..=point![3, 4])
+           point![1, 1]..=point![3, 4]
         );
     }
 
@@ -361,13 +275,13 @@ mod tests {
     fn bbox_from_points_including() {
         assert_eq!(
             BBox::from_points_including(&point![1, 1], &point![2, 3]),
-            BBox::from(point![1, 1]..=point![2, 3])
+            point![1, 1]..=point![2, 3]
         );
 
         // With messy coords
         assert_eq!(
             BBox::from_points_including(&point![1, 3], &point![2, 1]),
-            BBox::from(point![1, 1]..=point![2, 3])
+            point![1, 1]..=point![2, 3]
         );
     }
 
@@ -399,16 +313,16 @@ mod tests {
     fn bbox_contains() {
         let a: BBox<i32, 2> = [(Included(0), Included(5)), (Included(0), Included(5))].into();
 
-        assert!(a.contains(&point![2, 2]));
+        assert!(a.holds(&point![2, 2]));
 
-        assert!(!a.contains(&point![-3, 2]));
-        assert!(!a.contains(&point![-3, -3]));
-        assert!(!a.contains(&point![2, -3]));
-        assert!(!a.contains(&point![7, -3]));
-        assert!(!a.contains(&point![7, 2]));
-        assert!(!a.contains(&point![7, 7]));
-        assert!(!a.contains(&point![2, 7]));
-        assert!(!a.contains(&point![-3, 7]));
+        assert!(!a.holds(&point![-3, 2]));
+        assert!(!a.holds(&point![-3, -3]));
+        assert!(!a.holds(&point![2, -3]));
+        assert!(!a.holds(&point![7, -3]));
+        assert!(!a.holds(&point![7, 2]));
+        assert!(!a.holds(&point![7, 7]));
+        assert!(!a.holds(&point![2, 7]));
+        assert!(!a.holds(&point![-3, 7]));
     }
 
     #[test]
@@ -416,7 +330,7 @@ mod tests {
         let a: BBox<u32, 1> = [(Included(0), Included(5))].into();
         let b: BBox<u32, 1> = [(Included(2), Included(7))].into();
 
-        assert_eq!(a.intersection(&b), [(Included(2), Included(5))].into());
+        assert_eq!(a.intersection(&b), BBox::from([(Included(2), Included(5))]));
     }
 
     #[test]
@@ -432,7 +346,7 @@ mod tests {
         let a: BBox<u32, 1> = [(Included(0), Included(2))].into();
         let b: BBox<u32, 1> = [(Included(5), Included(7))].into();
 
-        assert_eq!(a.intersection(&b), [(Included(5), Included(2))].into());
+        assert_eq!(a.intersection(&b), BBox::from([(Included(5), Included(2))]));
     }
 
     #[test]
@@ -440,7 +354,7 @@ mod tests {
         let a: BBox<u32, 1> = [(Included(0), Included(5))].into();
         let b: BBox<u32, 1> = [(Excluded(2), Excluded(7))].into();
 
-        assert_eq!(a.intersection(&b), [(Excluded(2), Included(5))].into());
+        assert_eq!(a.intersection(&b), BBox::from([(Excluded(2), Included(5))]));
     }
 
     #[test]
@@ -448,7 +362,7 @@ mod tests {
         let a: BBox<u32, 1> = [(Included(0), Unbounded)].into();
         let b: BBox<u32, 1> = [(Unbounded, Excluded(7))].into();
 
-        assert_eq!(a.intersection(&b), [(Included(0), Excluded(7))].into());
+        assert_eq!(a.intersection(&b), BBox::from([(Included(0), Excluded(7))]));
     }
 
     #[test]
@@ -544,38 +458,6 @@ mod tests {
         assert_eq!(
             BBox::from(point![0.0, 0.0]..point![6.0, 6.0]).size(),
             vector![6.0, 6.0]
-        );
-    }
-
-    #[test]
-    fn bbox_nw() {
-        assert_eq!(
-            BBox::from(point![0.0, 0.0]..point![6.0, 6.0]).nw(),
-            point![6.0, 0.0]
-        );
-    }
-
-    #[test]
-    fn bbox_ne() {
-        assert_eq!(
-            BBox::from(point![0.0, 0.0]..point![6.0, 6.0]).ne(),
-            point![6.0, 6.0]
-        );
-    }
-
-    #[test]
-    fn bbox_sw() {
-        assert_eq!(
-            BBox::from(point![0.0, 0.0]..point![6.0, 6.0]).sw(),
-            point![0.0, 0.0]
-        );
-    }
-
-    #[test]
-    fn bbox_se() {
-        assert_eq!(
-            BBox::from(point![0.0, 0.0]..point![6.0, 6.0]).se(),
-            point![0.0, 6.0]
         );
     }
 }

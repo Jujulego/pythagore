@@ -7,3 +7,4 @@ pub mod traits;
 pub mod wasm;
 
 pub use bbox::BBox;
+pub use traits::{BoundingBox, IsRangeEmpty};
