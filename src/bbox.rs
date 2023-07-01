@@ -12,24 +12,18 @@ use crate::traits::IsRangeEmpty;
 
 /// `BBox<N, D>` structure for D dimension axe aligned bounding boxes
 #[derive(Clone, Copy, Debug, Eq)]
-pub struct BBox<N: Scalar, const D: usize> {
+pub struct BBox<N: Copy + Scalar, const D: usize> {
     ranges: [(Bound<N>, Bound<N>); D],
 }
 
 // Methods
-impl<N: Scalar, const D: usize> BBox<N, D> {
+impl<N: Copy + Scalar, const D: usize> BBox<N, D> {
     /// Builds a new bbox from a BoundingBox object
-    pub fn from_bounding_box<B: BoundingBox<N, D>>(bbox: &B) -> BBox<N, D>
-    where
-        N: Copy,
-    {
+    pub fn from_bounding_box<B: BoundingBox<N, D>>(bbox: &B) -> BBox<N, D> {
         let mut ranges = [(Unbounded, Unbounded); D];
 
         for (dim, pair) in ranges.iter_mut().enumerate() {
-            let range = bbox.get_range(dim);
-
-            pair.0 = range.0.cloned();
-            pair.1 = range.1.cloned();
+            *pair = bbox.get_range(dim);
         }
 
         BBox { ranges }
@@ -39,7 +33,7 @@ impl<N: Scalar, const D: usize> BBox<N, D> {
     /// Roughly the same as `(anchor..anchor + size).bbox()`
     pub fn from_anchor_size(anchor: &Point<N, D>, size: &SVector<N, D>) -> BBox<N, D>
     where
-        N: ClosedAdd + Copy + Ord,
+        N: ClosedAdd + Ord,
     {
         BBox::from_points(anchor, &(anchor + size))
     }
@@ -48,7 +42,7 @@ impl<N: Scalar, const D: usize> BBox<N, D> {
     /// Roughly the same as `(start..end).bbox()`
     pub fn from_points(start: &Point<N, D>, end: &Point<N, D>) -> BBox<N, D>
     where
-        N: Copy + Ord,
+        N: Ord,
     {
         let mut result = BBox::default();
 
@@ -64,7 +58,7 @@ impl<N: Scalar, const D: usize> BBox<N, D> {
     /// Roughly the same as `(anchor..=anchor + size).bbox()`
     pub fn from_anchor_size_including(anchor: &Point<N, D>, size: &SVector<N, D>) -> BBox<N, D>
     where
-        N: ClosedAdd + Copy + Ord,
+        N: ClosedAdd + Ord,
     {
         BBox::from_points_including(anchor, &(anchor + size))
     }
@@ -73,7 +67,7 @@ impl<N: Scalar, const D: usize> BBox<N, D> {
     /// Roughly the same as `(start..end).bbox()`
     pub fn from_points_including(start: &Point<N, D>, end: &Point<N, D>) -> BBox<N, D>
     where
-        N: Copy + Ord,
+        N: Ord,
     {
         let mut result = BBox::default();
 
@@ -87,9 +81,17 @@ impl<N: Scalar, const D: usize> BBox<N, D> {
 }
 
 // Utils
-impl<N: Scalar, const D: usize> BoundingBox<N, D> for BBox<N, D> {
-    fn get_range(&self, d: usize) -> (Bound<&N>, Bound<&N>) {
-        (self.ranges[d].0.as_ref(), self.ranges[0].1.as_ref())
+impl<N: Copy + Scalar, const D: usize> BoundingBox<N, D> for BBox<N, D> {
+    fn get_start(&self, d: usize) -> Bound<N> {
+        self.ranges[d].0
+    }
+
+    fn get_end(&self, d: usize) -> Bound<N> {
+        self.ranges[d].1
+    }
+
+    fn get_range(&self, d: usize) -> (Bound<N>, Bound<N>) {
+        self.ranges[d]
     }
 }
 
@@ -101,20 +103,20 @@ impl<N: Copy + Scalar, const D: usize> Default for BBox<N, D> {
     }
 }
 
-impl<N: Scalar + Hash, const D: usize> Hash for BBox<N, D> {
+impl<N: Copy + Scalar + Hash, const D: usize> Hash for BBox<N, D> {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.ranges.hash(state);
     }
 }
 
-impl<N: Scalar + PartialOrd, const D: usize> IsRangeEmpty for BBox<N, D> {
+impl<N: Copy + Scalar + PartialOrd, const D: usize> IsRangeEmpty for BBox<N, D> {
     fn is_range_empty(&self) -> bool {
         self.ranges.iter().any(|r| r.is_range_empty())
     }
 }
 
 // Conversions
-impl<N: Scalar, const D: usize> From<[(Bound<N>, Bound<N>); D]> for BBox<N, D> {
+impl<N: Copy + Scalar, const D: usize> From<[(Bound<N>, Bound<N>); D]> for BBox<N, D> {
     fn from(bounds: [(Bound<N>, Bound<N>); D]) -> Self {
         BBox { ranges: bounds }
     }
@@ -191,16 +193,14 @@ impl<N: Copy + Scalar, const D: usize> From<RangeInclusive<Point<N, D>>> for BBo
 }
 
 // Operators
-impl<N: Scalar, B: BoundingBox<N, D>, const D: usize> PartialEq<B> for BBox<N, D> {
+impl<N: Copy + Scalar, B: BoundingBox<N, D>, const D: usize> PartialEq<B> for BBox<N, D> {
     fn eq(&self, other: &B) -> bool {
-        self.ranges.iter().enumerate().all(|(d, range)| {
-            let oth = other.get_range(d);
-            range.0.as_ref() == oth.0 && range.1.as_ref() == oth.1
-        })
+        self.ranges.iter().enumerate()
+            .all(|(d, range)| range == &other.get_range(d))
     }
 }
 
-impl<N: Scalar, const D: usize> Index<usize> for BBox<N, D> {
+impl<N: Copy + Scalar, const D: usize> Index<usize> for BBox<N, D> {
     type Output = (Bound<N>, Bound<N>);
 
     fn index(&self, index: usize) -> &Self::Output {
