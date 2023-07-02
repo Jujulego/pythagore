@@ -10,6 +10,7 @@ pub trait IsRangeEmpty {
 // Implementations
 /// Always return false for RangeFull
 impl IsRangeEmpty for RangeFull {
+    #[inline]
     fn is_range_empty(&self) -> bool {
         false
     }
@@ -17,6 +18,7 @@ impl IsRangeEmpty for RangeFull {
 
 /// Always return false for RangeFrom
 impl<N> IsRangeEmpty for RangeFrom<N> {
+    #[inline]
     fn is_range_empty(&self) -> bool {
         false
     }
@@ -24,6 +26,7 @@ impl<N> IsRangeEmpty for RangeFrom<N> {
 
 /// Always return false for RangeTo
 impl<N> IsRangeEmpty for RangeTo<N> {
+    #[inline]
     fn is_range_empty(&self) -> bool {
         false
     }
@@ -31,6 +34,7 @@ impl<N> IsRangeEmpty for RangeTo<N> {
 
 /// Always return false for RangeToInclusive
 impl<N> IsRangeEmpty for RangeToInclusive<N> {
+    #[inline]
     fn is_range_empty(&self) -> bool {
         false
     }
@@ -38,6 +42,7 @@ impl<N> IsRangeEmpty for RangeToInclusive<N> {
 
 /// Return true for Range if start >= end
 impl<N: PartialOrd> IsRangeEmpty for Range<N> {
+    #[inline]
     fn is_range_empty(&self) -> bool {
         self.start >= self.end
     }
@@ -45,6 +50,7 @@ impl<N: PartialOrd> IsRangeEmpty for Range<N> {
 
 /// Returns true for RangeInclusive if start > end
 impl<N: PartialOrd> IsRangeEmpty for RangeInclusive<N> {
+    #[inline]
     fn is_range_empty(&self) -> bool {
         self.start() > self.end()
     }
