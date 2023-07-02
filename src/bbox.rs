@@ -256,6 +256,20 @@ impl<N: Scalar + PartialOrd, const D: usize> IsRangeEmpty for BBox<N, D> {
 }
 
 // Conversion
+impl<N: Scalar, const D: usize> AsRef<[BBoxElement<N>; D]> for BBox<N, D> {
+    #[inline]
+    fn as_ref(&self) -> &[BBoxElement<N>; D] {
+        &self.ranges
+    }
+}
+
+impl<N: Scalar, const D: usize> AsMut<[BBoxElement<N>; D]> for BBox<N, D> {
+    #[inline]
+    fn as_mut(&mut self) -> &mut [BBoxElement<N>; D] {
+        &mut self.ranges
+    }
+}
+
 /// Builds a bounding box from a set of ranges
 impl<N: Scalar, const D: usize> From<[BBoxElement<N>; D]> for BBox<N, D> {
     fn from(ranges: [BBoxElement<N>; D]) -> Self {
