@@ -1,6 +1,7 @@
 mod bound_tuple;
 mod range;
 mod range_from;
+mod range_full;
 mod range_inclusive;
 mod range_to;
 mod range_to_inclusive;
@@ -8,8 +9,8 @@ mod range_to_inclusive;
 use std::ops::{Bound, Index, IndexMut};
 use std::ops::Bound::Unbounded;
 use std::slice::{Iter, IterMut};
-use na::Scalar;
-use crate::IsRangeEmpty;
+use na::{Point, Scalar};
+use crate::{Holds, IsRangeEmpty};
 
 type BBoxElement<N> = (Bound<N>, Bound<N>);
 
@@ -36,7 +37,7 @@ impl<N: Scalar, const D: usize> BBox<N, D> {
     /// let bbox = BBox::from(point![1, 2]..point![3, 4]);
     ///
     /// unsafe {
-    ///     assert_eq!(bbox.get_unchecked(0), &(Included(1), Excluded(3)))
+    ///     assert_eq!(bbox.get_unchecked(0), &(Included(1), Excluded(3)));
     /// }
     /// ```
     #[inline]
@@ -68,7 +69,7 @@ impl<N: Scalar, const D: usize> BBox<N, D> {
     ///        (Unbounded, Excluded(0)),
     ///        (Included(2), Excluded(4)),
     ///     ])
-    /// )
+    /// );
     /// ```
     #[inline]
     pub unsafe fn get_unchecked_mut(&mut self, idx: usize) -> &mut BBoxElement<N> {
@@ -102,13 +103,29 @@ impl<N: Scalar, const D: usize> BBox<N, D> {
 ///        (Unbounded, Unbounded),
 ///        (Unbounded, Unbounded),
 ///     ])
-/// )
+/// );
 /// ```
 impl<N: Copy + Scalar, const D: usize> Default for BBox<N, D> {
     fn default() -> Self {
         BBox {
             ranges: [(Unbounded, Unbounded); D]
         }
+    }
+}
+
+/// Checks if bbox holds given point
+///
+/// # Example
+/// ```
+/// use nalgebra::point;
+/// use pythagore::{BBox, Holds};
+///
+/// assert!(BBox::from(point![0, 0]..point![5, 5]).holds(&point![2, 2]));
+/// ```
+impl<N: Scalar + PartialOrd, const D: usize> Holds<Point<N, D>> for BBox<N, D> {
+    fn holds(&self, object: &Point<N, D>) -> bool {
+        self.ranges.iter().enumerate()
+            .all(|(idx, range)| range.holds(unsafe { object.get_unchecked(idx) }))
     }
 }
 
@@ -119,7 +136,7 @@ impl<N: Copy + Scalar, const D: usize> Default for BBox<N, D> {
 /// use nalgebra::point;
 /// use pythagore::{BBox, IsRangeEmpty};
 ///
-/// assert!(BBox::from(point![5, 5]..point![0, 0]).is_range_empty())
+/// assert!(BBox::from(point![5, 5]..point![0, 0]).is_range_empty());
 /// ```
 impl<N: Scalar + PartialOrd, const D: usize> IsRangeEmpty for BBox<N, D> {
     fn is_range_empty(&self) -> bool {
@@ -187,6 +204,28 @@ mod tests {
 
             assert!(!BBox::from(point![5, 0]..=point![5, 5]).is_range_empty());
             assert!(!BBox::from(point![0, 5]..=point![5, 5]).is_range_empty());
+        }
+    }
+
+    mod holds {
+        use na::point;
+        use super::*;
+
+        #[test]
+        fn test_all_point_coords_in_ranges() {
+            assert!(BBox::from(point![0, 0]..point![5, 5]).holds(&point![2, 2]));
+        }
+
+        #[test]
+        fn test_some_point_coords_lower_than_start() {
+            assert!(!BBox::from(point![0, 0]..point![5, 5]).holds(&point![-2, 2]));
+            assert!(!BBox::from(point![0, 0]..point![5, 5]).holds(&point![2, -2]));
+        }
+
+        #[test]
+        fn test_some_point_coords_greater_than_end() {
+            assert!(!BBox::from(point![0, 0]..point![5, 5]).holds(&point![7, 2]));
+            assert!(!BBox::from(point![0, 0]..point![5, 5]).holds(&point![2, 7]));
         }
     }
 }
