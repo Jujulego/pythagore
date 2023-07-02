@@ -6,22 +6,133 @@ mod range_inclusive;
 mod range_to;
 mod range_to_inclusive;
 
+use std::cmp::{max, min};
 use std::ops::{Bound, Index, IndexMut};
-use std::ops::Bound::Unbounded;
+use std::ops::Bound::{Excluded, Included, Unbounded};
 use std::slice::{Iter, IterMut};
-use na::{Point, Scalar};
+use na::{ClosedAdd, Point, Scalar, SVector};
 use crate::{Holds, IsRangeEmpty};
 
 type BBoxElement<N> = (Bound<N>, Bound<N>);
 
 /// Generic Axis Aligned Bounding Box
 /// Supports all kinds of bounds, independently on each axis
-#[derive(Debug, Eq)]
+#[derive(Clone, Copy, Debug, Eq)]
 pub struct BBox<N: Scalar, const D: usize> {
     ranges: [BBoxElement<N>; D],
 }
 
 impl<N: Scalar, const D: usize> BBox<N, D> {
+    /// Builds a bounding box from two unordered points
+    ///
+    /// # Example
+    /// ```
+    /// use std::ops::Bound::{Excluded, Included};
+    /// use nalgebra::point;
+    /// use pythagore::BBox;
+    ///
+    /// assert_eq!(
+    ///     BBox::from_points(&point![1, 4], &point![3, 2]),
+    ///     BBox::from([
+    ///        (Included(1), Excluded(3)),
+    ///        (Included(2), Excluded(4)),
+    ///     ])
+    /// );
+    /// ```
+    pub fn from_points(a: &Point<N, D>, b: &Point<N, D>) -> BBox<N, D>
+    where
+        N: Copy + Ord
+    {
+        let mut ranges = [(Unbounded, Unbounded); D];
+
+        for (idx, range) in ranges.iter_mut().enumerate() {
+            range.0 = Included(*min(unsafe { a.get_unchecked(idx) }, unsafe { b.get_unchecked(idx) }));
+            range.1 = Excluded(*max(unsafe { a.get_unchecked(idx) }, unsafe { b.get_unchecked(idx) }));
+        }
+
+        BBox {
+            ranges
+        }
+    }
+
+    /// Builds a bounding box from a point and a vector
+    ///
+    /// # Example
+    /// ```
+    /// use std::ops::Bound::{Excluded, Included};
+    /// use nalgebra::{point, vector};
+    /// use pythagore::BBox;
+    ///
+    /// assert_eq!(
+    ///     BBox::from_anchor_size(&point![1, 1], &vector![3, -2]),
+    ///     BBox::from([
+    ///        (Included(1), Excluded(4)),
+    ///        (Included(-1), Excluded(1)),
+    ///     ])
+    /// );
+    /// ```
+    pub fn from_anchor_size(anchor: &Point<N, D>, size: &SVector<N, D>) -> BBox<N, D>
+    where
+        N: ClosedAdd + Copy + Ord
+    {
+        BBox::from_points(anchor, &(anchor + size))
+    }
+
+    /// Builds an including bounding box from two unordered points
+    ///
+    /// # Example
+    /// ```
+    /// use std::ops::Bound::Included;
+    /// use nalgebra::point;
+    /// use pythagore::BBox;
+    ///
+    /// assert_eq!(
+    ///     BBox::from_points_included(&point![1, 4], &point![3, 2]),
+    ///     BBox::from([
+    ///        (Included(1), Included(3)),
+    ///        (Included(2), Included(4)),
+    ///     ])
+    /// );
+    /// ```
+    pub fn from_points_included(a: &Point<N, D>, b: &Point<N, D>) -> BBox<N, D>
+    where
+        N: Copy + Ord
+    {
+        let mut ranges = [(Unbounded, Unbounded); D];
+
+        for (idx, range) in ranges.iter_mut().enumerate() {
+            range.0 = Included(*min(unsafe { a.get_unchecked(idx) }, unsafe { b.get_unchecked(idx) }));
+            range.1 = Included(*max(unsafe { a.get_unchecked(idx) }, unsafe { b.get_unchecked(idx) }));
+        }
+
+        BBox {
+            ranges
+        }
+    }
+
+    /// Builds an including bounding box from a point and a vector
+    ///
+    /// # Example
+    /// ```
+    /// use std::ops::Bound::Included;
+    /// use nalgebra::{point, vector};
+    /// use pythagore::BBox;
+    ///
+    /// assert_eq!(
+    ///     BBox::from_anchor_size_included(&point![1, 1], &vector![3, -2]),
+    ///     BBox::from([
+    ///        (Included(1), Included(4)),
+    ///        (Included(-1), Included(1)),
+    ///     ])
+    /// );
+    /// ```
+    pub fn from_anchor_size_included(anchor: &Point<N, D>, size: &SVector<N, D>) -> BBox<N, D>
+    where
+        N: ClosedAdd + Copy + Ord
+    {
+        BBox::from_points_included(anchor, &(anchor + size))
+    }
+
     /// Returns a reference to an internal range, without doing bounds checking.
     ///
     /// # Safety
