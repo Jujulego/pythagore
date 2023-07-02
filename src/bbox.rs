@@ -11,7 +11,8 @@ use std::ops::{Bound, Index, IndexMut};
 use std::ops::Bound::{Excluded, Included, Unbounded};
 use std::slice::{Iter, IterMut};
 use na::{ClosedAdd, Point, Scalar, SVector};
-use crate::{Holds, IsRangeEmpty};
+use num_traits::Bounded;
+use crate::{BoundPoints, Holds, IsRangeEmpty};
 
 type BBoxElement<N> = (Bound<N>, Bound<N>);
 
@@ -201,6 +202,38 @@ impl<N: Scalar, const D: usize> BBox<N, D> {
 }
 
 // Utils
+impl<N: Bounded + Copy + Scalar, const D: usize> BoundPoints<N, D> for BBox<N, D> {
+    /// Returns points made from start bounds
+    fn start_point(&self) -> Point<N, D> {
+        let coords = SVector::from_fn(|idx, _| {
+            let range = unsafe { self.get_unchecked(idx) };
+
+            if let Included(x) | Excluded(x) = range.0 {
+                x
+            } else {
+                N::min_value()
+            }
+        });
+
+        Point::from(coords)
+    }
+
+    /// Returns points made from end bounds
+    fn end_point(&self) -> Point<N, D> {
+        let coords = SVector::from_fn(|idx, _| {
+            let range = unsafe { self.get_unchecked(idx) };
+
+            if let Included(x) | Excluded(x) = range.1 {
+                x
+            } else {
+                N::max_value()
+            }
+        });
+
+        Point::from(coords)
+    }
+}
+
 /// Default is a fully unbounded bbox
 ///
 /// # Example
@@ -307,28 +340,34 @@ impl<N: Scalar, const D: usize> PartialEq for BBox<N, D> {
 mod tests {
     use super::*;
 
-    mod is_range_empty {
+    mod bound_points {
         use na::point;
         use super::*;
 
         #[test]
-        fn test_all_start_coords_lower_than_end_coords() {
-            assert!(!BBox::from(point![0, 0]..point![5, 5]).is_range_empty());
+        fn test_start_point() {
+            assert_eq!(
+                BBox::from(point![0, 0]..point![5, 5]).start_point(),
+                point![0, 0]
+            );
+
+            assert_eq!(
+                BBox::from(..point![5, 5]).start_point(),
+                Point::min_value()
+            );
         }
 
         #[test]
-        fn test_some_start_coords_greater_than_end_coords() {
-            assert!(BBox::from(point![5, 0]..point![0, 5]).is_range_empty());
-            assert!(BBox::from(point![0, 5]..point![5, 0]).is_range_empty());
-        }
+        fn test_end_point() {
+            assert_eq!(
+                BBox::from(point![0, 0]..point![5, 5]).end_point(),
+                point![5, 5]
+            );
 
-        #[test]
-        fn test_some_start_coords_equals_end_coords() {
-            assert!(BBox::from(point![0, 5]..point![5, 5]).is_range_empty());
-            assert!(BBox::from(point![5, 0]..point![5, 5]).is_range_empty());
-
-            assert!(!BBox::from(point![5, 0]..=point![5, 5]).is_range_empty());
-            assert!(!BBox::from(point![0, 5]..=point![5, 5]).is_range_empty());
+            assert_eq!(
+                BBox::from(point![0, 0]..).end_point(),
+                Point::max_value()
+            );
         }
     }
 
@@ -351,6 +390,31 @@ mod tests {
         fn test_some_point_coords_greater_than_end() {
             assert!(!BBox::from(point![0, 0]..point![5, 5]).holds(&point![7, 2]));
             assert!(!BBox::from(point![0, 0]..point![5, 5]).holds(&point![2, 7]));
+        }
+    }
+
+    mod is_range_empty {
+        use na::point;
+        use super::*;
+
+        #[test]
+        fn test_all_start_coords_lower_than_end_coords() {
+            assert!(!BBox::from(point![0, 0]..point![5, 5]).is_range_empty());
+        }
+
+        #[test]
+        fn test_some_start_coords_greater_than_end_coords() {
+            assert!(BBox::from(point![5, 0]..point![0, 5]).is_range_empty());
+            assert!(BBox::from(point![0, 5]..point![5, 0]).is_range_empty());
+        }
+
+        #[test]
+        fn test_some_start_coords_equals_end_coords() {
+            assert!(BBox::from(point![0, 5]..point![5, 5]).is_range_empty());
+            assert!(BBox::from(point![5, 0]..point![5, 5]).is_range_empty());
+
+            assert!(!BBox::from(point![5, 0]..=point![5, 5]).is_range_empty());
+            assert!(!BBox::from(point![0, 5]..=point![5, 5]).is_range_empty());
         }
     }
 }

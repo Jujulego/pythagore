@@ -7,4 +7,4 @@ pub mod traits;
 pub mod wasm;
 
 pub use bbox::BBox;
-pub use traits::{Holds, IsRangeEmpty};
+pub use traits::{BoundPoints, Holds, IsRangeEmpty};
