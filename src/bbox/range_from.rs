@@ -1,8 +1,9 @@
 use std::ops::Bound::{Included, Unbounded};
 use std::ops::RangeFrom;
 use na::{Point, Scalar};
+use num_traits::Bounded;
 
-use crate::BBox;
+use crate::{BBox, BoundPoints};
 
 /// Builds a bounding box from a range of points
 ///
@@ -29,5 +30,43 @@ impl<N: Copy + Scalar, const D: usize> From<RangeFrom<Point<N, D>>> for BBox<N, 
         }
 
         BBox::from(ranges)
+    }
+}
+
+impl<N: Bounded + Copy + Scalar, const D: usize> BoundPoints<N, D> for RangeFrom<Point<N, D>> {
+    #[inline]
+    fn start_point(&self) -> Point<N, D> {
+        self.start
+    }
+
+    #[inline]
+    fn end_point(&self) -> Point<N, D> {
+        Point::max_value()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    mod bound_points {
+        use na::point;
+        use super::*;
+
+        #[test]
+        fn test_start_point() {
+            assert_eq!(
+                (point![0, 0]..).start_point(),
+                point![0, 0]
+            );
+        }
+
+        #[test]
+        fn test_end_point() {
+            assert_eq!(
+                (point![0, 0]..).end_point(),
+                Point::max_value()
+            );
+        }
     }
 }
