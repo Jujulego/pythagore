@@ -6,7 +6,7 @@ use crate::BBox;
 
 /// Builds a bounding box from a range of points
 ///
-/// ## Example
+/// # Example
 /// ```
 /// use std::ops::Bound::{Excluded, Unbounded};
 /// use nalgebra::point;

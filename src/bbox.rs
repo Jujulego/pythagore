@@ -25,6 +25,19 @@ impl<N: Scalar, const D: usize> BBox<N, D> {
     /// # Safety
     /// Calling this method with an out-of-bounds index is *[undefined behavior]*
     /// even if the resulting reference is not used.
+    ///
+    /// # Example
+    /// ```
+    /// use std::ops::Bound::{Excluded, Included};
+    /// use nalgebra::point;
+    /// use pythagore::BBox;
+    ///
+    /// let bbox = BBox::from(point![1, 2]..point![3, 4]);
+    ///
+    /// unsafe {
+    ///     assert_eq!(bbox.get_unchecked(0), &(Included(1), Excluded(3)))
+    /// }
+    /// ```
     #[inline]
     pub unsafe fn get_unchecked(&self, idx: usize) -> &BBoxElement<N> {
         self.ranges.get_unchecked(idx)
@@ -35,8 +48,29 @@ impl<N: Scalar, const D: usize> BBox<N, D> {
     /// # Safety
     /// Calling this method with an out-of-bounds index is *[undefined behavior]*
     /// even if the resulting reference is not used.
+    ///
+    /// # Example
+    /// ```
+    /// use std::ops::Bound::{Excluded, Included, Unbounded};
+    /// use nalgebra::point;
+    /// use pythagore::BBox;
+    ///
+    /// let mut bbox = BBox::from(point![1, 2]..point![3, 4]);
+    ///
+    /// unsafe {
+    ///     *bbox.get_unchecked_mut(0) = (Unbounded, Excluded(0))
+    /// }
+    ///
+    /// assert_eq!(
+    ///     bbox,
+    ///     BBox::from([
+    ///        (Unbounded, Excluded(0)),
+    ///        (Included(2), Excluded(4)),
+    ///     ])
+    /// )
+    /// ```
     #[inline]
-    pub unsafe fn get_unchecked_mut(&mut self, idx: usize) -> &BBoxElement<N> {
+    pub unsafe fn get_unchecked_mut(&mut self, idx: usize) -> &mut BBoxElement<N> {
         self.ranges.get_unchecked_mut(idx)
     }
 
@@ -56,7 +90,7 @@ impl<N: Scalar, const D: usize> BBox<N, D> {
 // Utils
 /// Default is a fully unbounded bbox
 ///
-/// ## Example
+/// # Example
 /// ```
 /// use std::ops::Bound::Unbounded;
 /// use pythagore::BBox;
@@ -91,6 +125,18 @@ impl<N: Scalar, const D: usize> From<[BBoxElement<N>; D]> for BBox<N, D> {
 impl<N: Scalar, const D: usize> Index<usize> for BBox<N, D> {
     type Output = BBoxElement<N>;
 
+    /// Returns a reference to an internal range.
+    ///
+    /// # Example
+    /// ```
+    /// use std::ops::Bound::{Excluded, Included};
+    /// use nalgebra::point;
+    /// use pythagore::BBox;
+    ///
+    /// let bbox = BBox::from(point![1, 2]..point![3, 4]);
+    ///
+    /// assert_eq!(bbox[0], (Included(1), Excluded(3)))
+    /// ```
     #[inline]
     fn index(&self, index: usize) -> &Self::Output {
         &self.ranges[index]
@@ -98,6 +144,25 @@ impl<N: Scalar, const D: usize> Index<usize> for BBox<N, D> {
 }
 
 impl<N: Scalar, const D: usize> IndexMut<usize> for BBox<N, D> {
+    /// Returns a mutable reference to an internal range.
+    ///
+    /// # Example
+    /// ```
+    /// use std::ops::Bound::{Excluded, Included, Unbounded};
+    /// use nalgebra::point;
+    /// use pythagore::BBox;
+    ///
+    /// let mut bbox = BBox::from(point![1, 2]..point![3, 4]);
+    /// bbox[0] = (Unbounded, Excluded(0));
+    ///
+    /// assert_eq!(
+    ///     bbox,
+    ///     BBox::from([
+    ///        (Unbounded, Excluded(0)),
+    ///        (Included(2), Excluded(4)),
+    ///     ])
+    /// )
+    /// ```
     #[inline]
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         &mut self.ranges[index]
