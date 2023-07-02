@@ -1,5 +1,5 @@
-use std::ops::Bound::{Excluded, Included, Unbounded};
-use std::ops::Range;
+use std::ops::Bound::{Included, Unbounded};
+use std::ops::RangeFrom;
 use na::{Point, Scalar};
 
 use crate::BBox;
@@ -8,25 +8,24 @@ use crate::BBox;
 ///
 /// ## Example
 /// ```
-/// use std::ops::Bound::{Excluded, Included};
+/// use std::ops::Bound::{Excluded, Included, Unbounded};
 /// use nalgebra::point;
 /// use pythagore::BBox;
 ///
 /// assert_eq!(
-///     BBox::from(point![1, 2]..point![3, 4]),
+///     BBox::from(point![1, 2]..),
 ///     BBox::from([
-///        (Included(1), Excluded(3)),
-///        (Included(2), Excluded(4)),
+///        (Included(1), Unbounded),
+///        (Included(2), Unbounded),
 ///     ])
 /// )
 /// ```
-impl<N: Copy + Scalar, const D: usize> From<Range<Point<N, D>>> for BBox<N, D> {
-    fn from(value: Range<Point<N, D>>) -> Self {
+impl<N: Copy + Scalar, const D: usize> From<RangeFrom<Point<N, D>>> for BBox<N, D> {
+    fn from(value: RangeFrom<Point<N, D>>) -> Self {
         let mut ranges = [(Unbounded, Unbounded); D];
 
         for (idx, range) in ranges.iter_mut().enumerate() {
             range.0 = Included(value.start[idx]);
-            range.1 = Excluded(value.end[idx]);
         }
 
         BBox::from(ranges)
