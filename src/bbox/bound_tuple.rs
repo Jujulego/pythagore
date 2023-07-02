@@ -1,5 +1,4 @@
 use std::ops::Bound::{self, Excluded, Included, Unbounded};
-use std::ops::Range;
 use na::{Point, Scalar};
 
 use crate::BBox;
@@ -26,14 +25,14 @@ impl<N: Copy + Scalar, const D: usize> From<(Bound<Point<N, D>>, Bound<Point<N, 
 
         for (idx, range) in ranges.iter_mut().enumerate() {
             range.0 = match value.0 {
-                Included(x) => Included(x[idx]),
-                Excluded(x) => Excluded(x[idx]),
+                Included(x) => Included(unsafe { *x.get_unchecked(idx) }),
+                Excluded(x) => Excluded(unsafe { *x.get_unchecked(idx) }),
                 Unbounded => Unbounded,
             };
 
             range.1 = match value.1 {
-                Included(x) => Included(x[idx]),
-                Excluded(x) => Excluded(x[idx]),
+                Included(x) => Included(unsafe { *x.get_unchecked(idx) }),
+                Excluded(x) => Excluded(unsafe { *x.get_unchecked(idx) }),
                 Unbounded => Unbounded,
             };
         }

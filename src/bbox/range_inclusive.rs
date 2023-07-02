@@ -25,8 +25,8 @@ impl<N: Copy + Scalar, const D: usize> From<RangeInclusive<Point<N, D>>> for BBo
         let mut ranges = [(Unbounded, Unbounded); D];
 
         for (idx, range) in ranges.iter_mut().enumerate() {
-            range.0 = Included(value.start()[idx]);
-            range.1 = Included(value.end()[idx]);
+            range.0 = Included(unsafe { *value.start().get_unchecked(idx) });
+            range.1 = Included(unsafe { *value.end().get_unchecked(idx) });
         }
 
         BBox::from(ranges)
