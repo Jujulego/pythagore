@@ -1,9 +1,8 @@
 use std::ops::Bound::{Included, Unbounded};
 use std::ops::RangeToInclusive;
 use na::{Point, Scalar};
-use num_traits::Bounded;
 
-use crate::{BBox, BoundPoints};
+use crate::{BBox, PointBounds};
 
 /// Builds a bounding box from a range of points
 ///
@@ -33,15 +32,15 @@ impl<N: Copy + Scalar, const D: usize> From<RangeToInclusive<Point<N, D>>> for B
     }
 }
 
-impl<N: Bounded + Copy + Scalar, const D: usize> BoundPoints<N, D> for RangeToInclusive<Point<N, D>> {
+impl<N: Copy + Scalar, const D: usize> PointBounds<N, D> for RangeToInclusive<Point<N, D>> {
     #[inline]
-    fn start_point(&self) -> Point<N, D> {
-        Point::min_value()
+    fn start_point(&self) -> Option<Point<N, D>> {
+        None
     }
 
     #[inline]
-    fn end_point(&self) -> Point<N, D> {
-        self.end
+    fn end_point(&self) -> Option<Point<N, D>> {
+        Some(self.end)
     }
 }
 
@@ -57,7 +56,7 @@ mod tests {
         fn test_start_point() {
             assert_eq!(
                 (..=point![5, 5]).start_point(),
-                Point::min_value()
+                None
             );
         }
 
@@ -65,7 +64,7 @@ mod tests {
         fn test_end_point() {
             assert_eq!(
                 (..=point![5, 5]).end_point(),
-                point![5, 5]
+                Some(point![5, 5])
             );
         }
     }
