@@ -1,8 +1,7 @@
 use std::ops::Bound::{self, Excluded, Included, Unbounded};
 use na::{Point, Scalar};
-use num_traits::Bounded;
 
-use crate::{BBox, BoundPoints};
+use crate::{BBox, PointBounds};
 
 /// Builds a bounding box from a range of points
 ///
@@ -42,20 +41,20 @@ impl<N: Copy + Scalar, const D: usize> From<(Bound<Point<N, D>>, Bound<Point<N, 
     }
 }
 
-impl<N: Bounded + Copy + Scalar, const D: usize> BoundPoints<N, D> for (Bound<Point<N, D>>, Bound<Point<N, D>>) {
-    fn start_point(&self) -> Point<N, D> {
+impl<N: Copy + Scalar, const D: usize> PointBounds<N, D> for (Bound<Point<N, D>>, Bound<Point<N, D>>) {
+    fn start_point(&self) -> Option<Point<N, D>> {
         if let Included(pt) | Excluded(pt) = self.0 {
-            pt
+            Some(pt)
         } else {
-            Point::min_value()
+            None
         }
     }
 
-    fn end_point(&self) -> Point<N, D> {
+    fn end_point(&self) -> Option<Point<N, D>> {
         if let Included(pt) | Excluded(pt) = self.1 {
-            pt
+            Some(pt)
         } else {
-            Point::max_value()
+            None
         }
     }
 }
@@ -72,12 +71,12 @@ mod tests {
         fn test_start_point() {
             assert_eq!(
                 (Included(point![0, 0]), Excluded(point![5, 5])).start_point(),
-                point![0, 0]
+                Some(point![0, 0])
             );
 
             assert_eq!(
                 (Unbounded, Excluded(point![5, 5])).start_point(),
-                Point::min_value()
+                None
             );
         }
 
@@ -85,12 +84,12 @@ mod tests {
         fn test_end_point() {
             assert_eq!(
                 (Included(point![0, 0]), Excluded(point![5, 5])).end_point(),
-                point![5, 5]
+                Some(point![5, 5])
             );
 
             assert_eq!(
                 (Included(point![0, 0]), Unbounded).end_point(),
-                Point::max_value()
+                None
             );
         }
     }

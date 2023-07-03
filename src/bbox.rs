@@ -11,8 +11,8 @@ use std::ops::{Bound, Index, IndexMut};
 use std::ops::Bound::{Excluded, Included, Unbounded};
 use std::slice::{Iter, IterMut};
 use na::{ClosedAdd, Point, Scalar, SVector};
-use num_traits::Bounded;
-use crate::{BoundPoints, Holds, IsRangeEmpty};
+use num_traits::Zero;
+use crate::{Holds, IsRangeEmpty, PointBounds};
 
 type BBoxElement<N> = (Bound<N>, Bound<N>);
 
@@ -202,35 +202,33 @@ impl<N: Scalar, const D: usize> BBox<N, D> {
 }
 
 // Utils
-impl<N: Bounded + Copy + Scalar, const D: usize> BoundPoints<N, D> for BBox<N, D> {
-    /// Returns points made from start bounds
-    fn start_point(&self) -> Point<N, D> {
-        let coords = SVector::from_fn(|idx, _| {
-            let range = unsafe { self.get_unchecked(idx) };
+impl<N: Copy + Scalar + Zero, const D: usize> PointBounds<N, D> for BBox<N, D> {
+    fn start_point(&self) -> Option<Point<N, D>> {
+        let mut point = Point::<N, D>::default();
 
-            if let Included(x) | Excluded(x) = range.0 {
-                x
+        for (idx, range) in self.ranges.iter().enumerate() {
+            if let Included(x) | Excluded(x) = &range.0 {
+                unsafe { *point.get_unchecked_mut(idx) = *x };
             } else {
-                N::min_value()
+                return None
             }
-        });
+        }
 
-        Point::from(coords)
+        Some(point)
     }
 
-    /// Returns points made from end bounds
-    fn end_point(&self) -> Point<N, D> {
-        let coords = SVector::from_fn(|idx, _| {
-            let range = unsafe { self.get_unchecked(idx) };
+    fn end_point(&self) -> Option<Point<N, D>> {
+        let mut point = Point::<N, D>::default();
 
-            if let Included(x) | Excluded(x) = range.1 {
-                x
+        for (idx, range) in self.ranges.iter().enumerate() {
+            if let Included(x) | Excluded(x) = &range.1 {
+                unsafe { *point.get_unchecked_mut(idx) = *x };
             } else {
-                N::max_value()
+                return None
             }
-        });
+        }
 
-        Point::from(coords)
+        Some(point)
     }
 }
 
@@ -348,12 +346,12 @@ mod tests {
         fn test_start_point() {
             assert_eq!(
                 BBox::from(point![0, 0]..point![5, 5]).start_point(),
-                point![0, 0]
+                Some(point![0, 0])
             );
 
             assert_eq!(
                 BBox::from(..point![5, 5]).start_point(),
-                Point::min_value()
+                None
             );
         }
 
@@ -361,12 +359,12 @@ mod tests {
         fn test_end_point() {
             assert_eq!(
                 BBox::from(point![0, 0]..point![5, 5]).end_point(),
-                point![5, 5]
+                Some(point![5, 5])
             );
 
             assert_eq!(
                 BBox::from(point![0, 0]..).end_point(),
-                Point::max_value()
+                None
             );
         }
     }
