@@ -1,12 +1,12 @@
 extern crate nalgebra as na;
 
 pub mod bbox;
+pub mod bbox_walker;
 pub mod traits;
-pub mod walker;
 
 #[cfg(feature = "wasm")]
 pub mod wasm;
 
 pub use bbox::BBox;
+pub use bbox_walker::BBoxWalker;
 pub use traits::{Holds, IsRangeEmpty, PointBounds};
-pub use walker::Walker;
