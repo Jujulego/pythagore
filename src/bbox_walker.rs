@@ -6,30 +6,15 @@ use num_traits::One;
 pub struct BBoxWalker<N: Scalar, const D: usize> {
     first: Point<N, D>,
     last: Point<N, D>,
-    step: N,
 }
 
 impl<N: Scalar, const D: usize> BBoxWalker<N, D> {
     /// Builds a BBox Walker, moving inside a bbox going from first to last included.
     /// Uses a default step size of 1
-    pub fn new(first: Point<N, D>, last: Point<N, D>) -> BBoxWalker<N, D>
-    where
-        N: One,
-    {
+    pub fn new(first: Point<N, D>, last: Point<N, D>) -> BBoxWalker<N, D> {
         BBoxWalker {
             first,
-            last,
-            step: N::one()
-        }
-    }
-
-    /// Builds a BBox Walker, moving inside a bbox going from first to last included.
-    /// Uses the given step size
-    pub fn step_by(first: Point<N, D>, last: Point<N, D>, step: N) -> BBoxWalker<N, D> {
-        BBoxWalker {
-            first,
-            last,
-            step
+            last
         }
     }
 
@@ -46,7 +31,7 @@ impl<N: Scalar, const D: usize> BBoxWalker<N, D> {
     /// Computes next point, if exists from "from" point.
     pub fn next(&self, from: &Point<N, D>) -> Option<Point<N, D>>
     where
-        N: AddAssign + Copy + Ord
+        N: AddAssign + Copy + One + Ord
     {
         if from == &self.last || unsafe { from.get_unchecked(0) > self.last.get_unchecked(0) } {
             return None;
@@ -63,11 +48,11 @@ impl<N: Scalar, const D: usize> BBoxWalker<N, D> {
                 addable = Some(idx);
 
                 if idx == D - 1 {
-                    unsafe { *next.get_unchecked_mut(idx) += self.step };
+                    unsafe { *next.get_unchecked_mut(idx) += N::one() };
                 }
             } else {
                 if let Some(back) = addable {
-                    unsafe { *next.get_unchecked_mut(back) += self.step };
+                    unsafe { *next.get_unchecked_mut(back) += N::one() };
 
                     return Some(next);
                 } else {
