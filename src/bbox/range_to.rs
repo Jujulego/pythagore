@@ -48,7 +48,7 @@ impl<N: Copy + Scalar, const D: usize> PointBounds<N, D> for RangeTo<Point<N, D>
 mod tests {
     use super::*;
 
-    mod bound_points {
+    mod point_bounds {
         use na::point;
         use super::*;
 

@@ -10,9 +10,9 @@ use std::cmp::{max, min};
 use std::ops::{Bound, Index, IndexMut};
 use std::ops::Bound::{Excluded, Included, Unbounded};
 use std::slice::{Iter, IterMut};
-use na::{ClosedAdd, Point, Scalar, SVector};
-use num_traits::Zero;
-use crate::{Holds, IsRangeEmpty, PointBounds};
+use na::{ClosedAdd, ClosedSub, Point, Scalar, SVector};
+use num_traits::{One, Zero};
+use crate::{Holds, IsRangeEmpty, PointBounds, Walkable};
 
 type BBoxElement<N> = (Bound<N>, Bound<N>);
 
@@ -202,36 +202,6 @@ impl<N: Scalar, const D: usize> BBox<N, D> {
 }
 
 // Utils
-impl<N: Copy + Scalar + Zero, const D: usize> PointBounds<N, D> for BBox<N, D> {
-    fn start_point(&self) -> Option<Point<N, D>> {
-        let mut point = Point::<N, D>::default();
-
-        for (idx, range) in self.ranges.iter().enumerate() {
-            if let Included(x) | Excluded(x) = &range.0 {
-                unsafe { *point.get_unchecked_mut(idx) = *x };
-            } else {
-                return None
-            }
-        }
-
-        Some(point)
-    }
-
-    fn end_point(&self) -> Option<Point<N, D>> {
-        let mut point = Point::<N, D>::default();
-
-        for (idx, range) in self.ranges.iter().enumerate() {
-            if let Included(x) | Excluded(x) = &range.1 {
-                unsafe { *point.get_unchecked_mut(idx) = *x };
-            } else {
-                return None
-            }
-        }
-
-        Some(point)
-    }
-}
-
 /// Default is a fully unbounded bbox
 ///
 /// # Example
@@ -283,6 +253,66 @@ impl<N: Scalar + PartialOrd, const D: usize> Holds<Point<N, D>> for BBox<N, D> {
 impl<N: Scalar + PartialOrd, const D: usize> IsRangeEmpty for BBox<N, D> {
     fn is_range_empty(&self) -> bool {
         self.ranges.iter().any(|range| range.is_range_empty())
+    }
+}
+
+impl<N: Copy + Scalar + Zero, const D: usize> PointBounds<N, D> for BBox<N, D> {
+    fn start_point(&self) -> Option<Point<N, D>> {
+        let mut point = Point::<N, D>::default();
+
+        for (idx, range) in self.ranges.iter().enumerate() {
+            if let Included(x) | Excluded(x) = range.0 {
+                unsafe { *point.get_unchecked_mut(idx) = x };
+            } else {
+                return None
+            }
+        }
+
+        Some(point)
+    }
+
+    fn end_point(&self) -> Option<Point<N, D>> {
+        let mut point = Point::<N, D>::default();
+
+        for (idx, range) in self.ranges.iter().enumerate() {
+            if let Included(x) | Excluded(x) = range.1 {
+                unsafe { *point.get_unchecked_mut(idx) = x };
+            } else {
+                return None
+            }
+        }
+
+        Some(point)
+    }
+}
+
+impl<N: ClosedAdd + ClosedSub + Copy + One + Scalar + Zero, const D: usize> Walkable<N, D> for BBox<N, D> {
+    fn first_point(&self) -> Option<Point<N, D>> {
+        let mut point = Point::<N, D>::default();
+
+        for (idx, range) in self.ranges.iter().enumerate() {
+            match range.0 {
+                Included(x) => unsafe { *point.get_unchecked_mut(idx) = x },
+                Excluded(x) => unsafe { *point.get_unchecked_mut(idx) = x + N::one() },
+                Unbounded => return None,
+            }
+        }
+
+        Some(point)
+    }
+
+    fn last_point(&self) -> Option<Point<N, D>> {
+        let mut point = Point::<N, D>::default();
+
+        for (idx, range) in self.ranges.iter().enumerate() {
+            match range.1 {
+                Included(x) => unsafe { *point.get_unchecked_mut(idx) = x },
+                Excluded(x) => unsafe { *point.get_unchecked_mut(idx) = x - N::one() },
+                Unbounded => return None,
+            }
+        }
+
+        Some(point)
     }
 }
 
@@ -338,37 +368,6 @@ impl<N: Scalar, const D: usize> PartialEq for BBox<N, D> {
 mod tests {
     use super::*;
 
-    mod bound_points {
-        use na::point;
-        use super::*;
-
-        #[test]
-        fn test_start_point() {
-            assert_eq!(
-                BBox::from(point![0, 0]..point![5, 5]).start_point(),
-                Some(point![0, 0])
-            );
-
-            assert_eq!(
-                BBox::from(..point![5, 5]).start_point(),
-                None
-            );
-        }
-
-        #[test]
-        fn test_end_point() {
-            assert_eq!(
-                BBox::from(point![0, 0]..point![5, 5]).end_point(),
-                Some(point![5, 5])
-            );
-
-            assert_eq!(
-                BBox::from(point![0, 0]..).end_point(),
-                None
-            );
-        }
-    }
-
     mod holds {
         use na::point;
         use super::*;
@@ -413,6 +412,78 @@ mod tests {
 
             assert!(!BBox::from(point![5, 0]..=point![5, 5]).is_range_empty());
             assert!(!BBox::from(point![0, 5]..=point![5, 5]).is_range_empty());
+        }
+    }
+
+    mod point_bounds {
+        use na::point;
+        use super::*;
+
+        #[test]
+        fn test_start_point() {
+            assert_eq!(
+                BBox::from(point![0, 0]..point![5, 5]).start_point(),
+                Some(point![0, 0])
+            );
+
+            assert_eq!(
+                BBox::from(..point![5, 5]).start_point(),
+                None
+            );
+        }
+
+        #[test]
+        fn test_end_point() {
+            assert_eq!(
+                BBox::from(point![0, 0]..point![5, 5]).end_point(),
+                Some(point![5, 5])
+            );
+
+            assert_eq!(
+                BBox::from(point![0, 0]..).end_point(),
+                None
+            );
+        }
+    }
+
+    mod walkable {
+        use na::point;
+        use super::*;
+
+        #[test]
+        fn test_first_point() {
+            assert_eq!(
+                BBox::from(point![0, 0]..point![5, 5]).first_point(),
+                Some(point![0, 0])
+            );
+
+            assert_eq!(
+                BBox::from([(Included(0), Excluded(5)), (Excluded(0), Excluded(5))]).first_point(),
+                Some(point![0, 1])
+            );
+
+            assert_eq!(
+                BBox::from(..point![5, 5]).first_point(),
+                None
+            );
+        }
+
+        #[test]
+        fn test_last_point() {
+            assert_eq!(
+                BBox::from(point![0, 0]..point![5, 5]).last_point(),
+                Some(point![4, 4])
+            );
+
+            assert_eq!(
+                BBox::from([(Included(0), Included(5)), (Included(0), Excluded(5))]).last_point(),
+                Some(point![5, 4])
+            );
+
+            assert_eq!(
+                BBox::from(point![0, 0]..).last_point(),
+                None
+            );
         }
     }
 }

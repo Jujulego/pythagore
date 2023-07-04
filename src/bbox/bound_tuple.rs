@@ -1,7 +1,8 @@
 use std::ops::Bound::{self, Excluded, Included, Unbounded};
-use na::{Point, Scalar};
+use na::{ClosedAdd, ClosedSub, Point, Scalar, SVector};
+use num_traits::One;
 
-use crate::{BBox, PointBounds};
+use crate::{BBox, PointBounds, Walkable};
 
 /// Builds a bounding box from a range of points
 ///
@@ -59,11 +60,29 @@ impl<N: Copy + Scalar, const D: usize> PointBounds<N, D> for (Bound<Point<N, D>>
     }
 }
 
+impl<N: ClosedAdd + ClosedSub + Copy + One + Scalar, const D: usize> Walkable<N, D> for (Bound<Point<N, D>>, Bound<Point<N, D>>) {
+    fn first_point(&self) -> Option<Point<N, D>> {
+        match self.0 {
+            Included(pt) => Some(pt),
+            Excluded(pt) => Some(pt + SVector::repeat(N::one())),
+            Unbounded => None
+        }
+    }
+
+    fn last_point(&self) -> Option<Point<N, D>> {
+        match self.1 {
+            Included(pt) => Some(pt),
+            Excluded(pt) => Some(pt - SVector::repeat(N::one())),
+            Unbounded => None
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    mod bound_points {
+    mod point_bounds {
         use na::point;
         use super::*;
 
@@ -89,6 +108,47 @@ mod tests {
 
             assert_eq!(
                 (Included(point![0, 0]), Unbounded).end_point(),
+                None
+            );
+        }
+    }
+
+    mod walkable {
+        use na::point;
+        use super::*;
+
+        #[test]
+        fn test_first_point() {
+            assert_eq!(
+                (Included(point![0, 0]), Excluded(point![5, 5])).first_point(),
+                Some(point![0, 0])
+            );
+
+            assert_eq!(
+                (Excluded(point![0, 0]), Excluded(point![5, 5])).first_point(),
+                Some(point![1, 1])
+            );
+
+            assert_eq!(
+                (Unbounded, Excluded(point![5, 5])).first_point(),
+                None
+            );
+        }
+
+        #[test]
+        fn test_last_point() {
+            assert_eq!(
+                (Included(point![0, 0]), Included(point![5, 5])).last_point(),
+                Some(point![5, 5])
+            );
+
+            assert_eq!(
+                (Included(point![0, 0]), Excluded(point![5, 5])).last_point(),
+                Some(point![4, 4])
+            );
+
+            assert_eq!(
+                (Included(point![0, 0]), Unbounded).last_point(),
                 None
             );
         }
