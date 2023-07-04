@@ -2,7 +2,7 @@ use std::ops::Bound::{Included, Unbounded};
 use std::ops::RangeInclusive;
 use na::{Point, Scalar};
 
-use crate::{BBox, PointBounds};
+use crate::{BBox, PointBounds, Walkable};
 
 /// Builds a bounding box from a range of points
 ///
@@ -45,11 +45,23 @@ impl<N: Copy + Scalar, const D: usize> PointBounds<N, D> for RangeInclusive<Poin
     }
 }
 
+impl<N: Copy + Scalar, const D: usize> Walkable<N, D> for RangeInclusive<Point<N, D>> {
+    #[inline]
+    fn first_point(&self) -> Option<Point<N, D>> {
+        Some(*self.start())
+    }
+
+    #[inline]
+    fn last_point(&self) -> Option<Point<N, D>> {
+        Some(*self.end())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    mod bound_points {
+    mod point_bounds {
         use na::point;
         use super::*;
 
@@ -65,6 +77,27 @@ mod tests {
         fn test_end_point() {
             assert_eq!(
                 (point![0, 0]..=point![5, 5]).end_point(),
+                Some(point![5, 5])
+            );
+        }
+    }
+
+    mod walkable {
+        use na::point;
+        use super::*;
+
+        #[test]
+        fn test_first_point() {
+            assert_eq!(
+                (point![0, 0]..=point![5, 5]).first_point(),
+                Some(point![0, 0])
+            );
+        }
+
+        #[test]
+        fn test_last_point() {
+            assert_eq!(
+                (point![0, 0]..=point![5, 5]).last_point(),
                 Some(point![5, 5])
             );
         }

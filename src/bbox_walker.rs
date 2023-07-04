@@ -3,6 +3,7 @@ use na::{Point, Scalar};
 use num_traits::One;
 
 /// Generates points inside a bbox, in xy order.
+#[derive(Clone, Copy, Debug)]
 pub struct BBoxWalker<N: Scalar, const D: usize> {
     first: Point<N, D>,
     last: Point<N, D>,

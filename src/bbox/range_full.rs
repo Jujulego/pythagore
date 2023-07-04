@@ -42,7 +42,7 @@ impl<N: Scalar, const D: usize> PointBounds<N, D> for RangeFull {
 mod tests {
     use super::*;
 
-    mod bound_points {
+    mod point_bounds {
         use super::*;
 
         #[test]
