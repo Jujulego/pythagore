@@ -99,7 +99,7 @@ impl<N: Copy + Default + Ord + Scalar, const D: usize> Intersection<RangeFrom<Po
 
     #[inline]
     fn intersection(&self, lhs: &RangeFrom<Point<N, D>>) -> Self::Output {
-        max_point(&self.start(), &lhs.start)..=*self.end()
+        max_point(self.start(), &lhs.start)..=*self.end()
     }
 }
 

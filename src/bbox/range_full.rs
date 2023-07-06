@@ -43,7 +43,7 @@ impl<N: Copy + Scalar, const D: usize> Intersection<BBox<N, D>> for RangeFull {
 
     #[inline]
     fn intersection(&self, lhs: &BBox<N, D>) -> Self::Output {
-        lhs.clone()
+        *lhs
     }
 }
 
@@ -70,7 +70,7 @@ impl Intersection for RangeFull {
 
     #[inline]
     fn intersection(&self, _: &RangeFull) -> Self::Output {
-        self.clone()
+        *self
     }
 }
 
@@ -88,7 +88,7 @@ impl<N: Copy + Scalar, const D: usize> Intersection<RangeTo<Point<N, D>>> for Ra
 
     #[inline]
     fn intersection(&self, lhs: &RangeTo<Point<N, D>>) -> Self::Output {
-        lhs.clone()
+        *lhs
     }
 }
 
@@ -97,7 +97,7 @@ impl<N: Copy + Scalar, const D: usize> Intersection<RangeToInclusive<Point<N, D>
 
     #[inline]
     fn intersection(&self, lhs: &RangeToInclusive<Point<N, D>>) -> Self::Output {
-        lhs.clone()
+        *lhs
     }
 }
 
