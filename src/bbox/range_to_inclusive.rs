@@ -45,6 +45,15 @@ impl<N: Copy + Scalar, const D: usize> PointBounds<N, D> for RangeToInclusive<Po
     }
 }
 
+impl<N: Copy + PartialOrd + Scalar, const D: usize> Intersection<BBox<N, D>> for RangeToInclusive<Point<N, D>> {
+    type Output = BBox<N, D>;
+
+    #[inline]
+    fn intersection(&self, lhs: &BBox<N, D>) -> Self::Output {
+        lhs.intersection(self)
+    }
+}
+
 impl<N: Copy + Ord + Scalar, const D: usize> Intersection<Range<Point<N, D>>> for RangeToInclusive<Point<N, D>> {
     type Output = BBox<N, D>;
 

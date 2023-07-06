@@ -38,6 +38,15 @@ impl<N: Scalar, const D: usize> PointBounds<N, D> for RangeFull {
     }
 }
 
+impl<N: Copy + Scalar, const D: usize> Intersection<BBox<N, D>> for RangeFull {
+    type Output = BBox<N, D>;
+
+    #[inline]
+    fn intersection(&self, lhs: &BBox<N, D>) -> Self::Output {
+        lhs.clone()
+    }
+}
+
 impl<N: Copy + Scalar, const D: usize> Intersection<Range<Point<N, D>>> for RangeFull {
     type Output = Range<Point<N, D>>;
 

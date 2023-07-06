@@ -45,6 +45,15 @@ impl<N: Copy + Scalar, const D: usize> PointBounds<N, D> for RangeTo<Point<N, D>
     }
 }
 
+impl<N: Copy + PartialOrd + Scalar, const D: usize> Intersection<BBox<N, D>> for RangeTo<Point<N, D>> {
+    type Output = BBox<N, D>;
+
+    #[inline]
+    fn intersection(&self, lhs: &BBox<N, D>) -> Self::Output {
+        lhs.intersection(self)
+    }
+}
+
 impl<N: Copy + Default + Ord + Scalar, const D: usize> Intersection<Range<Point<N, D>>> for RangeTo<Point<N, D>> {
     type Output = Range<Point<N, D>>;
 
@@ -84,7 +93,7 @@ impl<N: Copy + Ord + Scalar, const D: usize> Intersection<RangeInclusive<Point<N
             let rex = unsafe { self.end.get_unchecked(idx) };
             let lex = unsafe { lhs.end().get_unchecked(idx) };
 
-            if rex < lex {
+            if rex <= lex {
                 range.1 = Excluded(*rex);
             } else {
                 range.1 = Included(*lex);
@@ -114,7 +123,7 @@ impl<N: Copy + Default + Ord + Scalar, const D: usize> Intersection<RangeToInclu
             let rex = unsafe { self.end.get_unchecked(idx) };
             let lex = unsafe { lhs.end.get_unchecked(idx) };
 
-            if rex < lex {
+            if rex <= lex {
                 range.1 = Excluded(*rex);
             } else {
                 range.1 = Included(*lex);
