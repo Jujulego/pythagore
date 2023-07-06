@@ -60,14 +60,12 @@ impl<N: Scalar, const D: usize> BBoxWalker<N, D> {
                 if idx == D - 1 {
                     unsafe { *next.get_unchecked_mut(idx) += N::one() };
                 }
-            } else {
-                if let Some(back) = addable {
-                    unsafe { *next.get_unchecked_mut(back) += N::one() };
+            } else if let Some(back) = addable {
+                unsafe { *next.get_unchecked_mut(back) += N::one() };
 
-                    return Some(next);
-                } else {
-                    unsafe { *next.get_unchecked_mut(idx) = *self.last.get_unchecked(idx) };
-                }
+                return Some(next);
+            } else {
+                unsafe { *next.get_unchecked_mut(idx) = *self.last.get_unchecked(idx) };
             }
         }
 
