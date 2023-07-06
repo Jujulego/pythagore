@@ -9,4 +9,4 @@ pub mod wasm;
 
 pub use bbox::BBox;
 pub use bbox_walker::BBoxWalker;
-pub use traits::{Holds, IsRangeEmpty, PointBounds, Walkable};
+pub use traits::{Holds, Intersection, IsRangeEmpty, PointBounds, Walkable};

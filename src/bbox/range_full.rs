@@ -1,8 +1,8 @@
 use std::ops::Bound::Unbounded;
-use std::ops::RangeFull;
+use std::ops::{Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive};
 use na::{Point, Scalar};
 
-use crate::{BBox, PointBounds};
+use crate::{BBox, Intersection, PointBounds};
 
 /// Builds a bounding box from a range of points
 ///
@@ -38,9 +38,84 @@ impl<N: Scalar, const D: usize> PointBounds<N, D> for RangeFull {
     }
 }
 
+impl<N: Copy + Scalar, const D: usize> Intersection<BBox<N, D>> for RangeFull {
+    type Output = BBox<N, D>;
+
+    #[inline]
+    fn intersection(&self, lhs: &BBox<N, D>) -> Self::Output {
+        lhs.clone()
+    }
+}
+
+impl<N: Copy + Scalar, const D: usize> Intersection<Range<Point<N, D>>> for RangeFull {
+    type Output = Range<Point<N, D>>;
+
+    #[inline]
+    fn intersection(&self, lhs: &Range<Point<N, D>>) -> Self::Output {
+        lhs.clone()
+    }
+}
+
+impl<N: Copy + Scalar, const D: usize> Intersection<RangeFrom<Point<N, D>>> for RangeFull {
+    type Output = RangeFrom<Point<N, D>>;
+
+    #[inline]
+    fn intersection(&self, lhs: &RangeFrom<Point<N, D>>) -> Self::Output {
+        lhs.clone()
+    }
+}
+
+impl Intersection for RangeFull {
+    type Output = RangeFull;
+
+    #[inline]
+    fn intersection(&self, _: &RangeFull) -> Self::Output {
+        self.clone()
+    }
+}
+
+impl<N: Copy + Scalar, const D: usize> Intersection<RangeInclusive<Point<N, D>>> for RangeFull {
+    type Output = RangeInclusive<Point<N, D>>;
+
+    #[inline]
+    fn intersection(&self, lhs: &RangeInclusive<Point<N, D>>) -> Self::Output {
+        lhs.clone()
+    }
+}
+
+impl<N: Copy + Scalar, const D: usize> Intersection<RangeTo<Point<N, D>>> for RangeFull {
+    type Output = RangeTo<Point<N, D>>;
+
+    #[inline]
+    fn intersection(&self, lhs: &RangeTo<Point<N, D>>) -> Self::Output {
+        lhs.clone()
+    }
+}
+
+impl<N: Copy + Scalar, const D: usize> Intersection<RangeToInclusive<Point<N, D>>> for RangeFull {
+    type Output = RangeToInclusive<Point<N, D>>;
+
+    #[inline]
+    fn intersection(&self, lhs: &RangeToInclusive<Point<N, D>>) -> Self::Output {
+        lhs.clone()
+    }
+}
+
+// Tests
 #[cfg(test)]
 mod tests {
+    use na::point;
     use super::*;
+
+    #[test]
+    fn test_intersection() {
+        assert_eq!((..).intersection(&(point![5, 0]..point![15, 10])), point![5, 0]..point![15, 10]);
+        assert_eq!((..).intersection(&(point![5, 0]..)), point![5, 0]..);
+        assert_eq!((..).intersection(&(..)), ..);
+        assert_eq!((..).intersection(&(point![5, 0]..=point![15, 10])), point![5, 0]..=point![15, 10]);
+        assert_eq!((..).intersection(&(..point![15, 10])), ..point![15, 10]);
+        assert_eq!((..).intersection(&(..=point![15, 10])), ..=point![15, 10]);
+    }
 
     mod point_bounds {
         use super::*;
