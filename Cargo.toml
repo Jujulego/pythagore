@@ -17,6 +17,6 @@ wasm-point = ["wasm"]
 wasm-vector = ["wasm"]
 
 [dependencies]
-nalgebra = "0.32.2"
+nalgebra = "0.32.3"
 num-traits = "0.2.15"
 wasm-bindgen = { version = "0.2.87", optional = true }
