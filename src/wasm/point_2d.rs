@@ -1,6 +1,8 @@
-use crate::wasm::vector_2d::Vector2D;
 use na::{point, Point2};
 use wasm_bindgen::prelude::wasm_bindgen;
+
+#[cfg(feature = "wasm-vector")]
+use crate::wasm::vector_2d::Vector2D;
 
 /// 2D point defined in js
 #[wasm_bindgen]
