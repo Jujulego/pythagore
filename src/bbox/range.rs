@@ -6,6 +6,7 @@ use num_traits::One;
 
 use crate::{BBox, Intersection, PointBounds, Walkable};
 use crate::bbox::utils::{max_point, min_point};
+use crate::traits::DimensionBounds;
 
 /// Builds a bounding box from a range of points
 ///
@@ -33,6 +34,15 @@ impl<N: Copy + Scalar, const D: usize> From<Range<Point<N, D>>> for BBox<N, D> {
         }
 
         BBox::from(ranges)
+    }
+}
+
+impl<N: Copy + Scalar, const D: usize> DimensionBounds<N, D> for Range<Point<N, D>> {
+    type Output = Range<N>;
+
+    #[inline]
+    unsafe fn get_bounds_unchecked(&self, idx: usize) -> Self::Output {
+        *self.start.get_unchecked(idx)..*self.end.get_unchecked(idx)
     }
 }
 
@@ -174,6 +184,17 @@ mod tests {
             (Included(0), Excluded(10)),
             (Included(5), Included(10)),
         ]));
+    }
+
+    mod dimension_bounds {
+        use na::point;
+        use super::*;
+
+        #[test]
+        fn test_get_bounds() {
+            assert_eq!((point![1, 2]..point![3, 4]).get_bounds(0), 1..3);
+            assert_eq!((point![1, 2]..point![3, 4]).get_bounds(1), 2..4);
+        }
     }
 
     mod point_bounds {
