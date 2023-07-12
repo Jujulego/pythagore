@@ -416,4 +416,56 @@ mod tests {
             assert!(!(0..4).overlaps(&(Included( 5), Included( 7))));
         }
     }
+
+    mod range_from {
+        use super::*;
+
+        #[test]
+        fn test_overlaps_range() {
+            assert!(!(0..).overlaps(&(-3..-1)));
+            assert!( (0..).overlaps(&(-1.. 1)));
+            assert!( (0..).overlaps(&( 3.. 5)));
+        }
+
+        #[test]
+        fn test_overlaps_range_from() {
+            assert!( (0..).overlaps(&(-3..)));
+            assert!( (0..).overlaps(&( 2..)));
+        }
+
+        #[test]
+        fn test_overlaps_range_full() {
+            assert!( (0..).overlaps(&(..)));
+        }
+
+        #[test]
+        fn test_overlaps_range_inclusive() {
+            assert!(!(0..).overlaps(&(-3..=-1)));
+            assert!( (0..).overlaps(&(-3..= 0)));
+            assert!( (0..).overlaps(&(-1..= 1)));
+            assert!( (0..).overlaps(&( 3..= 5)));
+        }
+
+        #[test]
+        fn test_overlaps_range_to() {
+            assert!(!(0..).overlaps(&(..-3)));
+            assert!( (0..).overlaps(&(.. 2)));
+        }
+
+        #[test]
+        fn test_overlaps_range_to_inclusive() {
+            assert!(!(0..).overlaps(&(..=-3)));
+            assert!( (0..).overlaps(&(..= 0)));
+            assert!( (0..).overlaps(&(..= 2)));
+        }
+
+        #[test]
+        fn test_overlaps_bound_tuple() {
+            assert!(!(0..).overlaps(&(Included(-3), Included(-1))));
+            assert!(!(0..).overlaps(&(Included(-3), Excluded( 0))));
+            assert!( (0..).overlaps(&(Included(-3), Included( 0))));
+            assert!( (0..).overlaps(&(Included(-1), Included( 1))));
+            assert!( (0..).overlaps(&(Included( 3), Included( 5))));
+        }
+    }
 }
