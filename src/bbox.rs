@@ -15,6 +15,7 @@ use na::{ClosedAdd, ClosedSub, Point, Scalar, SVector};
 use num_traits::{One, Zero};
 use crate::{Holds, Intersection, IsRangeEmpty, PointBounds, Walkable};
 use crate::bbox::utils::{max_bound, min_bound};
+use crate::traits::{DimensionBounds, Overlaps};
 
 type BBoxElement<N> = (Bound<N>, Bound<N>);
 
@@ -258,6 +259,14 @@ impl<N: Scalar + PartialOrd, const D: usize> IsRangeEmpty for BBox<N, D> {
     }
 }
 
+impl<N: Copy + Scalar, const D: usize> DimensionBounds<N, D> for BBox<N, D> {
+    type Output = (Bound<N>, Bound<N>);
+
+    unsafe fn get_bounds_unchecked(&self, idx: usize) -> Self::Output {
+        *self.ranges.get_unchecked(idx)
+    }
+}
+
 impl<N: Copy + Scalar + Zero, const D: usize> PointBounds<N, D> for BBox<N, D> {
     fn start_point(&self) -> Option<Point<N, D>> {
         let mut point = Point::<N, D>::default();
@@ -430,6 +439,18 @@ impl<N: Copy + PartialOrd + Scalar, const D: usize> Intersection<RangeToInclusiv
     }
 }
 
+impl<N, Lhs, const D: usize> Overlaps<Lhs> for BBox<N, D>
+where
+    N: Copy + PartialOrd + Scalar,
+    Lhs: DimensionBounds<N, D>,
+    <Lhs as DimensionBounds<N, D>>::Output: Overlaps<BBoxElement<N>>,
+{
+    fn overlaps(&self, lhs: &Lhs) -> bool {
+        self.ranges.iter().enumerate()
+            .all(|(idx, range)| unsafe { lhs.get_bounds_unchecked(idx) }.overlaps(range))
+    }
+}
+
 // Conversion
 impl<N: Scalar, const D: usize> AsRef<[BBoxElement<N>; D]> for BBox<N, D> {
     #[inline]
@@ -557,6 +578,21 @@ mod tests {
                 BBox::from(point![0, 0]..).end_point(),
                 None
             );
+        }
+    }
+
+    mod overlaps {
+        use na::point;
+        use super::*;
+
+        #[test]
+        fn test_range() {
+            assert!(BBox::from(point![0, 0]..point![4, 4]).overlaps(&(point![-2, -2]..point![2, 2])));
+            assert!(BBox::from(point![0, 0]..point![4, 4]).overlaps(&(point![ 2, -2]..point![6, 2])));
+            assert!(BBox::from(point![0, 0]..point![4, 4]).overlaps(&(point![-2,  2]..point![2, 6])));
+            assert!(BBox::from(point![0, 0]..point![4, 4]).overlaps(&(point![ 2,  2]..point![6, 6])));
+            assert!(BBox::from(point![0, 0]..point![4, 4]).overlaps(&(point![-2, -2]..point![6, 6])));
+            assert!(BBox::from(point![0, 0]..point![4, 4]).overlaps(&(point![ 1,  1]..point![3, 3])));
         }
     }
 

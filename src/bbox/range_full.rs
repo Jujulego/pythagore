@@ -3,6 +3,7 @@ use std::ops::{Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToIncl
 use na::{Point, Scalar};
 
 use crate::{BBox, Intersection, PointBounds};
+use crate::traits::DimensionBounds;
 
 /// Builds a bounding box from a range of points
 ///
@@ -23,6 +24,20 @@ use crate::{BBox, Intersection, PointBounds};
 impl<N: Copy + Scalar, const D: usize> From<RangeFull> for BBox<N, D> {
     fn from(_value: RangeFull) -> Self {
         BBox::from([(Unbounded, Unbounded); D])
+    }
+}
+
+impl<N: Scalar, const D: usize> DimensionBounds<N, D> for RangeFull {
+    type Output = RangeFull;
+
+    #[inline]
+    fn get_bounds(&self, _idx: usize) -> Self::Output {
+        ..
+    }
+
+    #[inline]
+    unsafe fn get_bounds_unchecked(&self, _idx: usize) -> Self::Output {
+        ..
     }
 }
 
@@ -115,6 +130,16 @@ mod tests {
         assert_eq!((..).intersection(&(point![5, 0]..=point![15, 10])), point![5, 0]..=point![15, 10]);
         assert_eq!((..).intersection(&(..point![15, 10])), ..point![15, 10]);
         assert_eq!((..).intersection(&(..=point![15, 10])), ..=point![15, 10]);
+    }
+
+    mod dimension_bounds {
+        use super::*;
+
+        #[test]
+        fn test_get_bounds() {
+            assert_eq!(DimensionBounds::<i32, 2>::get_bounds(&(..), 0), ..);
+            assert_eq!(DimensionBounds::<i32, 2>::get_bounds(&(..), 1), ..);
+        }
     }
 
     mod point_bounds {

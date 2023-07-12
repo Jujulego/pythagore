@@ -4,6 +4,7 @@ use na::{Point, Scalar};
 
 use crate::{BBox, Intersection, PointBounds};
 use crate::bbox::utils::max_point;
+use crate::traits::DimensionBounds;
 
 /// Builds a bounding box from a range of points
 ///
@@ -30,6 +31,15 @@ impl<N: Copy + Scalar, const D: usize> From<RangeFrom<Point<N, D>>> for BBox<N, 
         }
 
         BBox::from(ranges)
+    }
+}
+
+impl<N: Copy + Scalar, const D: usize> DimensionBounds<N, D> for RangeFrom<Point<N, D>> {
+    type Output = RangeFrom<N>;
+
+    #[inline]
+    unsafe fn get_bounds_unchecked(&self, idx: usize) -> Self::Output {
+        *self.start.get_unchecked(idx)..
     }
 }
 
@@ -122,6 +132,17 @@ mod tests {
         assert_eq!((point![0, 5]..).intersection(&(point![5, 0]..=point![15, 10])), point![5, 5]..=point![15, 10]);
         assert_eq!((point![0, 5]..).intersection(&(..point![15, 10])), point![0, 5]..point![15, 10]);
         assert_eq!((point![0, 5]..).intersection(&(..=point![15, 10])), point![0, 5]..=point![15, 10]);
+    }
+
+    mod dimension_bounds {
+        use na::point;
+        use super::*;
+
+        #[test]
+        fn test_get_bounds() {
+            assert_eq!((point![1, 2]..).get_bounds(0), 1..);
+            assert_eq!((point![1, 2]..).get_bounds(1), 2..);
+        }
     }
 
     mod point_bounds {

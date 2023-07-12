@@ -6,6 +6,13 @@ pub trait Holds<I> {
 }
 
 // Implementations
+impl<T: PartialOrd> Holds<T> for Range<T> {
+    #[inline]
+    fn holds(&self, object: &T) -> bool {
+        self.contains(object)
+    }
+}
+
 impl<T: PartialOrd> Holds<T> for RangeFrom<T> {
     #[inline]
     fn holds(&self, object: &T) -> bool {
@@ -20,6 +27,13 @@ impl<T> Holds<T> for RangeFull {
     }
 }
 
+impl<T: PartialOrd> Holds<T> for RangeInclusive<T> {
+    #[inline]
+    fn holds(&self, object: &T) -> bool {
+        self.contains(object)
+    }
+}
+
 impl<T: PartialOrd> Holds<T> for RangeTo<T> {
     #[inline]
     fn holds(&self, object: &T) -> bool {
@@ -28,20 +42,6 @@ impl<T: PartialOrd> Holds<T> for RangeTo<T> {
 }
 
 impl<T: PartialOrd> Holds<T> for RangeToInclusive<T> {
-    #[inline]
-    fn holds(&self, object: &T) -> bool {
-        self.contains(object)
-    }
-}
-
-impl<T: PartialOrd> Holds<T> for Range<T> {
-    #[inline]
-    fn holds(&self, object: &T) -> bool {
-        self.contains(object)
-    }
-}
-
-impl<T: PartialOrd> Holds<T> for RangeInclusive<T> {
     #[inline]
     fn holds(&self, object: &T) -> bool {
         self.contains(object)

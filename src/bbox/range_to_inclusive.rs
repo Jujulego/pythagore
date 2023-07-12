@@ -4,6 +4,7 @@ use na::{Point, Scalar};
 
 use crate::{BBox, Intersection, PointBounds};
 use crate::bbox::utils::min_point;
+use crate::traits::DimensionBounds;
 
 /// Builds a bounding box from a range of points
 ///
@@ -30,6 +31,15 @@ impl<N: Copy + Scalar, const D: usize> From<RangeToInclusive<Point<N, D>>> for B
         }
 
         BBox::from(ranges)
+    }
+}
+
+impl<N: Copy + Scalar, const D: usize> DimensionBounds<N, D> for RangeToInclusive<Point<N, D>> {
+    type Output = RangeToInclusive<N>;
+
+    #[inline]
+    unsafe fn get_bounds_unchecked(&self, idx: usize) -> Self::Output {
+        ..=*self.end.get_unchecked(idx)
     }
 }
 
@@ -153,6 +163,17 @@ mod tests {
             (Unbounded, Excluded(10)),
         ]));
         assert_eq!((..=point![10, 15]).intersection(&(..=point![15, 10])), ..=point![10, 10]);
+    }
+
+    mod dimension_bounds {
+        use na::point;
+        use super::*;
+
+        #[test]
+        fn test_get_bounds() {
+            assert_eq!((..=point![3, 4]).get_bounds(0), ..=3);
+            assert_eq!((..=point![3, 4]).get_bounds(1), ..=4);
+        }
     }
 
     mod point_bounds {

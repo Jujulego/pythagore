@@ -3,6 +3,7 @@ use na::{ClosedAdd, ClosedSub, Point, Scalar, SVector};
 use num_traits::One;
 
 use crate::{BBox, PointBounds, Walkable};
+use crate::traits::DimensionBounds;
 
 /// Builds a bounding box from a range of points
 ///
@@ -25,20 +26,41 @@ impl<N: Copy + Scalar, const D: usize> From<(Bound<Point<N, D>>, Bound<Point<N, 
         let mut ranges = [(Unbounded, Unbounded); D];
 
         for (idx, range) in ranges.iter_mut().enumerate() {
-            range.0 = match value.0 {
-                Included(x) => Included(unsafe { *x.get_unchecked(idx) }),
-                Excluded(x) => Excluded(unsafe { *x.get_unchecked(idx) }),
-                Unbounded => Unbounded,
-            };
-
-            range.1 = match value.1 {
-                Included(x) => Included(unsafe { *x.get_unchecked(idx) }),
-                Excluded(x) => Excluded(unsafe { *x.get_unchecked(idx) }),
-                Unbounded => Unbounded,
-            };
+            *range = unsafe { value.get_bounds_unchecked(idx) };
         }
 
         BBox::from(ranges)
+    }
+}
+
+#[cfg(not(feature = "bound_map"))]
+impl<N: Copy + Scalar, const D: usize> DimensionBounds<N, D> for (Bound<Point<N, D>>, Bound<Point<N, D>>) {
+    type Output = (Bound<N>, Bound<N>);
+
+    #[inline]
+    unsafe fn get_bounds_unchecked(&self, idx: usize) -> Self::Output {
+        (
+            match &self.0 {
+                Included(x) => Included(*x.get_unchecked(idx)),
+                Excluded(x) => Excluded(*x.get_unchecked(idx)),
+                Unbounded => Unbounded,
+            },
+            match &self.1 {
+                Included(x) => Included(*x.get_unchecked(idx)),
+                Excluded(x) => Excluded(*x.get_unchecked(idx)),
+                Unbounded => Unbounded,
+            }
+        )
+    }
+}
+
+#[cfg(feature = "bound_map")]
+impl<N: Scalar, const D: usize> DimensionBounds<N, D> for (Bound<Point<N, D>>, Bound<Point<N, D>>) {
+    type Output = (Bound<N>, Bound<N>);
+
+    #[inline]
+    unsafe fn get_bounds_unchecked(&self, idx: usize) -> Self::Output {
+        (self.0.map(|x| *x.get_unchecked(idx)), self.1.map(|x| *x.get_unchecked(idx)))
     }
 }
 
@@ -81,6 +103,23 @@ impl<N: ClosedAdd + ClosedSub + Copy + One + Scalar, const D: usize> Walkable<N,
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    mod dimension_bounds {
+        use na::point;
+        use super::*;
+
+        #[test]
+        fn test_get_bounds() {
+            assert_eq!(
+                (Excluded(point![1, 2]), Excluded(point![3, 4])).get_bounds(0),
+                (Excluded(1), Excluded(3)),
+            );
+            assert_eq!(
+                (Excluded(point![1, 2]), Excluded(point![3, 4])).get_bounds(1),
+                (Excluded(2), Excluded(4)),
+            );
+        }
+    }
 
     mod point_bounds {
         use na::point;
