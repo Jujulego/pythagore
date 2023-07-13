@@ -8,14 +8,14 @@ use crate::wasm::VectorReal2D;
 /// 2D vector defined in js
 #[wasm_bindgen]
 #[derive(Copy, Clone, Debug)]
-pub struct VectorInt2D(Vector2<i64>);
+pub struct VectorInt2D(Vector2<i32>);
 
 #[wasm_bindgen]
 impl VectorInt2D {
     // Statics
     /// Create a new vector from given scalars
     #[wasm_bindgen(constructor)]
-    pub fn new(dx: i64, dy: i64) -> VectorInt2D {
+    pub fn new(dx: i32, dy: i32) -> VectorInt2D {
         VectorInt2D(Vector2::new(dx, dy))
     }
 
@@ -36,36 +36,36 @@ impl VectorInt2D {
         VectorInt2D(self.0 - other.0)
     }
 
-    pub fn dot(&self, other: &VectorInt2D) -> i64 {
+    pub fn dot(&self, other: &VectorInt2D) -> i32 {
         self.0.dot(&other.0)
     }
 
-    pub fn dot_scalar(&self, scalar: i64) -> VectorInt2D {
+    pub fn dot_scalar(&self, scalar: i32) -> VectorInt2D {
         VectorInt2D(self.0 * scalar)
     }
 
-    pub fn div_scalar(&self, scalar: i64) -> VectorInt2D {
+    pub fn div_scalar(&self, scalar: i32) -> VectorInt2D {
         VectorInt2D(self.0 / scalar)
     }
 
     // Properties
     #[wasm_bindgen(getter)]
-    pub fn dx(&self) -> i64 {
+    pub fn dx(&self) -> i32 {
         self.0.x
     }
 
     #[wasm_bindgen(setter)]
-    pub fn set_dx(&mut self, dx: i64) {
+    pub fn set_dx(&mut self, dx: i32) {
         self.0.x = dx;
     }
 
     #[wasm_bindgen(getter)]
-    pub fn dy(&self) -> i64 {
+    pub fn dy(&self) -> i32 {
         self.0.y
     }
 
     #[wasm_bindgen(setter)]
-    pub fn set_dy(&mut self, dy: i64) {
+    pub fn set_dy(&mut self, dy: i32) {
         self.0.y = dy;
     }
 
@@ -87,32 +87,32 @@ impl VectorInt2D {
 }
 
 // Conversions
-impl AsRef<Vector2<i64>> for VectorInt2D {
-    fn as_ref(&self) -> &Vector2<i64> {
+impl AsRef<Vector2<i32>> for VectorInt2D {
+    fn as_ref(&self) -> &Vector2<i32> {
         &self.0
     }
 }
 
-impl AsMut<Vector2<i64>> for VectorInt2D {
-    fn as_mut(&mut self) -> &mut Vector2<i64> {
+impl AsMut<Vector2<i32>> for VectorInt2D {
+    fn as_mut(&mut self) -> &mut Vector2<i32> {
         &mut self.0
     }
 }
 
-impl Borrow<Vector2<i64>> for VectorInt2D {
-    fn borrow(&self) -> &Vector2<i64> {
+impl Borrow<Vector2<i32>> for VectorInt2D {
+    fn borrow(&self) -> &Vector2<i32> {
         &self.0
     }
 }
 
-impl BorrowMut<Vector2<i64>> for VectorInt2D {
-    fn borrow_mut(&mut self) -> &mut Vector2<i64> {
+impl BorrowMut<Vector2<i32>> for VectorInt2D {
+    fn borrow_mut(&mut self) -> &mut Vector2<i32> {
         &mut self.0
     }
 }
 
-impl From<Vector2<i64>> for VectorInt2D {
-    fn from(value: Vector2<i64>) -> Self {
+impl From<Vector2<i32>> for VectorInt2D {
+    fn from(value: Vector2<i32>) -> Self {
         VectorInt2D(value)
     }
 }
