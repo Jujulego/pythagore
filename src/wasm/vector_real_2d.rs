@@ -1,4 +1,5 @@
-use na::{vector, Vector2};
+use std::borrow::{Borrow, BorrowMut};
+use na::Vector2;
 use wasm_bindgen::prelude::wasm_bindgen;
 
 /// 2D vector defined in js
@@ -12,7 +13,7 @@ impl VectorReal2D {
     /// Create a new vector from given scalars
     #[wasm_bindgen(constructor)]
     pub fn new(dx: f64, dy: f64) -> VectorReal2D {
-        VectorReal2D(vector![dx, dy])
+        VectorReal2D(Vector2::new(dx, dy))
     }
 
     pub fn null() -> VectorReal2D {
@@ -90,6 +91,18 @@ impl AsRef<Vector2<f64>> for VectorReal2D {
 
 impl AsMut<Vector2<f64>> for VectorReal2D {
     fn as_mut(&mut self) -> &mut Vector2<f64> {
+        &mut self.0
+    }
+}
+
+impl Borrow<Vector2<f64>> for VectorReal2D {
+    fn borrow(&self) -> &Vector2<f64> {
+        &self.0
+    }
+}
+
+impl BorrowMut<Vector2<f64>> for VectorReal2D {
+    fn borrow_mut(&mut self) -> &mut Vector2<f64> {
         &mut self.0
     }
 }

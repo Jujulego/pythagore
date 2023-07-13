@@ -1,5 +1,5 @@
 use std::borrow::{Borrow, BorrowMut};
-use na::{point, Point2};
+use na::Point2;
 use wasm_bindgen::prelude::wasm_bindgen;
 
 #[cfg(feature = "wasm-vector-real")]
@@ -16,7 +16,7 @@ impl PointReal2D {
     /// Creates a new point from given coordinates
     #[wasm_bindgen(constructor)]
     pub fn new(x: f64, y: f64) -> PointReal2D {
-        PointReal2D(point![x, y])
+        PointReal2D(Point2::new(x, y))
     }
 
     /// Creates a new origin point (same as `new Point2D(0, 0)`)
