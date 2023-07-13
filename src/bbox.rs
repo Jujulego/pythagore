@@ -330,14 +330,14 @@ impl<N: ClosedAdd + ClosedSub + Copy + One + Scalar + Zero, const D: usize> Walk
 impl<N: Copy + PartialOrd + Scalar, const D: usize> Intersection for BBox<N, D> {
     type Output = BBox<N, D>;
 
-    fn intersection(&self, lhs: &Self) -> Self::Output {
+    fn intersection(&self, rhs: &Self) -> Self::Output {
         let mut ranges = [(Unbounded, Unbounded); D];
 
         for (idx, range) in ranges.iter_mut().enumerate() {
             let lhs = unsafe { self.get_unchecked(idx) };
-            let lhs = unsafe { lhs.get_unchecked(idx) };
+            let rhs = unsafe { rhs.get_unchecked(idx) };
 
-            range.0 = max_bound(lhs.0, lhs.0);
+            range.0 = max_bound(lhs.0, rhs.0);
             range.1 = min_bound(lhs.1, rhs.1);
         }
 
