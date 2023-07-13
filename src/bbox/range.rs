@@ -1,6 +1,6 @@
-use std::cmp::max;
+use std::cmp::{max, min};
 use std::ops::Bound::{Excluded, Included, Unbounded};
-use std::ops::{Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive};
+use std::ops::{Bound, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive};
 use na::{ClosedSub, Point, Scalar, SVector};
 use num_traits::One;
 
@@ -141,7 +141,7 @@ impl<N: Copy + Default + Ord + Scalar, const D: usize> Intersection<RangeTo<Poin
     }
 }
 
-impl<N: Copy + Default + Ord + Scalar, const D: usize> Intersection<RangeToInclusive<Point<N, D>>> for Range<Point<N, D>> {
+impl<N: Copy + Ord + Scalar, const D: usize> Intersection<RangeToInclusive<Point<N, D>>> for Range<Point<N, D>> {
     type Output = BBox<N, D>;
 
     fn intersection(&self, lhs: &RangeToInclusive<Point<N, D>>) -> Self::Output {
@@ -158,6 +158,62 @@ impl<N: Copy + Default + Ord + Scalar, const D: usize> Intersection<RangeToInclu
             } else {
                 range.1 = Included(*lex);
             }
+        }
+
+        BBox::from(ranges)
+    }
+}
+
+impl<N: Copy + Ord + Scalar, const D: usize> Intersection<(Bound<Point<N, D>>, Bound<Point<N, D>>)> for Range<Point<N, D>> {
+    type Output = BBox<N, D>;
+
+    fn intersection(&self, lhs: &(Bound<Point<N, D>>, Bound<Point<N, D>>)) -> Self::Output {
+        let mut ranges = [(Unbounded, Unbounded); D];
+
+        match &lhs.0 {
+            Excluded(lpt) => ranges.iter_mut().enumerate()
+                .for_each(|(idx, range)| {
+                    let rx = unsafe { self.start.get_unchecked(idx) };
+                    let lx = unsafe { lpt.get_unchecked(idx) };
+
+                    range.0 = if lx >= rx { Excluded(*lx) } else { Included(*rx) }
+                }),
+            Included(lpt) => ranges.iter_mut().enumerate()
+                .for_each(|(idx, range)| {
+                    range.0 = Included(*max(
+                        unsafe { self.start.get_unchecked(idx) },
+                        unsafe { lpt.get_unchecked(idx) }
+                    ))
+                }),
+            Unbounded => ranges.iter_mut().enumerate()
+                .for_each(|(idx, range)| {
+                    let rx = unsafe { self.start.get_unchecked(idx) };
+
+                    range.0 = Included(*rx)
+                }),
+        }
+
+        match &lhs.1 {
+            Excluded(lpt) => ranges.iter_mut().enumerate()
+                .for_each(|(idx, range)| {
+                    range.1 = Excluded(*min(
+                        unsafe { self.end.get_unchecked(idx) },
+                        unsafe { lpt.get_unchecked(idx) }
+                    ))
+                }),
+            Included(lpt) => ranges.iter_mut().enumerate()
+                .for_each(|(idx, range)| {
+                    let rx = unsafe { self.end.get_unchecked(idx) };
+                    let lx = unsafe { lpt.get_unchecked(idx) };
+
+                    range.1 = if lx < rx { Included(*lx) } else { Excluded(*rx) }
+                }),
+            Unbounded => ranges.iter_mut().enumerate()
+                .for_each(|(idx, range)| {
+                    let rx = unsafe { self.end.get_unchecked(idx) };
+
+                    range.1 = Included(*rx)
+                }),
         }
 
         BBox::from(ranges)
@@ -182,6 +238,10 @@ mod tests {
         assert_eq!((point![0, 5]..point![10, 15]).intersection(&(..point![15, 10])), point![0, 5]..point![10, 10]);
         assert_eq!((point![0, 5]..point![10, 15]).intersection(&(..=point![15, 10])), BBox::from([
             (Included(0), Excluded(10)),
+            (Included(5), Included(10)),
+        ]));
+        assert_eq!((point![0, 5]..point![10, 15]).intersection(&(Excluded(point![5, 0]), Included(point![15, 10]))), BBox::from([
+            (Excluded(5), Excluded(10)),
             (Included(5), Included(10)),
         ]));
     }
