@@ -12,11 +12,15 @@ description = "Mathematics tools for simple geometry"
 crate-type = ["lib", "cdylib"]
 
 [features]
-wasm = ["dep:wasm-bindgen"]
-wasm-point = ["wasm"]
-wasm-point-real = ["wasm"]
-wasm-vector = ["wasm"]
-wasm-vector-real = ["wasm"]
+wasm = ["wasm-point", "wasm-vector"]
+
+wasm-point = ["wasm-point-int", "wasm-point-real"]
+wasm-point-int = ["dep:wasm-bindgen"]
+wasm-point-real = ["dep:wasm-bindgen"]
+
+wasm-vector = ["wasm-vector-int", "wasm-vector-real"]
+wasm-vector-real = ["dep:wasm-bindgen"]
+wasm-vector-int = ["dep:wasm-bindgen"]
 
 [dependencies]
 nalgebra = "0.32.3"
