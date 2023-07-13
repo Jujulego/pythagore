@@ -334,11 +334,11 @@ impl<N: Copy + PartialOrd + Scalar, const D: usize> Intersection for BBox<N, D> 
         let mut ranges = [(Unbounded, Unbounded); D];
 
         for (idx, range) in ranges.iter_mut().enumerate() {
-            let rhs = unsafe { self.get_unchecked(idx) };
+            let lhs = unsafe { self.get_unchecked(idx) };
             let lhs = unsafe { lhs.get_unchecked(idx) };
 
-            range.0 = max_bound(rhs.0, lhs.0);
-            range.1 = min_bound(rhs.1, lhs.1);
+            range.0 = max_bound(lhs.0, lhs.0);
+            range.1 = min_bound(lhs.1, rhs.1);
         }
 
         BBox::from(ranges)
@@ -348,14 +348,14 @@ impl<N: Copy + PartialOrd + Scalar, const D: usize> Intersection for BBox<N, D> 
 impl<N: Copy + PartialOrd + Scalar, const D: usize> Intersection<Range<Point<N, D>>> for BBox<N, D> {
     type Output = BBox<N, D>;
 
-    fn intersection(&self, lhs: &Range<Point<N, D>>) -> Self::Output {
+    fn intersection(&self, rhs: &Range<Point<N, D>>) -> Self::Output {
         let mut ranges = [(Unbounded, Unbounded); D];
 
         for (idx, range) in ranges.iter_mut().enumerate() {
-            let rhs = unsafe { self.get_unchecked(idx) };
+            let lhs = unsafe { self.get_unchecked(idx) };
 
-            range.0 = max_bound(rhs.0, Included(unsafe { *lhs.start.get_unchecked(idx) }));
-            range.1 = min_bound(rhs.1, Excluded(unsafe { *lhs.end.get_unchecked(idx) }));
+            range.0 = max_bound(lhs.0, Included(unsafe { *rhs.start.get_unchecked(idx) }));
+            range.1 = min_bound(lhs.1, Excluded(unsafe { *rhs.end.get_unchecked(idx) }));
         }
 
         BBox::from(ranges)
@@ -365,14 +365,14 @@ impl<N: Copy + PartialOrd + Scalar, const D: usize> Intersection<Range<Point<N, 
 impl<N: Copy + PartialOrd + Scalar, const D: usize> Intersection<RangeFrom<Point<N, D>>> for BBox<N, D> {
     type Output = BBox<N, D>;
 
-    fn intersection(&self, lhs: &RangeFrom<Point<N, D>>) -> Self::Output {
+    fn intersection(&self, rhs: &RangeFrom<Point<N, D>>) -> Self::Output {
         let mut ranges = [(Unbounded, Unbounded); D];
 
         for (idx, range) in ranges.iter_mut().enumerate() {
-            let rhs = unsafe { self.get_unchecked(idx) };
+            let lhs = unsafe { self.get_unchecked(idx) };
 
-            range.0 = max_bound(rhs.0, Included(unsafe { *lhs.start.get_unchecked(idx) }));
-            range.1 = rhs.1;
+            range.0 = max_bound(lhs.0, Included(unsafe { *rhs.start.get_unchecked(idx) }));
+            range.1 = lhs.1;
         }
 
         BBox::from(ranges)
@@ -391,14 +391,14 @@ impl<N: Copy + Scalar, const D: usize> Intersection<RangeFull> for BBox<N, D> {
 impl<N: Copy + PartialOrd + Scalar, const D: usize> Intersection<RangeInclusive<Point<N, D>>> for BBox<N, D> {
     type Output = BBox<N, D>;
 
-    fn intersection(&self, lhs: &RangeInclusive<Point<N, D>>) -> Self::Output {
+    fn intersection(&self, rhs: &RangeInclusive<Point<N, D>>) -> Self::Output {
         let mut ranges = [(Unbounded, Unbounded); D];
 
         for (idx, range) in ranges.iter_mut().enumerate() {
-            let rhs = unsafe { self.get_unchecked(idx) };
+            let lhs = unsafe { self.get_unchecked(idx) };
 
-            range.0 = max_bound(rhs.0, Included(unsafe { *lhs.start().get_unchecked(idx) }));
-            range.1 = min_bound(rhs.1, Included(unsafe { *lhs.end().get_unchecked(idx) }));
+            range.0 = max_bound(lhs.0, Included(unsafe { *rhs.start().get_unchecked(idx) }));
+            range.1 = min_bound(lhs.1, Included(unsafe { *rhs.end().get_unchecked(idx) }));
         }
 
         BBox::from(ranges)
@@ -408,14 +408,14 @@ impl<N: Copy + PartialOrd + Scalar, const D: usize> Intersection<RangeInclusive<
 impl<N: Copy + PartialOrd + Scalar, const D: usize> Intersection<RangeTo<Point<N, D>>> for BBox<N, D> {
     type Output = BBox<N, D>;
 
-    fn intersection(&self, lhs: &RangeTo<Point<N, D>>) -> Self::Output {
+    fn intersection(&self, rhs: &RangeTo<Point<N, D>>) -> Self::Output {
         let mut ranges = [(Unbounded, Unbounded); D];
 
         for (idx, range) in ranges.iter_mut().enumerate() {
-            let rhs = unsafe { self.get_unchecked(idx) };
+            let lhs = unsafe { self.get_unchecked(idx) };
 
-            range.0 = rhs.0;
-            range.1 = min_bound(rhs.1, Excluded(unsafe { *lhs.end.get_unchecked(idx) }));
+            range.0 = lhs.0;
+            range.1 = min_bound(lhs.1, Excluded(unsafe { *rhs.end.get_unchecked(idx) }));
         }
 
         BBox::from(ranges)
@@ -425,14 +425,14 @@ impl<N: Copy + PartialOrd + Scalar, const D: usize> Intersection<RangeTo<Point<N
 impl<N: Copy + PartialOrd + Scalar, const D: usize> Intersection<RangeToInclusive<Point<N, D>>> for BBox<N, D> {
     type Output = BBox<N, D>;
 
-    fn intersection(&self, lhs: &RangeToInclusive<Point<N, D>>) -> Self::Output {
+    fn intersection(&self, rhs: &RangeToInclusive<Point<N, D>>) -> Self::Output {
         let mut ranges = [(Unbounded, Unbounded); D];
 
         for (idx, range) in ranges.iter_mut().enumerate() {
-            let rhs = unsafe { self.get_unchecked(idx) };
+            let lhs = unsafe { self.get_unchecked(idx) };
 
-            range.0 = rhs.0;
-            range.1 = min_bound(rhs.1, Included(unsafe { *lhs.end.get_unchecked(idx) }));
+            range.0 = lhs.0;
+            range.1 = min_bound(lhs.1, Included(unsafe { *rhs.end.get_unchecked(idx) }));
         }
 
         BBox::from(ranges)
@@ -442,30 +442,30 @@ impl<N: Copy + PartialOrd + Scalar, const D: usize> Intersection<RangeToInclusiv
 impl<N: Copy + PartialOrd + Scalar, const D: usize> Intersection<(Bound<Point<N, D>>, Bound<Point<N, D>>)> for BBox<N, D> {
     type Output = BBox<N, D>;
 
-    fn intersection(&self, lhs: &(Bound<Point<N, D>>, Bound<Point<N, D>>)) -> Self::Output {
+    fn intersection(&self, rhs: &(Bound<Point<N, D>>, Bound<Point<N, D>>)) -> Self::Output {
         let mut ranges = [(Unbounded, Unbounded); D];
 
         for (idx, range) in ranges.iter_mut().enumerate() {
-            let rhs = unsafe { self.get_unchecked(idx) };
-            let lhs = unsafe { lhs.get_bounds_unchecked(idx) };
+            let lhs = unsafe { self.get_unchecked(idx) };
+            let rhs = unsafe { rhs.get_bounds_unchecked(idx) };
 
-            range.0 = max_bound(rhs.0, lhs.0);
-            range.1 = min_bound(rhs.1, lhs.1);
+            range.0 = max_bound(lhs.0, rhs.0);
+            range.1 = min_bound(lhs.1, rhs.1);
         }
 
         BBox::from(ranges)
     }
 }
 
-impl<N, Lhs, const D: usize> Overlaps<Lhs> for BBox<N, D>
+impl<N, Rhs, const D: usize> Overlaps<Rhs> for BBox<N, D>
 where
     N: Copy + PartialOrd + Scalar,
-    Lhs: DimensionBounds<N, D>,
-    <Lhs as DimensionBounds<N, D>>::Output: Overlaps<BBoxElement<N>>,
+    Rhs: DimensionBounds<N, D>,
+    <Rhs as DimensionBounds<N, D>>::Output: Overlaps<BBoxElement<N>>,
 {
-    fn overlaps(&self, lhs: &Lhs) -> bool {
+    fn overlaps(&self, rhs: &Rhs) -> bool {
         self.ranges.iter().enumerate()
-            .all(|(idx, range)| unsafe { lhs.get_bounds_unchecked(idx) }.overlaps(range))
+            .all(|(idx, range)| unsafe { rhs.get_bounds_unchecked(idx) }.overlaps(range))
     }
 }
 

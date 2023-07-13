@@ -153,15 +153,15 @@ impl<N: Copy + Ord + Scalar, const D: usize> Intersection<RangeToInclusive<Point
 impl<N: Copy + Ord + Scalar, const D: usize> Intersection<(Bound<Point<N, D>>, Bound<Point<N, D>>)> for (Bound<Point<N, D>>, Bound<Point<N, D>>) {
     type Output = BBox<N, D>;
 
-    fn intersection(&self, lhs: &(Bound<Point<N, D>>, Bound<Point<N, D>>)) -> Self::Output {
+    fn intersection(&self, rhs: &(Bound<Point<N, D>>, Bound<Point<N, D>>)) -> Self::Output {
         let mut ranges = [(Unbounded, Unbounded); D];
 
         for (idx, range) in ranges.iter_mut().enumerate() {
-            let rhs = unsafe { self.get_bounds_unchecked(idx) };
-            let lhs = unsafe { lhs.get_bounds_unchecked(idx) };
+            let lhs = unsafe { self.get_bounds_unchecked(idx) };
+            let rhs = unsafe { rhs.get_bounds_unchecked(idx) };
 
-            range.0 = min_bound(rhs.0, lhs.0);
-            range.1 = max_bound(rhs.1, lhs.1);
+            range.0 = min_bound(lhs.0, rhs.0);
+            range.1 = max_bound(lhs.1, rhs.1);
         }
 
         BBox::from(ranges)

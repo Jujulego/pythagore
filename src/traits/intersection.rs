@@ -1,7 +1,7 @@
 /// Computes intersection between ranges
-pub trait Intersection<Lhs = Self> {
+pub trait Intersection<Rhs = Self> {
     type Output;
 
-    fn intersection(&self, lhs: &Lhs) -> Self::Output;
+    fn intersection(&self, rhs: &Rhs) -> Self::Output;
 }
 
