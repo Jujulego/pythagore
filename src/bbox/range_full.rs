@@ -1,5 +1,5 @@
 use std::ops::Bound::Unbounded;
-use std::ops::{Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive};
+use std::ops::{Bound, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive};
 use na::{Point, Scalar};
 
 use crate::{BBox, Intersection, PointBounds};
@@ -112,6 +112,14 @@ impl<N: Copy + Scalar, const D: usize> Intersection<RangeToInclusive<Point<N, D>
 
     #[inline]
     fn intersection(&self, lhs: &RangeToInclusive<Point<N, D>>) -> Self::Output {
+        *lhs
+    }
+}
+
+impl<N: Copy + Ord + Scalar, const D: usize> Intersection<(Bound<Point<N, D>>, Bound<Point<N, D>>)> for RangeFull {
+    type Output = (Bound<Point<N, D>>, Bound<Point<N, D>>);
+
+    fn intersection(&self, lhs: &(Bound<Point<N, D>>, Bound<Point<N, D>>)) -> Self::Output {
         *lhs
     }
 }

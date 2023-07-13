@@ -1,9 +1,9 @@
 use std::ops::Bound::{Excluded, Included, Unbounded};
-use std::ops::{Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive};
+use std::ops::{Bound, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive};
 use na::{Point, Scalar};
 
 use crate::{BBox, Intersection, PointBounds};
-use crate::bbox::utils::min_point;
+use crate::bbox::utils::{max_bound, min_bound, min_point};
 use crate::traits::DimensionBounds;
 
 /// Builds a bounding box from a range of points
@@ -103,11 +103,7 @@ impl<N: Copy + Ord + Scalar, const D: usize> Intersection<RangeInclusive<Point<N
             let rex = unsafe { self.end.get_unchecked(idx) };
             let lex = unsafe { lhs.end().get_unchecked(idx) };
 
-            if rex <= lex {
-                range.1 = Excluded(*rex);
-            } else {
-                range.1 = Included(*lex);
-            }
+            range.1 = if rex <= lex { Excluded(*rex) } else { Included(*lex) };
         }
 
         BBox::from(ranges)
@@ -133,11 +129,24 @@ impl<N: Copy + Default + Ord + Scalar, const D: usize> Intersection<RangeToInclu
             let rex = unsafe { self.end.get_unchecked(idx) };
             let lex = unsafe { lhs.end.get_unchecked(idx) };
 
-            if rex <= lex {
-                range.1 = Excluded(*rex);
-            } else {
-                range.1 = Included(*lex);
-            }
+            range.1 = if rex <= lex { Excluded(*rex) } else { Included(*lex) };
+        }
+
+        BBox::from(ranges)
+    }
+}
+
+impl<N: Copy + Ord + Scalar, const D: usize> Intersection<(Bound<Point<N, D>>, Bound<Point<N, D>>)> for RangeTo<Point<N, D>> {
+    type Output = BBox<N, D>;
+
+    fn intersection(&self, lhs: &(Bound<Point<N, D>>, Bound<Point<N, D>>)) -> Self::Output {
+        let mut ranges = [(Unbounded, Unbounded); D];
+
+        for (idx, range) in ranges.iter_mut().enumerate() {
+            let (start, end) = unsafe { lhs.get_bounds_unchecked(idx) };
+
+            range.0 = start;
+            range.1 = max_bound(end, Excluded(unsafe { *self.end.get_unchecked(idx) }));
         }
 
         BBox::from(ranges)

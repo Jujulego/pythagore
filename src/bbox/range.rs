@@ -1,11 +1,11 @@
-use std::cmp::{max, min};
+use std::cmp::max;
 use std::ops::Bound::{Excluded, Included, Unbounded};
 use std::ops::{Bound, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive};
 use na::{ClosedSub, Point, Scalar, SVector};
 use num_traits::One;
 
 use crate::{BBox, Intersection, PointBounds, Walkable};
-use crate::bbox::utils::{max_point, min_point};
+use crate::bbox::utils::{max_bound, max_point, min_bound, min_point};
 use crate::traits::DimensionBounds;
 
 /// Builds a bounding box from a range of points
@@ -121,11 +121,7 @@ impl<N: Copy + Ord + Scalar, const D: usize> Intersection<RangeInclusive<Point<N
             let rex = unsafe { self.end.get_unchecked(idx) };
             let lex = unsafe { lhs.end().get_unchecked(idx) };
 
-            if rex <= lex {
-                range.1 = Excluded(*rex);
-            } else {
-                range.1 = Included(*lex);
-            }
+            range.1 = if rex <= lex { Excluded(*rex) } else { Included(*lex) }
         }
 
         BBox::from(ranges)
@@ -153,11 +149,7 @@ impl<N: Copy + Ord + Scalar, const D: usize> Intersection<RangeToInclusive<Point
             let rex = unsafe { self.end.get_unchecked(idx) };
             let lex = unsafe { lhs.end.get_unchecked(idx) };
 
-            if rex <= lex {
-                range.1 = Excluded(*rex);
-            } else {
-                range.1 = Included(*lex);
-            }
+            range.1 = if rex <= lex { Excluded(*rex) } else { Included(*lex) }
         }
 
         BBox::from(ranges)
@@ -170,50 +162,11 @@ impl<N: Copy + Ord + Scalar, const D: usize> Intersection<(Bound<Point<N, D>>, B
     fn intersection(&self, lhs: &(Bound<Point<N, D>>, Bound<Point<N, D>>)) -> Self::Output {
         let mut ranges = [(Unbounded, Unbounded); D];
 
-        match &lhs.0 {
-            Excluded(lpt) => ranges.iter_mut().enumerate()
-                .for_each(|(idx, range)| {
-                    let rx = unsafe { self.start.get_unchecked(idx) };
-                    let lx = unsafe { lpt.get_unchecked(idx) };
+        for (idx, range) in ranges.iter_mut().enumerate() {
+            let (start, end) = unsafe { lhs.get_bounds_unchecked(idx) };
 
-                    range.0 = if lx >= rx { Excluded(*lx) } else { Included(*rx) }
-                }),
-            Included(lpt) => ranges.iter_mut().enumerate()
-                .for_each(|(idx, range)| {
-                    range.0 = Included(*max(
-                        unsafe { self.start.get_unchecked(idx) },
-                        unsafe { lpt.get_unchecked(idx) }
-                    ))
-                }),
-            Unbounded => ranges.iter_mut().enumerate()
-                .for_each(|(idx, range)| {
-                    let rx = unsafe { self.start.get_unchecked(idx) };
-
-                    range.0 = Included(*rx)
-                }),
-        }
-
-        match &lhs.1 {
-            Excluded(lpt) => ranges.iter_mut().enumerate()
-                .for_each(|(idx, range)| {
-                    range.1 = Excluded(*min(
-                        unsafe { self.end.get_unchecked(idx) },
-                        unsafe { lpt.get_unchecked(idx) }
-                    ))
-                }),
-            Included(lpt) => ranges.iter_mut().enumerate()
-                .for_each(|(idx, range)| {
-                    let rx = unsafe { self.end.get_unchecked(idx) };
-                    let lx = unsafe { lpt.get_unchecked(idx) };
-
-                    range.1 = if lx < rx { Included(*lx) } else { Excluded(*rx) }
-                }),
-            Unbounded => ranges.iter_mut().enumerate()
-                .for_each(|(idx, range)| {
-                    let rx = unsafe { self.end.get_unchecked(idx) };
-
-                    range.1 = Included(*rx)
-                }),
+            range.0 = min_bound(start, Included(unsafe { *self.start.get_unchecked(idx) }));
+            range.1 = max_bound(end, Excluded(unsafe { *self.end.get_unchecked(idx) }));
         }
 
         BBox::from(ranges)
