@@ -121,7 +121,7 @@ impl<N: Copy + Ord + Scalar, const D: usize> Intersection<RangeFrom<Point<N, D>>
 impl<N: Copy + Ord + Scalar, const D: usize> Intersection<RangeFull> for (Bound<Point<N, D>>, Bound<Point<N, D>>) {
     type Output = (Bound<Point<N, D>>, Bound<Point<N, D>>);
 
-    fn intersection(&self, lhs: &RangeFull) -> Self::Output {
+    fn intersection(&self, _: &RangeFull) -> Self::Output {
         *self
     }
 }
@@ -157,11 +157,11 @@ impl<N: Copy + Ord + Scalar, const D: usize> Intersection<(Bound<Point<N, D>>, B
         let mut ranges = [(Unbounded, Unbounded); D];
 
         for (idx, range) in ranges.iter_mut().enumerate() {
-            let (rhs_start, rhs_end) = unsafe { self.get_bounds_unchecked(idx) };
-            let (lhs_start, lhs_end) = unsafe { lhs.get_bounds_unchecked(idx) };
+            let rhs = unsafe { self.get_bounds_unchecked(idx) };
+            let lhs = unsafe { lhs.get_bounds_unchecked(idx) };
 
-            range.0 = min_bound(rhs_start, lhs_start);
-            range.1 = max_bound(rhs_end, lhs_end);
+            range.0 = min_bound(rhs.0, lhs.0);
+            range.1 = max_bound(rhs.1, lhs.1);
         }
 
         BBox::from(ranges)
