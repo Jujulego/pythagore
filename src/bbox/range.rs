@@ -165,8 +165,8 @@ impl<N: Copy + Ord + Scalar, const D: usize> Intersection<(Bound<Point<N, D>>, B
         for (idx, range) in ranges.iter_mut().enumerate() {
             let rhs = unsafe { rhs.get_bounds_unchecked(idx) };
 
-            range.0 = min_bound(Included(unsafe { *self.start.get_unchecked(idx) }), rhs.0);
-            range.1 = max_bound(Excluded(unsafe { *self.end.get_unchecked(idx) }), rhs.1);
+            range.0 = max_bound(Included(unsafe { *self.start.get_unchecked(idx) }), rhs.0);
+            range.1 = min_bound(Excluded(unsafe { *self.end.get_unchecked(idx) }), rhs.1);
         }
 
         BBox::from(ranges)

@@ -3,7 +3,7 @@ use std::ops::Bound;
 use std::ops::Bound::{Excluded, Included, Unbounded};
 use na::{Point, Scalar};
 
-/// Compute smallest end bound
+/// Compute greatest start bound
 pub fn max_bound<N: PartialOrd>(a: Bound<N>, b: Bound<N>) -> Bound<N> {
     match (&a, &b) {
         (Included(va), Included(vb)) |
@@ -29,7 +29,7 @@ pub fn max_point<N: Default + Copy + Ord + Scalar, const D: usize>(a: &Point<N, 
     Point::from(coords)
 }
 
-/// Compute greatest start bound
+/// Compute smallest end bound
 pub fn min_bound<N: PartialOrd>(a: Bound<N>, b: Bound<N>) -> Bound<N> {
     match (&a, &b) {
         (Included(va), Included(vb)) |

@@ -3,7 +3,7 @@ use std::ops::{Bound, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, Rang
 use na::{Point, Scalar};
 
 use crate::{BBox, Intersection, PointBounds};
-use crate::bbox::utils::{max_bound, min_point};
+use crate::bbox::utils::{min_bound, min_point};
 use crate::traits::DimensionBounds;
 
 /// Builds a bounding box from a range of points
@@ -146,7 +146,7 @@ impl<N: Copy + Ord + Scalar, const D: usize> Intersection<(Bound<Point<N, D>>, B
             let lhs = unsafe { lhs.get_bounds_unchecked(idx) };
 
             range.0 = lhs.0;
-            range.1 = max_bound(Included(unsafe { *self.end.get_unchecked(idx) }), lhs.1);
+            range.1 = min_bound(Included(unsafe { *self.end.get_unchecked(idx) }), lhs.1);
         }
 
         BBox::from(ranges)

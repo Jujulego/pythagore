@@ -4,4 +4,3 @@ pub trait Intersection<Rhs = Self> {
 
     fn intersection(&self, rhs: &Rhs) -> Self::Output;
 }
-
