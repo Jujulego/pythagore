@@ -2,22 +2,22 @@ use std::ops::{Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToIncl
 use std::ops::Bound::{self, Excluded, Included, Unbounded};
 
 /// Tests if ranges overlaps
-pub trait Overlaps<Lhs = Self> {
-    fn overlaps(&self, lhs: &Lhs) -> bool;
+pub trait Overlaps<Rhs = Self> {
+    fn overlaps(&self, rhs: &Rhs) -> bool;
 }
 
 // Implementations for Range
 impl<T: PartialOrd> Overlaps for Range<T> {
     #[inline]
-    fn overlaps(&self, lhs: &Range<T>) -> bool {
-        self.start < lhs.end && self.end > lhs.start
+    fn overlaps(&self, rhs: &Range<T>) -> bool {
+        self.start < rhs.end && self.end > rhs.start
     }
 }
 
 impl<T: PartialOrd> Overlaps<RangeFrom<T>> for Range<T> {
     #[inline]
-    fn overlaps(&self, lhs: &RangeFrom<T>) -> bool {
-        self.end > lhs.start
+    fn overlaps(&self, rhs: &RangeFrom<T>) -> bool {
+        self.end > rhs.start
     }
 }
 
@@ -30,32 +30,32 @@ impl<T> Overlaps<RangeFull> for Range<T> {
 
 impl<T: PartialOrd> Overlaps<RangeInclusive<T>> for Range<T> {
     #[inline]
-    fn overlaps(&self, lhs: &RangeInclusive<T>) -> bool {
-        &self.start <= lhs.end() && &self.end >= lhs.start()
+    fn overlaps(&self, rhs: &RangeInclusive<T>) -> bool {
+        &self.start <= rhs.end() && &self.end >= rhs.start()
     }
 }
 
 impl<T: PartialOrd> Overlaps<RangeTo<T>> for Range<T> {
     #[inline]
-    fn overlaps(&self, lhs: &RangeTo<T>) -> bool {
-        self.start < lhs.end
+    fn overlaps(&self, rhs: &RangeTo<T>) -> bool {
+        self.start < rhs.end
     }
 }
 
 impl<T: PartialOrd> Overlaps<RangeToInclusive<T>> for Range<T> {
     #[inline]
-    fn overlaps(&self, lhs: &RangeToInclusive<T>) -> bool {
-        self.start <= lhs.end
+    fn overlaps(&self, rhs: &RangeToInclusive<T>) -> bool {
+        self.start <= rhs.end
     }
 }
 
 impl<T: PartialOrd> Overlaps<(Bound<T>, Bound<T>)> for Range<T> {
-    fn overlaps(&self, lhs: &(Bound<T>, Bound<T>)) -> bool {
-        (match &lhs.0 {
+    fn overlaps(&self, rhs: &(Bound<T>, Bound<T>)) -> bool {
+        (match &rhs.0 {
             Excluded(lhs_start) |
             Included(lhs_start) => &self.end > lhs_start,
             Unbounded => true
-        }) && (match &lhs.1 {
+        }) && (match &rhs.1 {
             Excluded(lhs_end) => &self.start < lhs_end,
             Included(lhs_end) => &self.start <= lhs_end,
             Unbounded => true
@@ -66,8 +66,8 @@ impl<T: PartialOrd> Overlaps<(Bound<T>, Bound<T>)> for Range<T> {
 // Implementations for RangeFrom
 impl<T: PartialOrd> Overlaps<Range<T>> for RangeFrom<T> {
     #[inline]
-    fn overlaps(&self, lhs: &Range<T>) -> bool {
-        self.start < lhs.end
+    fn overlaps(&self, rhs: &Range<T>) -> bool {
+        self.start < rhs.end
     }
 }
 
@@ -87,29 +87,29 @@ impl<T> Overlaps<RangeFull> for RangeFrom<T> {
 
 impl<T: PartialOrd> Overlaps<RangeInclusive<T>> for RangeFrom<T> {
     #[inline]
-    fn overlaps(&self, lhs: &RangeInclusive<T>) -> bool {
-        &self.start <= lhs.end()
+    fn overlaps(&self, rhs: &RangeInclusive<T>) -> bool {
+        &self.start <= rhs.end()
     }
 }
 
 impl<T: PartialOrd> Overlaps<RangeTo<T>> for RangeFrom<T> {
     #[inline]
-    fn overlaps(&self, lhs: &RangeTo<T>) -> bool {
-        self.start < lhs.end
+    fn overlaps(&self, rhs: &RangeTo<T>) -> bool {
+        self.start < rhs.end
     }
 }
 
 impl<T: PartialOrd> Overlaps<RangeToInclusive<T>> for RangeFrom<T> {
     #[inline]
-    fn overlaps(&self, lhs: &RangeToInclusive<T>) -> bool {
-        self.start <= lhs.end
+    fn overlaps(&self, rhs: &RangeToInclusive<T>) -> bool {
+        self.start <= rhs.end
     }
 }
 
 impl<T: PartialOrd> Overlaps<(Bound<T>, Bound<T>)> for RangeFrom<T> {
     #[inline]
-    fn overlaps(&self, lhs: &(Bound<T>, Bound<T>)) -> bool {
-        match &lhs.1 {
+    fn overlaps(&self, rhs: &(Bound<T>, Bound<T>)) -> bool {
+        match &rhs.1 {
             Excluded(lhs_end) => &self.start < lhs_end,
             Included(lhs_end) => &self.start <= lhs_end,
             Unbounded => true
@@ -170,15 +170,15 @@ impl<T> Overlaps<(Bound<T>, Bound<T>)> for RangeFull {
 // Implementations for RangeInclusive
 impl<T: PartialOrd> Overlaps<Range<T>> for RangeInclusive<T> {
     #[inline]
-    fn overlaps(&self, lhs: &Range<T>) -> bool {
-        self.start() < &lhs.end && self.end() >= &lhs.start
+    fn overlaps(&self, rhs: &Range<T>) -> bool {
+        self.start() < &rhs.end && self.end() >= &rhs.start
     }
 }
 
 impl<T: PartialOrd> Overlaps<RangeFrom<T>> for RangeInclusive<T> {
     #[inline]
-    fn overlaps(&self, lhs: &RangeFrom<T>) -> bool {
-        self.end() >= &lhs.start
+    fn overlaps(&self, rhs: &RangeFrom<T>) -> bool {
+        self.end() >= &rhs.start
     }
 }
 
@@ -191,32 +191,32 @@ impl<T> Overlaps<RangeFull> for RangeInclusive<T> {
 
 impl<T: PartialOrd> Overlaps for RangeInclusive<T> {
     #[inline]
-    fn overlaps(&self, lhs: &RangeInclusive<T>) -> bool {
-        self.start() <= lhs.end() && self.end() >= lhs.start()
+    fn overlaps(&self, rhs: &RangeInclusive<T>) -> bool {
+        self.start() <= rhs.end() && self.end() >= rhs.start()
     }
 }
 
 impl<T: PartialOrd> Overlaps<RangeTo<T>> for RangeInclusive<T> {
     #[inline]
-    fn overlaps(&self, lhs: &RangeTo<T>) -> bool {
-        self.start() < &lhs.end
+    fn overlaps(&self, rhs: &RangeTo<T>) -> bool {
+        self.start() < &rhs.end
     }
 }
 
 impl<T: PartialOrd> Overlaps<RangeToInclusive<T>> for RangeInclusive<T> {
     #[inline]
-    fn overlaps(&self, lhs: &RangeToInclusive<T>) -> bool {
-        self.start() <= &lhs.end
+    fn overlaps(&self, rhs: &RangeToInclusive<T>) -> bool {
+        self.start() <= &rhs.end
     }
 }
 
 impl<T: PartialOrd> Overlaps<(Bound<T>, Bound<T>)> for RangeInclusive<T> {
-    fn overlaps(&self, lhs: &(Bound<T>, Bound<T>)) -> bool {
-        (match &lhs.0 {
+    fn overlaps(&self, rhs: &(Bound<T>, Bound<T>)) -> bool {
+        (match &rhs.0 {
             Excluded(lhs_start) => self.end() > lhs_start,
             Included(lhs_start) => self.end() >= lhs_start,
             Unbounded => true
-        }) && (match &lhs.1 {
+        }) && (match &rhs.1 {
             Excluded(lhs_end) => self.start() < lhs_end,
             Included(lhs_end) => self.start() <= lhs_end,
             Unbounded => true
@@ -227,15 +227,15 @@ impl<T: PartialOrd> Overlaps<(Bound<T>, Bound<T>)> for RangeInclusive<T> {
 // Implementations for RangeTo
 impl<T: PartialOrd> Overlaps<Range<T>> for RangeTo<T> {
     #[inline]
-    fn overlaps(&self, lhs: &Range<T>) -> bool {
-        self.end > lhs.start
+    fn overlaps(&self, rhs: &Range<T>) -> bool {
+        self.end > rhs.start
     }
 }
 
 impl<T: PartialOrd> Overlaps<RangeFrom<T>> for RangeTo<T> {
     #[inline]
-    fn overlaps(&self, lhs: &RangeFrom<T>) -> bool {
-        self.end > lhs.start
+    fn overlaps(&self, rhs: &RangeFrom<T>) -> bool {
+        self.end > rhs.start
     }
 }
 
@@ -248,8 +248,8 @@ impl<T> Overlaps<RangeFull> for RangeTo<T> {
 
 impl<T: PartialOrd> Overlaps<RangeInclusive<T>> for RangeTo<T> {
     #[inline]
-    fn overlaps(&self, lhs: &RangeInclusive<T>) -> bool {
-        &self.end >= lhs.start()
+    fn overlaps(&self, rhs: &RangeInclusive<T>) -> bool {
+        &self.end >= rhs.start()
     }
 }
 
@@ -269,8 +269,8 @@ impl<T> Overlaps<RangeToInclusive<T>> for RangeTo<T> {
 
 impl<T: PartialOrd> Overlaps<(Bound<T>, Bound<T>)> for RangeTo<T> {
     #[inline]
-    fn overlaps(&self, lhs: &(Bound<T>, Bound<T>)) -> bool {
-        match &lhs.0 {
+    fn overlaps(&self, rhs: &(Bound<T>, Bound<T>)) -> bool {
+        match &rhs.0 {
             Excluded(lhs_start) |
             Included(lhs_start) => &self.end > lhs_start,
             Unbounded => true
@@ -281,15 +281,15 @@ impl<T: PartialOrd> Overlaps<(Bound<T>, Bound<T>)> for RangeTo<T> {
 // Implementations for RangeToInclusive
 impl<T: PartialOrd> Overlaps<Range<T>> for RangeToInclusive<T> {
     #[inline]
-    fn overlaps(&self, lhs: &Range<T>) -> bool {
-        self.end >= lhs.start
+    fn overlaps(&self, rhs: &Range<T>) -> bool {
+        self.end >= rhs.start
     }
 }
 
 impl<T: PartialOrd> Overlaps<RangeFrom<T>> for RangeToInclusive<T> {
     #[inline]
-    fn overlaps(&self, lhs: &RangeFrom<T>) -> bool {
-        self.end >= lhs.start
+    fn overlaps(&self, rhs: &RangeFrom<T>) -> bool {
+        self.end >= rhs.start
     }
 }
 
@@ -302,8 +302,8 @@ impl<T> Overlaps<RangeFull> for RangeToInclusive<T> {
 
 impl<T: PartialOrd> Overlaps<RangeInclusive<T>> for RangeToInclusive<T> {
     #[inline]
-    fn overlaps(&self, lhs: &RangeInclusive<T>) -> bool {
-        &self.end >= lhs.start()
+    fn overlaps(&self, rhs: &RangeInclusive<T>) -> bool {
+        &self.end >= rhs.start()
     }
 }
 
@@ -323,8 +323,8 @@ impl<T> Overlaps for RangeToInclusive<T> {
 
 impl<T: PartialOrd> Overlaps<(Bound<T>, Bound<T>)> for RangeToInclusive<T> {
     #[inline]
-    fn overlaps(&self, lhs: &(Bound<T>, Bound<T>)) -> bool {
-        match &lhs.0 {
+    fn overlaps(&self, rhs: &(Bound<T>, Bound<T>)) -> bool {
+        match &rhs.0 {
             Excluded(lhs_start) => &self.end > lhs_start,
             Included(lhs_start) => &self.end >= lhs_start,
             Unbounded => true
@@ -335,15 +335,15 @@ impl<T: PartialOrd> Overlaps<(Bound<T>, Bound<T>)> for RangeToInclusive<T> {
 // Implementations for Bound tuple
 impl<T: PartialOrd> Overlaps<Range<T>> for (Bound<T>, Bound<T>) {
     #[inline]
-    fn overlaps(&self, lhs: &Range<T>) -> bool {
-        lhs.overlaps(self)
+    fn overlaps(&self, rhs: &Range<T>) -> bool {
+        rhs.overlaps(self)
     }
 }
 
 impl<T: PartialOrd> Overlaps<RangeFrom<T>> for (Bound<T>, Bound<T>) {
     #[inline]
-    fn overlaps(&self, lhs: &RangeFrom<T>) -> bool {
-        lhs.overlaps(self)
+    fn overlaps(&self, rhs: &RangeFrom<T>) -> bool {
+        rhs.overlaps(self)
     }
 }
 
@@ -356,34 +356,34 @@ impl<T> Overlaps<RangeFull> for (Bound<T>, Bound<T>) {
 
 impl<T: PartialOrd> Overlaps<RangeInclusive<T>> for (Bound<T>, Bound<T>) {
     #[inline]
-    fn overlaps(&self, lhs: &RangeInclusive<T>) -> bool {
-        lhs.overlaps(self)
+    fn overlaps(&self, rhs: &RangeInclusive<T>) -> bool {
+        rhs.overlaps(self)
     }
 }
 
 impl<T: PartialOrd> Overlaps<RangeTo<T>> for (Bound<T>, Bound<T>) {
     #[inline]
-    fn overlaps(&self, lhs: &RangeTo<T>) -> bool {
-        lhs.overlaps(self)
+    fn overlaps(&self, rhs: &RangeTo<T>) -> bool {
+        rhs.overlaps(self)
     }
 }
 
 impl<T: PartialOrd> Overlaps<RangeToInclusive<T>> for (Bound<T>, Bound<T>) {
     #[inline]
-    fn overlaps(&self, lhs: &RangeToInclusive<T>) -> bool {
-        lhs.overlaps(self)
+    fn overlaps(&self, rhs: &RangeToInclusive<T>) -> bool {
+        rhs.overlaps(self)
     }
 }
 
 impl<T: PartialOrd> Overlaps for (Bound<T>, Bound<T>) {
-    fn overlaps(&self, lhs: &(Bound<T>, Bound<T>)) -> bool {
-        (match (&self.1, &lhs.0) {
+    fn overlaps(&self, rhs: &(Bound<T>, Bound<T>)) -> bool {
+        (match (&self.1, &rhs.0) {
             (Excluded(rhs_end), Excluded(lhs_start)) |
             (Included(rhs_end), Excluded(lhs_start)) |
             (Excluded(rhs_end), Included(lhs_start)) => rhs_end > lhs_start,
             (Included(rhs_end), Included(lhs_start)) => rhs_end >= lhs_start,
             (Unbounded, _) | (_, Unbounded) => true,
-        }) && (match (&self.0, &lhs.1) {
+        }) && (match (&self.0, &rhs.1) {
             (Excluded(rhs_start), Excluded(lhs_end)) |
             (Included(rhs_start), Excluded(lhs_end)) |
             (Excluded(rhs_start), Included(lhs_end)) => rhs_start < lhs_end,
