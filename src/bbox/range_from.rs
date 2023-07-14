@@ -100,7 +100,7 @@ impl<N: Copy + Default + Ord + Scalar, const D: usize> Intersection<RangeInclusi
     }
 }
 
-impl<N: Copy + Default + Ord + Scalar, const D: usize> Intersection<RangeTo<Point<N, D>>> for RangeFrom<Point<N, D>> {
+impl<N: Copy + PartialOrd + Scalar, const D: usize> Intersection<RangeTo<Point<N, D>>> for RangeFrom<Point<N, D>> {
     type Output = Range<Point<N, D>>;
 
     #[inline]
@@ -109,7 +109,7 @@ impl<N: Copy + Default + Ord + Scalar, const D: usize> Intersection<RangeTo<Poin
     }
 }
 
-impl<N: Copy + Default + Ord + Scalar, const D: usize> Intersection<RangeToInclusive<Point<N, D>>> for RangeFrom<Point<N, D>> {
+impl<N: Copy + PartialOrd + Scalar, const D: usize> Intersection<RangeToInclusive<Point<N, D>>> for RangeFrom<Point<N, D>> {
     type Output = RangeInclusive<Point<N, D>>;
 
     #[inline]
@@ -118,7 +118,7 @@ impl<N: Copy + Default + Ord + Scalar, const D: usize> Intersection<RangeToInclu
     }
 }
 
-impl<N: Copy + Ord + Scalar, const D: usize> Intersection<(Bound<Point<N, D>>, Bound<Point<N, D>>)> for RangeFrom<Point<N, D>> {
+impl<N: Copy + PartialOrd + Scalar, const D: usize> Intersection<(Bound<Point<N, D>>, Bound<Point<N, D>>)> for RangeFrom<Point<N, D>> {
     type Output = BBox<N, D>;
 
     fn intersection(&self, rhs: &(Bound<Point<N, D>>, Bound<Point<N, D>>)) -> Self::Output {

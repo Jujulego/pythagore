@@ -116,9 +116,10 @@ impl<N: Copy + Scalar, const D: usize> Intersection<RangeToInclusive<Point<N, D>
     }
 }
 
-impl<N: Copy + Ord + Scalar, const D: usize> Intersection<(Bound<Point<N, D>>, Bound<Point<N, D>>)> for RangeFull {
+impl<N: Copy + Scalar, const D: usize> Intersection<(Bound<Point<N, D>>, Bound<Point<N, D>>)> for RangeFull {
     type Output = (Bound<Point<N, D>>, Bound<Point<N, D>>);
 
+    #[inline]
     fn intersection(&self, rhs: &(Bound<Point<N, D>>, Bound<Point<N, D>>)) -> Self::Output {
         *rhs
     }
