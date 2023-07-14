@@ -1,8 +1,10 @@
 use std::ops::Bound::{self, Excluded, Included, Unbounded};
+use std::ops::{Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive};
 use na::{ClosedAdd, ClosedSub, Point, Scalar, SVector};
 use num_traits::One;
 
-use crate::{BBox, PointBounds, Walkable};
+use crate::{BBox, Intersection, PointBounds, Walkable};
+use crate::bbox::utils::{max_bound, min_bound};
 use crate::traits::DimensionBounds;
 
 /// Builds a bounding box from a range of points
@@ -97,6 +99,87 @@ impl<N: ClosedAdd + ClosedSub + Copy + One + Scalar, const D: usize> Walkable<N,
             Excluded(pt) => Some(pt - SVector::repeat(N::one())),
             Unbounded => None
         }
+    }
+}
+
+impl<N: Copy + PartialOrd + Scalar, const D: usize> Intersection<BBox<N, D>> for (Bound<Point<N, D>>, Bound<Point<N, D>>) {
+    type Output = BBox<N, D>;
+
+    #[inline]
+    fn intersection(&self, rhs: &BBox<N, D>) -> Self::Output {
+        rhs.intersection(self)
+    }
+}
+
+impl<N: Copy + PartialOrd + Scalar, const D: usize> Intersection<Range<Point<N, D>>> for (Bound<Point<N, D>>, Bound<Point<N, D>>) {
+    type Output = BBox<N, D>;
+
+    #[inline]
+    fn intersection(&self, lhs: &Range<Point<N, D>>) -> Self::Output {
+        lhs.intersection(self)
+    }
+}
+
+impl<N: Copy + PartialOrd + Scalar, const D: usize> Intersection<RangeFrom<Point<N, D>>> for (Bound<Point<N, D>>, Bound<Point<N, D>>) {
+    type Output = BBox<N, D>;
+
+    #[inline]
+    fn intersection(&self, lhs: &RangeFrom<Point<N, D>>) -> Self::Output {
+        lhs.intersection(self)
+    }
+}
+
+impl<N: Copy + Scalar, const D: usize> Intersection<RangeFull> for (Bound<Point<N, D>>, Bound<Point<N, D>>) {
+    type Output = (Bound<Point<N, D>>, Bound<Point<N, D>>);
+
+    #[inline]
+    fn intersection(&self, _: &RangeFull) -> Self::Output {
+        *self
+    }
+}
+
+impl<N: Copy + PartialOrd + Scalar, const D: usize> Intersection<RangeInclusive<Point<N, D>>> for (Bound<Point<N, D>>, Bound<Point<N, D>>) {
+    type Output = BBox<N, D>;
+
+    #[inline]
+    fn intersection(&self, lhs: &RangeInclusive<Point<N, D>>) -> Self::Output {
+        lhs.intersection(self)
+    }
+}
+
+impl<N: Copy + PartialOrd + Scalar, const D: usize> Intersection<RangeTo<Point<N, D>>> for (Bound<Point<N, D>>, Bound<Point<N, D>>) {
+    type Output = BBox<N, D>;
+
+    #[inline]
+    fn intersection(&self, lhs: &RangeTo<Point<N, D>>) -> Self::Output {
+        lhs.intersection(self)
+    }
+}
+
+impl<N: Copy + PartialOrd + Scalar, const D: usize> Intersection<RangeToInclusive<Point<N, D>>> for (Bound<Point<N, D>>, Bound<Point<N, D>>) {
+    type Output = BBox<N, D>;
+
+    #[inline]
+    fn intersection(&self, lhs: &RangeToInclusive<Point<N, D>>) -> Self::Output {
+        lhs.intersection(self)
+    }
+}
+
+impl<N: Copy + PartialOrd + Scalar, const D: usize> Intersection for (Bound<Point<N, D>>, Bound<Point<N, D>>) {
+    type Output = BBox<N, D>;
+
+    fn intersection(&self, rhs: &(Bound<Point<N, D>>, Bound<Point<N, D>>)) -> Self::Output {
+        let mut ranges = [(Unbounded, Unbounded); D];
+
+        for (idx, range) in ranges.iter_mut().enumerate() {
+            let lhs = unsafe { self.get_bounds_unchecked(idx) };
+            let rhs = unsafe { rhs.get_bounds_unchecked(idx) };
+
+            range.0 = min_bound(lhs.0, rhs.0);
+            range.1 = max_bound(lhs.1, rhs.1);
+        }
+
+        BBox::from(ranges)
     }
 }
 
