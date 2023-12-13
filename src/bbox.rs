@@ -15,7 +15,7 @@ use na::{ClosedAdd, ClosedSub, Point, Scalar, SVector};
 use num_traits::{One, Zero};
 use crate::{Holds, Intersection, IsRangeEmpty, PointBounds, Walkable};
 use crate::bbox::utils::{max_bound, min_bound};
-use crate::traits::{DimensionBounds, Overlaps};
+use crate::traits::{DimBounds, Overlaps};
 
 type BBoxElement<N> = (Bound<N>, Bound<N>);
 
@@ -259,7 +259,7 @@ impl<N: Scalar + PartialOrd, const D: usize> IsRangeEmpty for BBox<N, D> {
     }
 }
 
-impl<N: Copy + Scalar, const D: usize> DimensionBounds<N, D> for BBox<N, D> {
+impl<N: Copy + Scalar, const D: usize> DimBounds<N, D> for BBox<N, D> {
     type Output = (Bound<N>, Bound<N>);
 
     unsafe fn get_bounds_unchecked(&self, idx: usize) -> Self::Output {
@@ -460,8 +460,8 @@ impl<N: Copy + PartialOrd + Scalar, const D: usize> Intersection<(Bound<Point<N,
 impl<N, Rhs, const D: usize> Overlaps<Rhs> for BBox<N, D>
 where
     N: Copy + PartialOrd + Scalar,
-    Rhs: DimensionBounds<N, D>,
-    <Rhs as DimensionBounds<N, D>>::Output: Overlaps<BBoxElement<N>>,
+    Rhs: DimBounds<N, D>,
+    <Rhs as DimBounds<N, D>>::Output: Overlaps<BBoxElement<N>>,
 {
     fn overlaps(&self, rhs: &Rhs) -> bool {
         self.ranges.iter().enumerate()
