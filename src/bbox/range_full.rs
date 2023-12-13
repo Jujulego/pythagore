@@ -3,7 +3,7 @@ use std::ops::{Bound, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, Rang
 use na::{Point, Scalar};
 
 use crate::{BBox, Intersection, PointBounds};
-use crate::traits::DimensionBounds;
+use crate::traits::DimBounds;
 
 /// Builds a bounding box from a range of points
 ///
@@ -27,7 +27,7 @@ impl<N: Copy + Scalar, const D: usize> From<RangeFull> for BBox<N, D> {
     }
 }
 
-impl<N: Scalar, const D: usize> DimensionBounds<N, D> for RangeFull {
+impl<N: Scalar, const D: usize> DimBounds<N, D> for RangeFull {
     type Output = RangeFull;
 
     #[inline]
@@ -146,8 +146,8 @@ mod tests {
 
         #[test]
         fn test_get_bounds() {
-            assert_eq!(DimensionBounds::<i32, 2>::get_bounds(&(..), 0), ..);
-            assert_eq!(DimensionBounds::<i32, 2>::get_bounds(&(..), 1), ..);
+            assert_eq!(DimBounds::<i32, 2>::get_bounds(&(..), 0), ..);
+            assert_eq!(DimBounds::<i32, 2>::get_bounds(&(..), 1), ..);
         }
     }
 

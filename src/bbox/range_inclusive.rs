@@ -5,7 +5,7 @@ use na::{Point, Scalar};
 
 use crate::{BBox, Intersection, PointBounds, Walkable};
 use crate::bbox::utils::{max_bound, max_point, min_bound, min_point};
-use crate::traits::DimensionBounds;
+use crate::traits::DimBounds;
 
 /// Builds a bounding box from a range of points
 ///
@@ -36,7 +36,7 @@ impl<N: Copy + Scalar, const D: usize> From<RangeInclusive<Point<N, D>>> for BBo
     }
 }
 
-impl<N: Copy + Scalar, const D: usize> DimensionBounds<N, D> for RangeInclusive<Point<N, D>> {
+impl<N: Copy + Scalar, const D: usize> DimBounds<N, D> for RangeInclusive<Point<N, D>> {
     type Output = RangeInclusive<N>;
 
     #[inline]

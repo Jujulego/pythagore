@@ -5,7 +5,7 @@ use num_traits::One;
 
 use crate::{BBox, Intersection, PointBounds, Walkable};
 use crate::bbox::utils::{max_bound, min_bound};
-use crate::traits::DimensionBounds;
+use crate::traits::DimBounds;
 
 /// Builds a bounding box from a range of points
 ///
@@ -36,7 +36,7 @@ impl<N: Copy + Scalar, const D: usize> From<(Bound<Point<N, D>>, Bound<Point<N, 
 }
 
 #[cfg(not(feature = "bound_map"))]
-impl<N: Copy + Scalar, const D: usize> DimensionBounds<N, D> for (Bound<Point<N, D>>, Bound<Point<N, D>>) {
+impl<N: Copy + Scalar, const D: usize> DimBounds<N, D> for (Bound<Point<N, D>>, Bound<Point<N, D>>) {
     type Output = (Bound<N>, Bound<N>);
 
     #[inline]
@@ -57,7 +57,7 @@ impl<N: Copy + Scalar, const D: usize> DimensionBounds<N, D> for (Bound<Point<N,
 }
 
 #[cfg(feature = "bound_map")]
-impl<N: Scalar, const D: usize> DimensionBounds<N, D> for (Bound<Point<N, D>>, Bound<Point<N, D>>) {
+impl<N: Scalar, const D: usize> DimBounds<N, D> for (Bound<Point<N, D>>, Bound<Point<N, D>>) {
     type Output = (Bound<N>, Bound<N>);
 
     #[inline]
