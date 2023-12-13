@@ -3,7 +3,13 @@
 
 __metadata:
   version: 8
-  cacheKey: 10
+  cacheKey: 10c0
+
+"@jujulego/pythagore@workspace:pkg":
+  version: 0.0.0-use.local
+  resolution: "@jujulego/pythagore@workspace:pkg"
+  languageName: unknown
+  linkType: soft
 
 "pythagore@workspace:.":
   version: 0.0.0-use.local
