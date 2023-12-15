@@ -1,4 +1,5 @@
 mod dim_bounds;
+mod dim_fields;
 mod holds;
 mod intersection;
 mod is_range_empty;
@@ -7,6 +8,7 @@ mod point_bounds;
 mod walkable;
 
 pub use dim_bounds::DimBounds;
+pub use dim_fields::DimFields;
 pub use holds::Holds;
 pub use intersection::Intersection;
 pub use is_range_empty::IsRangeEmpty;

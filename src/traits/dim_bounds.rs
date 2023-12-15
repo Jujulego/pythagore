@@ -16,6 +16,7 @@ pub trait DimBounds<N: Scalar, const D: usize> {
     ///
     /// assert_eq!(bbox.get_bounds(0), 0..1);
     /// ```
+    #[inline]
     fn get_bounds(&self, dim: usize) -> Self::Output {
         assert!(dim < D, "Dimension index out of bounds");
         unsafe { self.get_bounds_unchecked(dim) }
