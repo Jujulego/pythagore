@@ -1,7 +1,7 @@
 use na::{Point, Scalar, SVector};
 
 pub trait DimFields<const D: usize> {
-    type Output;
+    type Field;
 
     /// Returns object's field for given dimension.
     ///
@@ -15,7 +15,7 @@ pub trait DimFields<const D: usize> {
     /// assert_eq!(v.get_field(1), 2);
     /// ```
     #[inline]
-    fn get_field(&self, dim: usize) -> &Self::Output {
+    fn get_field(&self, dim: usize) -> &Self::Field {
         assert!(dim < D, "Dimension index out of bounds");
         unsafe { self.get_field_unchecked(dim) }
     }
@@ -37,17 +37,17 @@ pub trait DimFields<const D: usize> {
     ///     assert_eq!(v.get_field_unchecked(1), 2);
     /// }
     /// ```
-    unsafe fn get_field_unchecked(&self, dim: usize) -> &Self::Output;
+    unsafe fn get_field_unchecked(&self, dim: usize) -> &Self::Field;
 }
 
 // Macros
 macro_rules! literal_impl {
     ($t:ty) => {
         impl DimFields<1> for $t {
-            type Output = Self;
+            type Field = Self;
 
             #[inline]
-            unsafe fn get_field_unchecked(&self, _dim: usize) -> &Self::Output {
+            unsafe fn get_field_unchecked(&self, _dim: usize) -> &Self::Field {
                 self
             }
         }
@@ -60,19 +60,19 @@ literal_impl!(u8, u16, u32, u64, u128);
 literal_impl!(i8, i16, i32, i64, i128);
 
 impl<N, const D: usize> DimFields<D> for SVector<N, D> {
-    type Output = N;
+    type Field = N;
 
     #[inline]
-    unsafe fn get_field_unchecked(&self, dim: usize) -> &Self::Output {
+    unsafe fn get_field_unchecked(&self, dim: usize) -> &Self::Field {
         &self[dim]
     }
 }
 
 impl<N: Scalar, const D: usize> DimFields<D> for Point<N, D> {
-    type Output = N;
+    type Field = N;
 
     #[inline]
-    unsafe fn get_field_unchecked(&self, dim: usize) -> &Self::Output {
+    unsafe fn get_field_unchecked(&self, dim: usize) -> &Self::Field {
         &self[dim]
     }
 }
