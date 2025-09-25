@@ -23,7 +23,7 @@ jobs:
       security-events: write
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Setup Rust
         run: rustup toolchain install stable --profile minimal --component clippy
@@ -46,7 +46,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Setup Rust
         run: rustup toolchain install stable --profile minimal
@@ -81,7 +81,7 @@ jobs:
       contents: write
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Setup Rust
         run: rustup toolchain install stable --profile minimal
@@ -152,7 +152,7 @@ jobs:
       contents: write
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Setup Node.js 18.x
         uses: actions/setup-node@v4.4.0
@@ -184,7 +184,7 @@ jobs:
     needs: [unit-tests]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Download unit coverage
         uses: actions/download-artifact@v4
