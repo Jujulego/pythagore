@@ -64,7 +64,7 @@ jobs:
         run: cargo test --doc
 
       - name: Upload coverage
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: codecov-unit
           path: codecov-unit.json
@@ -187,7 +187,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Download unit coverage
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: codecov-unit
 
