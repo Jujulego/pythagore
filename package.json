@@ -10,5 +10,5 @@
   "scripts": {
     "build": "wasm-pack build --all-features --scope jujulego --weak-refs"
   },
-  "packageManager": "yarn@4.12.0"
+  "packageManager": "yarn@4.13.0"
 }
