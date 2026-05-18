@@ -23,6 +23,6 @@ wasm-vector-real = ["dep:wasm-bindgen"]
 wasm-vector-int = ["dep:wasm-bindgen"]
 
 [dependencies]
-nalgebra = "0.32.3"
+nalgebra = "0.34.0"
 num-traits = "0.2.17"
 wasm-bindgen = { version = "0.2.89", optional = true }
